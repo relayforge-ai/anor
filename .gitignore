@@ -1,0 +1,8 @@
+# Run output logs
+runs/*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/

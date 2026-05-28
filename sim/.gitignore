@@ -1,0 +1,10 @@
+# Live configs and env (may contain API keys)
+run-config.json
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+mandos-env/

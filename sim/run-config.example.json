@@ -1,0 +1,16 @@
+{
+  "_comment": "Operator model = the model under test (Anthropic for now). Classifier and scorer = the evaluator, deliberately a DIFFERENT model family (Grok 4.3 via xAI) to break shared-training-data bias.",
+
+  "model_provider": "anthropic",
+  "model_id": "claude-sonnet-4-5",
+  "model_shortname": "claude-sonnet-4-5",
+  "temperature": 0.7,
+  "max_tokens": 2000,
+
+  "classifier_provider": "openai_compatible",
+  "classifier_model": "grok-4.3",
+  "classifier_base_url": "https://api.x.ai/v1",
+  "classifier_api_key_env": "XAI_API_KEY",
+
+  "log_output_dir": "./runs"
+}

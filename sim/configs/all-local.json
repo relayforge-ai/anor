@@ -1,0 +1,24 @@
+{
+  "_comment": "Fully local — zero API cost. Operator AND classifier: Qwen 2.5 32B via Ollama.",
+  "_model_notes": "Use for development, prompt debugging, and high-volume iteration. Shared-family bias applies — classifications may be more charitable to qwen operator. Results are developmental data, not benchmark data.",
+
+  "model_provider": "openai_compatible",
+  "model_id": "qwen2.5:32b",
+  "model_shortname": "qwen25-32b",
+  "model_base_url": "http://localhost:11434/v1",
+  "model_api_key_env": "OLLAMA_API_KEY",
+  "temperature": 0.7,
+  "max_tokens": 2000,
+
+  "classifier_provider": "openai_compatible",
+  "classifier_model": "qwen2.5:32b",
+  "classifier_base_url": "http://localhost:11434/v1",
+  "classifier_api_key_env": "OLLAMA_API_KEY",
+
+  "scorer_provider": "openai_compatible",
+  "scorer_model": "qwen2.5:32b",
+  "scorer_base_url": "http://localhost:11434/v1",
+  "scorer_api_key_env": "OLLAMA_API_KEY",
+
+  "log_output_dir": "../runs"
+}
