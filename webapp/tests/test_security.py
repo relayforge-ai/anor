@@ -237,5 +237,136 @@ class TestApiRateHelpers(unittest.TestCase):
             security.API_LIMITER = prev
 
 
+class _FakeHandler:
+    def __init__(self, peer: str, headers: dict | None = None):
+        self.client_address = (peer, 12345)
+        self.headers = headers or {}
+
+
+class TestClientKeyProxyTrust(unittest.TestCase):
+    def test_ignores_xff_by_default(self):
+        prev = os.environ.get("ANOR_TRUST_PROXY")
+        try:
+            os.environ.pop("ANOR_TRUST_PROXY", None)
+            h = _FakeHandler("10.0.0.5", {"X-Forwarded-For": "1.2.3.4, 10.0.0.1"})
+            self.assertEqual(security.client_key(h), "10.0.0.5")
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_TRUST_PROXY", None)
+            else:
+                os.environ["ANOR_TRUST_PROXY"] = prev
+
+    def test_honors_xff_when_trust_proxy(self):
+        prev = os.environ.get("ANOR_TRUST_PROXY")
+        try:
+            os.environ["ANOR_TRUST_PROXY"] = "1"
+            h = _FakeHandler("10.0.0.5", {"X-Forwarded-For": "1.2.3.4, 10.0.0.1"})
+            self.assertEqual(security.client_key(h), "1.2.3.4")
+            h2 = _FakeHandler("10.0.0.5", {"X-Real-IP": "9.9.9.9"})
+            self.assertEqual(security.client_key(h2), "9.9.9.9")
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_TRUST_PROXY", None)
+            else:
+                os.environ["ANOR_TRUST_PROXY"] = prev
+
+class TestSpoofedXffRateLimit(unittest.TestCase):
+    """Spoofed X-Forwarded-For must not mint new rate-limit buckets by default."""
+
+    @classmethod
+    def setUpClass(cls):
+        from http.server import ThreadingHTTPServer
+        from webapp.server import Handler
+
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        cls.port = cls.httpd.server_address[1]
+        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.base = f"http://127.0.0.1:{cls.port}"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+
+    def test_spoofed_xff_cannot_bypass_rate_limit_without_trust(self):
+        import webapp.server as server_mod
+
+        prev_trust = os.environ.get("ANOR_TRUST_PROXY")
+        os.environ.pop("ANOR_TRUST_PROXY", None)
+        tight = security.RateLimiter(2, 60)
+        server_mod.sec.API_LIMITER = tight
+        security.API_LIMITER = tight
+        try:
+            codes = []
+            for i in range(4):
+                req = urllib.request.Request(
+                    self.base + "/api/catalog",
+                    headers={"X-Forwarded-For": f"203.0.113.{i}"},
+                )
+                try:
+                    with urllib.request.urlopen(req, timeout=5) as r:
+                        codes.append(r.status)
+                except urllib.error.HTTPError as e:
+                    codes.append(e.code)
+            # Same TCP peer → same bucket → later calls 429 despite unique XFF
+            self.assertTrue(any(c == 200 for c in codes), codes)
+            self.assertTrue(any(c == 429 for c in codes), codes)
+        finally:
+            if prev_trust is None:
+                os.environ.pop("ANOR_TRUST_PROXY", None)
+            else:
+                os.environ["ANOR_TRUST_PROXY"] = prev_trust
+            restored = security.RateLimiter(1000, 60)
+            server_mod.sec.API_LIMITER = restored
+            security.API_LIMITER = restored
+
+
+class TestMethodNotAllowed(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from http.server import ThreadingHTTPServer
+        from webapp.server import Handler
+
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        cls.port = cls.httpd.server_address[1]
+        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.base = f"http://127.0.0.1:{cls.port}"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+
+    def test_put_returns_405_with_allow(self):
+        req = urllib.request.Request(
+            self.base + "/api/catalog",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="PUT",
+        )
+        try:
+            urllib.request.urlopen(req, timeout=5)
+            self.fail("expected 405")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 405)
+            body = json.loads(e.read().decode() or "{}")
+            self.assertEqual(body.get("code"), "method_not_allowed")
+            allow = e.headers.get("Allow") or ""
+            self.assertIn("GET", allow)
+            self.assertIn("POST", allow)
+
+    def test_patch_returns_405(self):
+        req = urllib.request.Request(
+            self.base + "/",
+            data=b"x",
+            method="PATCH",
+        )
+        try:
+            urllib.request.urlopen(req, timeout=5)
+            self.fail("expected 405")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 405)
+
+
 if __name__ == "__main__":
     unittest.main()

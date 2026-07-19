@@ -55,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.12"
+    server_version = "ForkedHistory/1.13"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -240,9 +240,30 @@ class Handler(BaseHTTPRequestHandler):
     def _media_file(self, path: Path) -> None:
         self._stream_file(path, support_range=True, cache_mode="media")
 
+    def _method_not_allowed(self) -> None:
+        """405 with Allow — prefer over default 501 for unsupported verbs."""
+        self._json(
+            405,
+            {"error": "method not allowed", "code": "method_not_allowed"},
+            extra={"Allow": "GET, HEAD, POST, DELETE, OPTIONS"},
+        )
+
+    def do_PUT(self) -> None:
+        return self._method_not_allowed()
+
+    def do_PATCH(self) -> None:
+        return self._method_not_allowed()
+
+    def do_TRACE(self) -> None:
+        return self._method_not_allowed()
+
+    def do_CONNECT(self) -> None:
+        return self._method_not_allowed()
+
     def do_OPTIONS(self) -> None:
         self._ensure_request_id()
         self.send_response(204)
+        self.send_header("Allow", "GET, HEAD, POST, DELETE, OPTIONS")
         self._security_headers()
         self.end_headers()
 
@@ -314,6 +335,7 @@ class Handler(BaseHTTPRequestHandler):
                         "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
                         "api_rate_limit": sec.API_LIMITER.limit,
                         "api_rate_window_s": sec.API_LIMITER.window_s,
+                        "trust_proxy": sec.trust_proxy(),
                         "max_body_bytes": sec.MAX_BODY_BYTES,
                         "max_seed_chars": sec.MAX_SEED_CHARS,
                         "member_enforcement": mem.enforcement_enabled(),

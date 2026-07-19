@@ -9,6 +9,7 @@ Tune via env without code changes:
   ANOR_FORK_LLM_RATE     max use_llm=true forks per window (default 5)
   ANOR_API_RATE_LIMIT    max /api/* requests per window (default 180; health exempt)
   ANOR_API_RATE_WINDOW   global API window seconds (default 60)
+  ANOR_TRUST_PROXY       if 1/true, honor X-Forwarded-For / X-Real-IP for client_key
   ANOR_MAX_BODY_BYTES    max POST body size (default 16384)
   ANOR_MAX_SEED_CHARS    max custom_seed length (default 500)
   ANOR_CORS_ORIGIN       CORS allow-origin (default * for local dev)
@@ -113,12 +114,37 @@ MAX_BODY_BYTES = _env_int("ANOR_MAX_BODY_BYTES", 16_384)
 MAX_SEED_CHARS = _env_int("ANOR_MAX_SEED_CHARS", 500)
 
 
+def trust_proxy() -> bool:
+    """True when reverse-proxy client headers may be trusted for rate limiting.
+
+    Default False: any client can send X-Forwarded-For and would otherwise mint
+    a fresh rate-limit bucket per spoofed IP. Enable only behind a trusted proxy
+    that overwrites these headers (ANOR_TRUST_PROXY=1).
+    """
+    return (os.environ.get("ANOR_TRUST_PROXY") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def client_key(handler) -> str:
-    """Best-effort client identity for rate limiting."""
-    xff = handler.headers.get("X-Forwarded-For", "")
-    if xff:
-        # first hop only
-        return xff.split(",")[0].strip()[:128] or "unknown"
+    """Best-effort client identity for rate limiting.
+
+    Uses the TCP peer address unless ANOR_TRUST_PROXY is enabled, in which case
+    X-Forwarded-For (leftmost / original client) or X-Real-IP is preferred.
+    """
+    if trust_proxy():
+        xff = (handler.headers.get("X-Forwarded-For") or "").strip()
+        if xff:
+            # Leftmost hop is the original client when the proxy appends correctly
+            hop = xff.split(",")[0].strip()[:128]
+            if hop:
+                return hop
+        xri = (handler.headers.get("X-Real-IP") or "").strip()[:128]
+        if xri:
+            return xri
     return (handler.client_address[0] if handler.client_address else "unknown")[:128]
 
 

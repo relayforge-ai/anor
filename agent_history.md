@@ -705,3 +705,33 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Paywall upgrade flow is keyboard- and screen-reader-usable without trapping background interaction.
+
+---
+
+## Iteration 24 — 2026-07-19
+
+### OBSERVE
+`client_key` always trusted `X-Forwarded-For`, so any client could spoof a new IP per request and bypass all rate limiters. Unsupported verbs (PUT/PATCH/TRACE) returned vague 501s without `Allow`.
+
+### PLAN
+**One high-impact change:** only honor proxy client headers when `ANOR_TRUST_PROXY` is set; return 405 + Allow for unsupported methods.
+
+Expected outcome: spoofed XFF cannot reset rate buckets by default; PUT/PATCH return 405 with Allow.
+
+### EXECUTE
+- `trust_proxy()` + hardened `client_key()` (XFF / X-Real-IP only when trusted)
+- `do_PUT`/`PATCH`/`TRACE`/`CONNECT` → 405 `method_not_allowed`
+- Health exposes `trust_proxy`
+- Tests: XFF ignored by default; spoof cannot bypass; 405 + Allow
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security -v
+→ Ran 19 tests — OK
+```
+- Default client_key uses TCP peer despite XFF
+- Spoofed XFF still hits global API 429
+- PUT → 405 with Allow header
+
+### RESULT
+Rate limits bind to real peers unless operators explicitly trust a reverse proxy; HTTP method surface is explicit.
