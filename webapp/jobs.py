@@ -378,6 +378,18 @@ class VideoJobQueue:
             mine.sort(key=lambda j: j.created_at, reverse=True)
             return mine[:limit]
 
+    def visible_to(self, job: Optional[VideoJob], owner_key: str) -> bool:
+        """Whether ``owner_key`` may poll/cancel this job.
+
+        Jobs without ``owner_key`` (legacy / tests) remain readable so local
+        tooling does not break. Owned jobs require an exact client key match.
+        """
+        if job is None:
+            return False
+        if not job.owner_key:
+            return True
+        return bool(owner_key) and job.owner_key == owner_key
+
     def to_public_enriched(self, job: VideoJob) -> dict[str, Any]:
         """Public job dict plus queue_position / jobs_ahead for studio feedback.
 

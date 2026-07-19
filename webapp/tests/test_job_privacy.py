@@ -53,6 +53,31 @@ class TestJobListPrivacy(unittest.TestCase):
         self.assertNotIn("owner_key", pub)
         self.assertNotIn("secret-peer", json_dumps_safe(pub))
 
+    def test_visible_to_owner_only(self):
+        from webapp.jobs import VideoJob, VideoJobQueue
+
+        q = VideoJobQueue()
+        owned = VideoJob(
+            id="aaaaaaaaaaaaaaaa",
+            scenario_id="ELO-001",
+            choice_id="historical",
+            use_llm=False,
+            owner_key="client-a",
+        )
+        legacy = VideoJob(
+            id="bbbbbbbbbbbbbbbb",
+            scenario_id="ELO-003",
+            choice_id="historical",
+            use_llm=False,
+            owner_key=None,
+        )
+        self.assertTrue(q.visible_to(owned, "client-a"))
+        self.assertFalse(q.visible_to(owned, "client-b"))
+        self.assertFalse(q.visible_to(owned, ""))
+        # Legacy unowned jobs remain accessible (dev/tests)
+        self.assertTrue(q.visible_to(legacy, "anyone"))
+        self.assertFalse(q.visible_to(None, "client-a"))
+
 
 def json_dumps_safe(obj) -> str:
     import json

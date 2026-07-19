@@ -824,3 +824,34 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Scholars can see how long a render has run and how much wall-clock budget remains.
+
+---
+
+## Iteration 28 — 2026-07-19
+
+### OBSERVE
+Job list was scoped to the caller, but `GET`/`DELETE` by job id still returned or cancelled any job for anyone who knew the id (IDOR) — status, errors, and cancel control leaked across clients.
+
+### PLAN
+**One high-impact change:** enforce `owner_key` on job get and cancel; return 404 on mismatch (no existence oracle).
+
+Expected outcome: foreign job ids look not-found; same-client poll/cancel still work.
+
+### EXECUTE
+- `VideoJobQueue.visible_to(job, owner_key)`
+- GET and DELETE check ownership before public payload / cancel
+- Unit tests for visibility rules
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_job_privacy \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_enqueue_and_complete \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_cancel_queued_or_running_job \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_list_jobs_scoped_to_client -v
+→ Ran 6 tests — OK
+```
+- owner-only visibility unit cases
+- Same-client enqueue/poll/cancel green
+
+### RESULT
+Knowing a job id is no longer enough to read or cancel another client's render.

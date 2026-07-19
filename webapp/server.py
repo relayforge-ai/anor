@@ -55,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.14"
+    server_version = "ForkedHistory/1.15"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -377,7 +377,9 @@ class Handler(BaseHTTPRequestHandler):
             if jerr:
                 return self._validation_error(jerr)
             job = QUEUE.get(jid)
-            if not job:
+            owner = sec.client_key(self)
+            # 404 on missing *or* wrong owner — do not confirm foreign job ids
+            if not job or not QUEUE.visible_to(job, owner):
                 return self._json(404, {"error": "job not found", "code": "not_found"})
             return self._json(200, QUEUE.to_public_enriched(job))
 
@@ -452,6 +454,11 @@ class Handler(BaseHTTPRequestHandler):
         if denied:
             status, body = denied
             return self._json(status, body)
+        # Ownership: cannot cancel another client's job
+        existing = QUEUE.get(jid)
+        owner = sec.client_key(self)
+        if not existing or not QUEUE.visible_to(existing, owner):
+            return self._json(404, {"error": "job not found", "code": "not_found"})
         ok, reason, job = QUEUE.cancel(jid)
         if not ok and reason == "not_found":
             return self._json(404, {"error": "job not found", "code": "not_found"})
