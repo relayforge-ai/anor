@@ -64,6 +64,7 @@ jobs:
             webapp.tests.test_video_jobs \
             webapp.tests.test_paths_and_media \
             webapp.tests.test_membership \
+            webapp.tests.test_job_dedupe \
             -v
 
       - name: Pipeline + webapp syntax check

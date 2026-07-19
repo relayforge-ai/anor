@@ -108,6 +108,21 @@ class TestForkEndpointSecurity(unittest.TestCase):
         self.assertEqual(code, 400)
         self.assertEqual(data.get("code"), "bad_scenario_id")
 
+    def test_rejects_non_json_content_type(self):
+        req = urllib.request.Request(
+            self.base + "/api/fork",
+            data=b'{"scenario_id":"ELO-003","choice_id":"historical"}',
+            headers={"Content-Type": "text/plain"},
+            method="POST",
+        )
+        try:
+            urllib.request.urlopen(req, timeout=10)
+            self.fail("expected 415")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 415)
+            body = json.loads(e.read().decode() or "{}")
+            self.assertEqual(body.get("code"), "unsupported_media_type")
+
     def test_path_traversal_scenario_get(self):
         req = urllib.request.Request(self.base + "/api/scenario/..%2F..%2FREADME")
         try:

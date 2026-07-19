@@ -59,6 +59,7 @@ class TestVideoJobsAPI(unittest.TestCase):
         self.assertEqual(status, 202, job)
         self.assertIn("id", job)
         self.assertIn(job["status"], ("queued", "running", "completed"))
+        self.assertIn("deduped", job)
 
         job_id = job["id"]
         deadline = time.time() + 120
@@ -82,6 +83,27 @@ class TestVideoJobsAPI(unittest.TestCase):
         self.assertNotIn("script_path", final.get("result") or {})
         blob = json.dumps(final)
         self.assertNotIn(str(ROOT), blob)
+
+    def test_enqueue_dedupes_active_job(self):
+        status1, job1 = self.post_job(
+            {"scenario_id": "ELO-013", "choice_id": "historical", "use_llm": False}
+        )
+        self.assertEqual(status1, 202, job1)
+        status2, job2 = self.post_job(
+            {"scenario_id": "ELO-013", "choice_id": "historical", "use_llm": False}
+        )
+        self.assertEqual(status2, 202, job2)
+        # Prefer unit tests for reliable dedupe; API path may finish instantly
+        if job1["status"] in ("queued", "running") or job2.get("deduped"):
+            self.assertEqual(job1["id"], job2["id"])
+            self.assertTrue(job2.get("deduped"))
+        else:
+            # First finished before second enqueue — new job is correct
+            self.assertFalse(job2.get("deduped", False) and job2["id"] == job1["id"])
+            self.assertIn(
+                job2["status"],
+                ("queued", "running", "completed", "failed", "cancelled"),
+            )
 
     def test_rejects_bad_scenario(self):
         status, data = self.post_job(

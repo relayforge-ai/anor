@@ -344,3 +344,31 @@ python3 -m unittest webapp.tests.test_video_jobs ... → OK
 
 ### RESULT
 Operators can stop wasteful renders; requests are correlatable in logs via rid=.
+
+---
+
+## Iteration 12 — 2026-07-18
+
+### OBSERVE
+Double-clicks / retries on "Queue video render" could spawn multiple workers for the same scenario+choice, wasting GPU. POST endpoints accepted any Content-Type.
+
+### PLAN
+**One high-impact change:** idempotent enqueue (dedupe active jobs) + require JSON Content-Type on POST.
+
+Expected outcome: second enqueue while queued/running returns the same job with `deduped: true`; non-JSON Content-Type → 415.
+
+### EXECUTE
+- `QUEUE.enqueue` returns `(job, deduped)`; reuses active match
+- API adds `deduped` field + `X-Job-Deduped` header
+- Content-Type must be application/json when body present
+- Tests: `test_job_dedupe.py`, content-type + API dedupe cases
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_job_dedupe webapp.tests.test_video_jobs \
+  webapp.tests.test_security -v
+→ OK (dedupe unit + 415 Content-Type + API paths)
+```
+
+### RESULT
+Duplicate render clicks no longer double-spend GPU; POST bodies must be JSON.

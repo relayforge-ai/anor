@@ -54,7 +54,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.6"
+    server_version = "ForkedHistory/1.7"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -340,7 +340,25 @@ class Handler(BaseHTTPRequestHandler):
 
         return self._json(404, {"error": "not found", "path": path})
 
+    def _require_json_content_type(self) -> sec.ValidationError | None:
+        """POST bodies must declare JSON (charset optional)."""
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        length = int(self.headers.get("Content-Length") or "0")
+        # Empty body is treated as {} — allow missing Content-Type only then
+        if length == 0 and not ctype:
+            return None
+        if ctype not in ("application/json", "text/json"):
+            return sec.ValidationError(
+                415,
+                "Content-Type must be application/json",
+                "unsupported_media_type",
+            )
+        return None
+
     def _read_json_body(self) -> tuple[dict | None, sec.ValidationError | None]:
+        ct_err = self._require_json_content_type()
+        if ct_err:
+            return None, ct_err
         body_err = sec.check_body_size(self.headers.get("Content-Length"))
         if body_err:
             return None, body_err
@@ -498,14 +516,18 @@ class Handler(BaseHTTPRequestHandler):
             return self._validation_error(rate_err)
 
         try:
-            job = QUEUE.enqueue(scenario_id, choice_id, use_llm=use_llm)
+            job, deduped = QUEUE.enqueue(scenario_id, choice_id, use_llm=use_llm)
         except RuntimeError as e:
             return self._json(503, {"error": str(e), "code": "queue_full"})
         except Exception as e:
             return self._json(400, {"error": str(e)[:300], "code": "enqueue_failed"})
 
         # 202 Accepted — client polls GET /api/video/jobs/{id}
-        return self._json(202, job.to_public())
+        # Deduped responses reuse the active job (no second GPU worker)
+        payload = job.to_public()
+        payload["deduped"] = deduped
+        extra = {"X-Job-Deduped": "1" if deduped else "0"}
+        return self._json(202, payload, extra=extra)
 
     def _post_member_demo(self) -> None:
         """Issue a short-lived Scholar token for demo unlock / review."""

@@ -115,14 +115,52 @@ class VideoJobQueue:
                 "by_status": statuses,
             }
 
+    def find_active(
+        self,
+        scenario_id: str,
+        choice_id: str,
+        use_llm: bool = False,
+    ) -> Optional[VideoJob]:
+        """Return an in-flight job for the same render key, if any."""
+        with self._lock:
+            self._purge_locked()
+            for j in self._jobs.values():
+                if (
+                    j.status in ("queued", "running")
+                    and j.scenario_id == scenario_id
+                    and j.choice_id == choice_id
+                    and bool(j.use_llm) == bool(use_llm)
+                    and not j.cancel_requested
+                ):
+                    return j
+            return None
+
     def enqueue(
         self,
         scenario_id: str,
         choice_id: str,
         use_llm: bool = False,
-    ) -> VideoJob:
+        *,
+        dedupe: bool = True,
+    ) -> tuple[VideoJob, bool]:
+        """Enqueue a render. Returns (job, deduped).
+
+        When ``dedupe`` is True (default), a second request for the same
+        scenario/choice/use_llm while one is queued or running reuses that job
+        instead of spawning duplicate GPU work.
+        """
         with self._lock:
             self._purge_locked()
+            if dedupe:
+                for j in self._jobs.values():
+                    if (
+                        j.status in ("queued", "running")
+                        and j.scenario_id == scenario_id
+                        and j.choice_id == choice_id
+                        and bool(j.use_llm) == bool(use_llm)
+                        and not j.cancel_requested
+                    ):
+                        return j, True
             active = sum(
                 1 for j in self._jobs.values() if j.status in ("queued", "running")
             )
@@ -138,7 +176,7 @@ class VideoJobQueue:
             )
             self._jobs[job.id] = job
         self._executor.submit(self._run, job.id)
-        return job
+        return job, False
 
     def get(self, job_id: str) -> Optional[VideoJob]:
         with self._lock:
