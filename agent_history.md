@@ -1674,3 +1674,30 @@ python3 -m unittest scripts.tests.test_social_drafts \
 
 ### RESULT
 Dunkirk social creative is staged as drafts only, aligned with the new public pack.
+
+---
+
+## Iteration 58 — 2026-07-19
+
+### OBSERVE
+Docker image ran as **root** by default — unnecessary privilege for a stdlib HTTP product site with a writable video volume.
+
+### PLAN
+**One high-impact change:** non-root runtime (uid 10001 `anor`), writable `outputs/`, compose `user` match, docs for volume ownership.
+
+Expected outcome: container process is not root; healthcheck and CMD still work; operators know how to fix old volumes.
+
+### EXECUTE
+- Dockerfile: `useradd`/`groupadd` 10001, `chown /app`, `USER anor`
+- compose: `user: "10001:10001"`
+- DEPLOY.md: security runtime + volume chown note
+- Tests: assert USER anor, uid, user before CMD
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_deploy_config -v
+→ Ran 6 tests — OK
+```
+
+### RESULT
+Forked History container drops root by default; env-driven endpoints unchanged.

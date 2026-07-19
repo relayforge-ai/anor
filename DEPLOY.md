@@ -37,6 +37,12 @@ docker compose up --build -d
 
 Ganymede / Nauvoo: same compose file; only change the URL values (or `.env`).
 
+## Security runtime
+
+The image runs as **non-root** user `anor` (**uid/gid 10001**). Compose sets
+`user: "10001:10001"` so it matches the image. Do not override with `user: root`
+unless you are debugging.
+
 ## Guardrails
 
 | Rule | How this deploy respects it |
@@ -46,6 +52,7 @@ Ganymede / Nauvoo: same compose file; only change the URL values (or `.env`).
 | No auto-publish | No Postiz/TikTok/YouTube steps in compose |
 | Speculation labels | Unchanged product code; packs keep `speculation_level` |
 | Mock fallback | Default `ANOR_MOCK_MEDIA=1` until you flip it |
+| Non-root process | `USER anor` (10001) in Dockerfile + compose `user` |
 
 ## Without Docker
 
@@ -57,3 +64,11 @@ python3 -m webapp.server --host 0.0.0.0 --port 8787
 ## Volumes
 
 Rendered videos persist in the named volume `anor_videos` → `/app/outputs/videos`.
+
+If the volume was created by an older root-owned container and the app cannot
+write MP4s, fix ownership once (host with Docker):
+
+```bash
+docker run --rm -v anor_anor_videos:/v alpine chown -R 10001:10001 /v
+# volume name may differ — check: docker volume ls | grep anor
+```

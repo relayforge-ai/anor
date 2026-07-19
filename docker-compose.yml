@@ -6,6 +6,8 @@ services:
   forked-history:
     build: .
     image: anor-forked-history:local
+    # Match Dockerfile non-root user (anor:10001) so volume writes succeed
+    user: "10001:10001"
     ports:
       - "${ANOR_PORT:-8787}:8787"
     # Pass host env / --env-file .env (do not bake secrets into the image)

@@ -30,6 +30,11 @@ class TestDeployConfig(unittest.TestCase):
         # Healthcheck uses stdlib urllib, not curl
         self.assertIn("urllib.request", df)
         self.assertIn("/api/health", df)
+        # Non-root runtime
+        self.assertRegex(df, re.compile(r"^USER\s+anor\s*$", re.M))
+        self.assertIn("10001", df)
+        self.assertIn("useradd", df)
+        self.assertIn("/app/outputs/videos", df)
 
     def test_compose_wires_endpoint_env_vars(self):
         raw = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
@@ -49,6 +54,16 @@ class TestDeployConfig(unittest.TestCase):
         self.assertNotRegex(raw, r"LLM_API_KEY:\s*['\"]?[a-zA-Z0-9_\-]{16,}")
         self.assertIn("anor_videos", raw)
         self.assertIn("forked-history", raw)
+        # Non-root (match Dockerfile uid)
+        self.assertIn('user: "10001:10001"', raw)
+
+    def test_dockerfile_user_comes_before_cmd(self):
+        """USER must apply to CMD/HEALTHCHECK (no root by default)."""
+        df = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+        user_i = df.rfind("\nUSER ")
+        cmd_i = df.rfind("\nCMD ")
+        self.assertGreater(user_i, 0)
+        self.assertGreater(cmd_i, user_i)
 
     def test_dockerignore_excludes_secrets_and_outputs(self):
         di = (ROOT / ".dockerignore").read_text(encoding="utf-8")
@@ -61,6 +76,8 @@ class TestDeployConfig(unittest.TestCase):
         self.assertIn("ANOR_MOCK_MEDIA", doc)
         self.assertIn("docker compose", doc)
         self.assertIn("host.docker.internal", doc)
+        self.assertIn("10001", doc)
+        self.assertIn("non-root", doc.lower())
         # Guardrail language
         self.assertRegex(doc, re.compile(r"secret|never commit", re.I))
 
