@@ -59,6 +59,15 @@ class TestSecurityHeaders(unittest.TestCase):
         self.assertEqual(h["X-Frame-Options"], "DENY")
         self.assertEqual(h["X-Content-Type-Options"], "nosniff")
         self.assertNotIn("Strict-Transport-Security", h)
+        expose = h.get("Access-Control-Expose-Headers", "")
+        for name in (
+            "Retry-After",
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "X-Request-ID",
+            "ETag",
+        ):
+            self.assertIn(name, expose)
 
     def test_hsts_when_configured(self):
         prev = os.environ.get("ANOR_HSTS_MAX_AGE")

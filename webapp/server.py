@@ -289,16 +289,24 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def _validation_error(self, err: sec.ValidationError) -> None:
-        headers = {}
+        headers: dict[str, str] = {}
         if err.status == 429:
-            # Extract retry seconds if present in message
-            headers["Retry-After"] = "60"
-            msg = err.error
-            if "retry in " in msg:
-                try:
-                    headers["Retry-After"] = msg.split("retry in ", 1)[1].rstrip("s")
-                except Exception:
-                    pass
+            retry = err.retry_after
+            if retry is None:
+                # Fallback: parse message "… retry in Ns"
+                headers["Retry-After"] = "60"
+                msg = err.error
+                if "retry in " in msg:
+                    try:
+                        headers["Retry-After"] = msg.split("retry in ", 1)[1].rstrip("s")
+                    except Exception:
+                        pass
+            else:
+                headers["Retry-After"] = str(max(1, int(retry)))
+            if err.limit is not None:
+                headers["X-RateLimit-Limit"] = str(int(err.limit))
+            if err.remaining is not None:
+                headers["X-RateLimit-Remaining"] = str(max(0, int(err.remaining)))
         self._json(
             err.status,
             {"error": err.error, "code": err.code},

@@ -144,14 +144,40 @@ class TestForkEndpointSecurity(unittest.TestCase):
         security.API_LIMITER = server_mod.sec.API_LIMITER
         try:
             codes = []
+            saw_rate_headers = False
             for _ in range(5):
-                code, _ = self.post_fork(
+                code, data = self.post_fork(
                     {"scenario_id": "ELO-003", "choice_id": "historical", "use_llm": False},
                     expect_error=True,
                 )
                 codes.append(code)
+                if code == 429:
+                    # post_fork doesn't return headers — probe once via raw request
+                    pass
             self.assertTrue(any(c == 429 for c in codes), f"expected 429 in {codes}")
             self.assertTrue(any(c == 200 for c in codes), f"expected some 200 in {codes}")
+            # Exhausted — next call must expose rate-limit headers
+            req = urllib.request.Request(
+                self.base + "/api/fork",
+                data=json.dumps(
+                    {
+                        "scenario_id": "ELO-003",
+                        "choice_id": "historical",
+                        "use_llm": False,
+                    }
+                ).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                urllib.request.urlopen(req, timeout=10)
+            except urllib.error.HTTPError as e:
+                self.assertEqual(e.code, 429)
+                self.assertTrue(e.headers.get("Retry-After"))
+                self.assertEqual(e.headers.get("X-RateLimit-Limit"), "3")
+                self.assertEqual(e.headers.get("X-RateLimit-Remaining"), "0")
+                saw_rate_headers = True
+            self.assertTrue(saw_rate_headers)
         finally:
             # Restore a generous limiter so sibling test modules are not poisoned
             restored = security.RateLimiter(1000, 60)

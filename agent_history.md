@@ -1391,3 +1391,31 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Background studio tabs no longer hammer the video job API during long sovereign renders.
+
+---
+
+## Iteration 48 — 2026-07-19
+
+### OBSERVE
+429 responses only set `Retry-After` by parsing the error message string. Clients and CORS frontends could not rely on standard `X-RateLimit-Limit` / `X-RateLimit-Remaining` headers for structured backoff.
+
+### PLAN
+**One high-impact change:** attach rate-limit metadata on `ValidationError` for all 429 paths; emit `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Remaining`; expose those headers over CORS.
+
+Expected outcome: exhausted fork/API/video/demo limits return machine-readable rate headers without message parsing.
+
+### EXECUTE
+- `ValidationError.limit|remaining|retry_after` optional fields
+- `check_*_rate` populates them on trip
+- `_validation_error` sets headers (structured first, message parse fallback)
+- CORS `Access-Control-Expose-Headers` includes the new names
+- `test_rate_limit_trips` asserts header values
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security webapp.tests.test_security_headers webapp.tests.test_health_privacy -v
+→ Ran 29 tests — OK
+```
+
+### RESULT
+SPA and reverse proxies can read standard rate-limit headers on 429 without scraping English error text.

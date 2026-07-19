@@ -53,6 +53,10 @@ class ValidationError:
     status: int
     error: str
     code: str
+    # Optional rate-limit metadata for 429 responses (headers)
+    limit: Optional[int] = None
+    remaining: Optional[int] = None
+    retry_after: Optional[int] = None
 
 
 class RateLimiter:
@@ -287,6 +291,9 @@ def check_fork_rate(key: str, use_llm: bool) -> Optional[ValidationError]:
             429,
             f"rate limit exceeded — retry in {retry}s",
             "rate_limited",
+            limit=FORK_LIMITER.limit,
+            remaining=0,
+            retry_after=retry,
         )
     if use_llm:
         ok_llm, _, retry_llm = LLM_FORK_LIMITER.allow(f"llm:{key}")
@@ -295,6 +302,9 @@ def check_fork_rate(key: str, use_llm: bool) -> Optional[ValidationError]:
                 429,
                 f"LLM fork rate limit exceeded — retry in {retry_llm}s",
                 "llm_rate_limited",
+                limit=LLM_FORK_LIMITER.limit,
+                remaining=0,
+                retry_after=retry_llm,
             )
     return None
 
@@ -306,6 +316,9 @@ def check_video_job_rate(key: str) -> Optional[ValidationError]:
             429,
             f"video render rate limit exceeded — retry in {retry}s",
             "video_rate_limited",
+            limit=VIDEO_JOB_LIMITER.limit,
+            remaining=0,
+            retry_after=retry,
         )
     return None
 
@@ -317,6 +330,9 @@ def check_demo_token_rate(key: str) -> Optional[ValidationError]:
             429,
             f"demo token rate limit exceeded — retry in {retry}s",
             "demo_rate_limited",
+            limit=DEMO_TOKEN_LIMITER.limit,
+            remaining=0,
+            retry_after=retry,
         )
     return None
 
@@ -343,12 +359,15 @@ def check_api_rate(key: str, path: str = "") -> Optional[ValidationError]:
     """
     if path and api_rate_exempt(path):
         return None
-    ok, _, retry = API_LIMITER.allow(f"api:{key}")
+    ok, remaining, retry = API_LIMITER.allow(f"api:{key}")
     if not ok:
         return ValidationError(
             429,
             f"API rate limit exceeded — retry in {retry}s",
             "api_rate_limited",
+            limit=API_LIMITER.limit,
+            remaining=0,
+            retry_after=retry,
         )
     return None
 
@@ -422,7 +441,10 @@ def security_headers() -> dict[str, str]:
         "Access-Control-Allow-Origin": cors,
         "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, X-ANOR-Member, Authorization, X-Request-ID",
-        "Access-Control-Expose-Headers": "X-Request-ID, ETag, Retry-After",
+        "Access-Control-Expose-Headers": (
+            "X-Request-ID, ETag, Retry-After, "
+            "X-RateLimit-Limit, X-RateLimit-Remaining"
+        ),
     }
     hsts = hsts_header_value()
     if hsts:
