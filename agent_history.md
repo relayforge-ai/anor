@@ -855,3 +855,33 @@ python3 -m unittest webapp.tests.test_job_privacy \
 
 ### RESULT
 Knowing a job id is no longer enough to read or cancel another client's render.
+
+---
+
+## Iteration 29 — 2026-07-19
+
+### OBSERVE
+Public `/api/health` (rate-limit exempt) returned full security limits, pipeline endpoint config, and video inventory — free reconnaissance for attackers and scrapers.
+
+### PLAN
+**One high-impact change:** slim public health (readiness only); full detail via `ANOR_HEALTH_DETAIL` or `X-ANOR-Health-Token`.
+
+Expected outcome: default health has site/version/ready/ffmpeg_ok/disk_ok only; operators unlock detail explicitly.
+
+### EXECUTE
+- `_health_payload` + `_health_detail_authorized` (hmac token compare)
+- Env: `ANOR_HEALTH_DETAIL`, `ANOR_HEALTH_TOKEN`
+- Tests: slim public, detail flag, token header; updated consumers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_health_privacy webapp.tests.test_security_headers \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_health_includes_queue \
+  webapp.tests.test_security.TestForkEndpointSecurity.test_health_exempt_from_global_api_limit -v
+→ Ran 8 tests — OK
+```
+- Public omits security/pipeline/videos_present
+- Detail with env or correct token
+
+### RESULT
+Health probes stay cheap and available without advertising rate limits or fleet inventory.

@@ -150,7 +150,13 @@ class TestVideoJobsAPI(unittest.TestCase):
             data = json.loads(r.read())
             rid = r.headers.get("X-Request-ID")
         self.assertIn("video_queue", data)
-        self.assertIn("max_concurrent", data["video_queue"])
+        # Public health is slim — readiness flags only (not full queue config)
+        self.assertIn("ffmpeg_ok", data["video_queue"])
+        self.assertIn("disk_ok", data["video_queue"])
+        self.assertIn("ready", data)
+        self.assertFalse(data.get("detail"))
+        self.assertNotIn("security", data)
+        self.assertNotIn("pipeline", data)
         self.assertTrue(rid)
 
     def test_bad_job_id_rejected(self):

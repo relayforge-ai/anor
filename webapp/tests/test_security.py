@@ -203,12 +203,14 @@ class TestForkEndpointSecurity(unittest.TestCase):
                 self.fail("expected 429 on catalog")
             except urllib.error.HTTPError as e:
                 self.assertEqual(e.code, 429)
-            # Health remains available for probes
+            # Health remains available for probes (slim public payload)
             with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:
                 self.assertEqual(r.status, 200)
                 data = json.loads(r.read())
                 self.assertEqual(data.get("site"), "ok")
-                self.assertIn("api_rate_limit", data.get("security") or {})
+                self.assertIn("ready", data)
+                self.assertFalse(data.get("detail"))
+                self.assertNotIn("security", data)
         finally:
             restored = security.RateLimiter(1000, 60)
             server_mod.sec.API_LIMITER = restored

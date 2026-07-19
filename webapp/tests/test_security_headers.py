@@ -63,11 +63,12 @@ class TestSecurityHeaders(unittest.TestCase):
             body = r.read().decode()
         self.assertEqual(headers.get("x-frame-options"), "DENY")
         self.assertIn("content-security-policy", headers)
-        # Health must not leak absolute host paths
+        # Public health is slim readiness — no host paths, no inventory recon
         data = __import__("json").loads(body)
         self.assertNotIn("videos_dir", data)
-        self.assertIn("videos_count", data)
-        self.assertIn("scenarios_count", data)
+        self.assertNotIn("videos_present", data)
+        self.assertIn("ready", data)
+        self.assertFalse(data.get("detail"))
         self.assertNotIn(str(ROOT), body)
 
 

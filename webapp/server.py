@@ -20,8 +20,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import mimetypes
+import os
 import sys
 import uuid
 import urllib.parse
@@ -55,7 +57,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.15"
+    server_version = "ForkedHistory/1.16"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -321,39 +323,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, list_scenarios())
 
         if path == "/api/health":
-            cfg = PipelineConfig.from_env()
-            return self._json(
-                200,
-                {
-                    "site": "ok",
-                    "version": self.server_version,
-                    "security": {
-                        "fork_rate_limit": sec.FORK_LIMITER.limit,
-                        "fork_rate_window_s": sec.FORK_LIMITER.window_s,
-                        "llm_fork_rate_limit": sec.LLM_FORK_LIMITER.limit,
-                        "video_rate_limit": sec.VIDEO_JOB_LIMITER.limit,
-                        "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
-                        "api_rate_limit": sec.API_LIMITER.limit,
-                        "api_rate_window_s": sec.API_LIMITER.window_s,
-                        "trust_proxy": sec.trust_proxy(),
-                        "max_body_bytes": sec.MAX_BODY_BYTES,
-                        "max_seed_chars": sec.MAX_SEED_CHARS,
-                        "member_enforcement": mem.enforcement_enabled(),
-                    },
-                    "video_queue": QUEUE.stats(),
-                    "pipeline": healthcheck(cfg),
-                    # Public health: names only — never absolute host paths
-                    "videos_present": sorted(
-                        p.name for p in VIDEOS.iterdir() if p.is_dir()
-                    )
-                    if VIDEOS.exists()
-                    else [],
-                    "videos_count": sum(1 for p in VIDEOS.iterdir() if p.is_dir())
-                    if VIDEOS.exists()
-                    else 0,
-                    "scenarios_count": len(list_scenarios()),
-                },
-            )
+            return self._json(200, self._health_payload())
 
         if path == "/api/video/jobs":
             # Privacy: only return jobs owned by this client (never all tenants)
@@ -399,6 +369,79 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
         return self._json(404, {"error": "not found", "path": path})
+
+    def _health_detail_authorized(self) -> bool:
+        """True when caller may receive full operator health (limits, pipeline, inventory).
+
+        Public default is a slim readiness payload. Full detail requires either:
+          - ANOR_HEALTH_DETAIL=1 (local/dev), or
+          - matching X-ANOR-Health-Token header when ANOR_HEALTH_TOKEN is set
+        """
+        if (os.environ.get("ANOR_HEALTH_DETAIL") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        ):
+            return True
+        expected = (os.environ.get("ANOR_HEALTH_TOKEN") or "").strip()
+        if not expected:
+            return False
+        provided = (self.headers.get("X-ANOR-Health-Token") or "").strip()
+        if not provided:
+            return False
+        try:
+            return hmac.compare_digest(provided, expected)
+        except (TypeError, ValueError):
+            return False
+
+    def _health_payload(self) -> dict:
+        """Build health JSON — slim by default to reduce reconnaissance surface."""
+        stats = QUEUE.stats()
+        ffmpeg_ok = bool(stats.get("ffmpeg_ok"))
+        disk_ok = bool(stats.get("disk_ok"))
+        payload: dict = {
+            "site": "ok",
+            "version": self.server_version,
+            "ready": ffmpeg_ok and disk_ok,
+            "video_queue": {
+                "jobs": stats.get("jobs", 0),
+                "by_status": stats.get("by_status", {}),
+                "ffmpeg_ok": ffmpeg_ok,
+                "disk_ok": disk_ok,
+            },
+            "detail": False,
+        }
+        if not self._health_detail_authorized():
+            return payload
+
+        cfg = PipelineConfig.from_env()
+        payload["detail"] = True
+        payload["security"] = {
+            "fork_rate_limit": sec.FORK_LIMITER.limit,
+            "fork_rate_window_s": sec.FORK_LIMITER.window_s,
+            "llm_fork_rate_limit": sec.LLM_FORK_LIMITER.limit,
+            "video_rate_limit": sec.VIDEO_JOB_LIMITER.limit,
+            "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
+            "api_rate_limit": sec.API_LIMITER.limit,
+            "api_rate_window_s": sec.API_LIMITER.window_s,
+            "trust_proxy": sec.trust_proxy(),
+            "max_body_bytes": sec.MAX_BODY_BYTES,
+            "max_seed_chars": sec.MAX_SEED_CHARS,
+            "member_enforcement": mem.enforcement_enabled(),
+        }
+        payload["video_queue"] = stats
+        payload["pipeline"] = healthcheck(cfg)
+        payload["videos_present"] = (
+            sorted(p.name for p in VIDEOS.iterdir() if p.is_dir())
+            if VIDEOS.exists()
+            else []
+        )
+        payload["videos_count"] = (
+            sum(1 for p in VIDEOS.iterdir() if p.is_dir()) if VIDEOS.exists() else 0
+        )
+        payload["scenarios_count"] = len(list_scenarios())
+        return payload
 
     def _require_json_content_type(self) -> sec.ValidationError | None:
         """POST bodies must declare JSON (charset optional)."""
