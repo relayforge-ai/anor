@@ -23,6 +23,7 @@ import argparse
 import json
 import mimetypes
 import sys
+import uuid
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -53,14 +54,27 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.5"
+    server_version = "ForkedHistory/1.6"
 
     def log_message(self, fmt: str, *args) -> None:
-        sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
+        rid = getattr(self, "_request_id", "-")
+        sys.stderr.write(
+            f"[forked-history] rid={rid} {self.address_string()} {fmt % args}\n"
+        )
+
+    def _ensure_request_id(self) -> str:
+        if not getattr(self, "_request_id", None):
+            incoming = (self.headers.get("X-Request-ID") or "").strip()[:64]
+            if incoming and all(c.isalnum() or c in "-_" for c in incoming):
+                self._request_id = incoming
+            else:
+                self._request_id = uuid.uuid4().hex[:16]
+        return self._request_id
 
     def _security_headers(self) -> None:
         for k, v in sec.security_headers().items():
             self.send_header(k, v)
+        self.send_header("X-Request-ID", self._ensure_request_id())
 
     def _send(
         self,
@@ -69,6 +83,7 @@ class Handler(BaseHTTPRequestHandler):
         content_type: str,
         extra: dict | None = None,
     ) -> None:
+        self._ensure_request_id()
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
@@ -213,11 +228,13 @@ class Handler(BaseHTTPRequestHandler):
         self._stream_file(path, support_range=True, cache_mode="media")
 
     def do_OPTIONS(self) -> None:
+        self._ensure_request_id()
         self.send_response(204)
         self._security_headers()
         self.end_headers()
 
     def do_GET(self) -> None:
+        self._ensure_request_id()
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
@@ -298,8 +315,9 @@ class Handler(BaseHTTPRequestHandler):
 
         if path.startswith("/api/video/jobs/"):
             jid = path[len("/api/video/jobs/") :].strip("/")
-            if not jid or "/" in jid or ".." in jid:
-                return self._json(400, {"error": "invalid job id", "code": "bad_job_id"})
+            jerr = sec.validate_job_id(jid)
+            if jerr:
+                return self._validation_error(jerr)
             job = QUEUE.get(jid)
             if not job:
                 return self._json(404, {"error": "job not found", "code": "not_found"})
@@ -342,7 +360,43 @@ class Handler(BaseHTTPRequestHandler):
             return None, sec.ValidationError(400, "body must be a JSON object", "bad_json")
         return data, None
 
+    def do_DELETE(self) -> None:
+        self._ensure_request_id()
+        parsed = urllib.parse.urlparse(self.path)
+        if not parsed.path.startswith("/api/video/jobs/"):
+            return self._json(404, {"error": "not found"})
+        jid = parsed.path[len("/api/video/jobs/") :].strip("/")
+        jerr = sec.validate_job_id(jid)
+        if jerr:
+            return self._validation_error(jerr)
+        # Same membership gate as enqueue — cancel is a Scholar control when enforced
+        denied = mem.require_member(self)
+        if denied:
+            status, body = denied
+            return self._json(status, body)
+        ok, reason, job = QUEUE.cancel(jid)
+        if not ok and reason == "not_found":
+            return self._json(404, {"error": "job not found", "code": "not_found"})
+        if not ok and reason == "already_terminal":
+            return self._json(
+                409,
+                {
+                    "error": "job already finished",
+                    "code": "already_terminal",
+                    "job": job.to_public() if job else None,
+                },
+            )
+        return self._json(
+            200,
+            {
+                "ok": True,
+                "reason": reason,
+                "job": job.to_public() if job else None,
+            },
+        )
+
     def do_POST(self) -> None:
+        self._ensure_request_id()
         parsed = urllib.parse.urlparse(self.path)
 
         if parsed.path == "/api/member/demo":

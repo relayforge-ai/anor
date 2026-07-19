@@ -28,6 +28,8 @@ from typing import Deque, Optional
 _SAFE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
 # Choice ids: historical, march, recon, etc.
 _SAFE_CHOICE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
+# Video job ids are 16 hex chars from uuid4().hex[:16]
+_SAFE_JOB_ID = re.compile(r"^[a-f0-9]{16}$")
 # Strip control chars except newline/tab from free text seeds
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
@@ -124,6 +126,14 @@ def validate_choice_id(value: object) -> Optional[ValidationError]:
         return ValidationError(400, "choice_id required", "missing_choice_id")
     if not _SAFE_CHOICE.match(value):
         return ValidationError(400, "invalid choice_id format", "bad_choice_id")
+    return None
+
+
+def validate_job_id(value: object) -> Optional[ValidationError]:
+    if not isinstance(value, str) or not value:
+        return ValidationError(400, "job id required", "missing_job_id")
+    if not _SAFE_JOB_ID.match(value):
+        return ValidationError(400, "invalid job id format", "bad_job_id")
     return None
 
 
@@ -244,6 +254,7 @@ def security_headers() -> dict[str, str]:
         "Cross-Origin-Resource-Policy": "same-site",
         "Content-Security-Policy": csp,
         "Access-Control-Allow-Origin": cors,
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-ANOR-Member, Authorization, X-Request-ID",
+        "Access-Control-Expose-Headers": "X-Request-ID, ETag, Retry-After",
     }

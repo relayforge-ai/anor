@@ -316,3 +316,31 @@ CSS ETag + 304 verified; full regression green
 
 ### RESULT
 Faster repeat loads for CSS/JS; clearer watch-page feedback; lighter job polling under long renders.
+
+---
+
+## Iteration 11 — 2026-07-18
+
+### OBSERVE
+Video jobs could not be cancelled once queued/running (GPU/time waste). Job IDs accepted any path-like string. No request correlation IDs in responses/logs.
+
+### PLAN
+**One high-impact change:** cooperative job cancel API + strict job IDs + X-Request-ID tracing.
+
+Expected outcome: DELETE cancels queued immediately and running at next progress tick; bad job ids 400; every response includes X-Request-ID.
+
+### EXECUTE
+- `QUEUE.cancel()` + `JobCancelled` cooperative stop in progress callback
+- `DELETE /api/video/jobs/{id}` (membership-gated when enforced)
+- `validate_job_id` (16 hex)
+- `X-Request-ID` generation/echo + log field
+- Studio Cancel button while job active
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_video_jobs ... → OK
+```
+- Cancel API + strict job ids + X-Request-ID covered
+
+### RESULT
+Operators can stop wasteful renders; requests are correlatable in logs via rid=.

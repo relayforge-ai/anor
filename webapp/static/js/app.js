@@ -704,19 +704,48 @@
       let done = false;
       let pollMs = 500;
       const pollMax = 4000;
+      const bindCancel = () => {
+        const cbtn = $("#btn-cancel-job");
+        if (!cbtn) return;
+        cbtn.onclick = async () => {
+          cbtn.disabled = true;
+          try {
+            const cr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId), {
+              method: "DELETE",
+              headers: FHFreemium.authHeaders(),
+            });
+            const cd = await cr.json().catch(() => ({}));
+            if (!cr.ok && cr.status !== 409) {
+              toast(cd.error || "Cancel failed");
+              cbtn.disabled = false;
+              return;
+            }
+            toast("Cancel requested");
+          } catch (e) {
+            toast("Cancel failed");
+            cbtn.disabled = false;
+          }
+        };
+      };
       while (!done) {
         const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId));
         const st = await pr.json();
         if (!pr.ok) throw Object.assign(new Error(st.error || "Poll failed"), { code: st.code });
 
         const idx = stageIndex(st.stage);
-        $("#fork-result").innerHTML = renderSimProgress({
-          stages,
-          activeIndex: st.status === "failed" ? idx : idx,
-          pct: st.pct || 0,
-          label: st.message || st.status,
-          indeterminate: st.status === "queued",
-        });
+        const cancelBar =
+          st.status === "queued" || st.status === "running"
+            ? `<div class="row" style="margin-top:0.8rem"><button type="button" class="btn btn-ghost btn-sm" id="btn-cancel-job">Cancel render</button></div>`
+            : "";
+        $("#fork-result").innerHTML =
+          renderSimProgress({
+            stages,
+            activeIndex: st.status === "failed" ? idx : idx,
+            pct: st.pct || 0,
+            label: st.message || st.status,
+            indeterminate: st.status === "queued",
+          }) + cancelBar;
+        bindCancel();
 
         if (st.status === "completed") {
           done = true;
@@ -739,6 +768,17 @@
               }
             </div>`;
           toast("Video ready");
+        } else if (st.status === "cancelled") {
+          done = true;
+          $("#fork-result").innerHTML =
+            renderSimProgress({
+              stages,
+              activeIndex: idx,
+              pct: st.pct || 0,
+              label: "Cancelled",
+              indeterminate: false,
+            }) + `<p class="note" style="margin-top:0.8rem">Job <code>${escapeHtml(jobId)}</code> was cancelled.</p>`;
+          toast("Render cancelled");
         } else if (st.status === "failed") {
           done = true;
           $("#fork-result").innerHTML =

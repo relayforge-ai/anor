@@ -99,8 +99,50 @@ class TestVideoJobsAPI(unittest.TestCase):
     def test_health_includes_queue(self):
         with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:
             data = json.loads(r.read())
+            rid = r.headers.get("X-Request-ID")
         self.assertIn("video_queue", data)
         self.assertIn("max_concurrent", data["video_queue"])
+        self.assertTrue(rid)
+
+    def test_bad_job_id_rejected(self):
+        try:
+            urllib.request.urlopen(self.base + "/api/video/jobs/../x", timeout=5)
+            self.fail("expected error")
+        except urllib.error.HTTPError as e:
+            self.assertIn(e.code, (400, 404))
+
+    def test_cancel_queued_or_running_job(self):
+        status, job = self.post_job(
+            {"scenario_id": "ELO-003", "choice_id": "historical", "use_llm": False}
+        )
+        self.assertEqual(status, 202, job)
+        jid = job["id"]
+        req = urllib.request.Request(
+            self.base + "/api/video/jobs/" + jid,
+            method="DELETE",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as r:
+                body = json.loads(r.read())
+                code = r.status
+        except urllib.error.HTTPError as e:
+            # Already finished is acceptable if mock render is very fast
+            code = e.code
+            body = json.loads(e.read().decode() or "{}")
+        self.assertIn(code, (200, 409), body)
+        if code == 200:
+            self.assertTrue(body.get("ok"))
+            # Poll until terminal
+            deadline = time.time() + 30
+            while time.time() < deadline:
+                with urllib.request.urlopen(
+                    self.base + "/api/video/jobs/" + jid, timeout=10
+                ) as r:
+                    st = json.loads(r.read())
+                if st["status"] in ("cancelled", "completed", "failed"):
+                    break
+                time.sleep(0.2)
+            self.assertIn(st["status"], ("cancelled", "completed", "failed"))
 
 
 if __name__ == "__main__":

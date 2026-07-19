@@ -55,6 +55,7 @@ class TestSecurityHeaders(unittest.TestCase):
         self.assertIn("content-security-policy", headers)
         self.assertIn("default-src 'self'", headers["content-security-policy"])
         self.assertEqual(headers.get("referrer-policy"), "strict-origin-when-cross-origin")
+        self.assertTrue(headers.get("x-request-id"))
 
     def test_json_api_also_hardened(self):
         with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:

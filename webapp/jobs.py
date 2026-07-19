@@ -33,13 +33,17 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+class JobCancelled(Exception):
+    """Raised cooperatively when a running render is cancelled."""
+
+
 @dataclass
 class VideoJob:
     id: str
     scenario_id: str
     choice_id: str
     use_llm: bool
-    status: str = "queued"  # queued | running | completed | failed
+    status: str = "queued"  # queued | running | completed | failed | cancelled
     stage: str = "queued"
     pct: float = 0.0
     message: str = "Queued"
@@ -49,6 +53,7 @@ class VideoJob:
     updated_at: float = field(default_factory=time.time)
     started_at: Optional[float] = None
     finished_at: Optional[float] = None
+    cancel_requested: bool = False
 
     def to_public(self) -> dict[str, Any]:
         d = {
@@ -65,6 +70,7 @@ class VideoJob:
             "updated_at": self.updated_at,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
+            "cancel_requested": self.cancel_requested,
         }
         if self.result:
             d["result"] = self.result
@@ -145,6 +151,36 @@ class VideoJobQueue:
             jobs = sorted(self._jobs.values(), key=lambda j: j.created_at, reverse=True)
             return jobs[:limit]
 
+    def is_cancel_requested(self, job_id: str) -> bool:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            return bool(job and job.cancel_requested)
+
+    def cancel(self, job_id: str) -> tuple[bool, str, Optional[VideoJob]]:
+        """Request cancellation.
+
+        Returns (ok, reason, job).
+        - queued jobs flip to cancelled immediately
+        - running jobs set cancel_requested; worker exits at next progress tick
+        - terminal jobs return ok=False
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job:
+                return False, "not_found", None
+            if job.status in ("completed", "failed", "cancelled"):
+                return False, "already_terminal", job
+            job.cancel_requested = True
+            job.updated_at = time.time()
+            if job.status == "queued":
+                job.status = "cancelled"
+                job.stage = "cancelled"
+                job.message = "Cancelled before start"
+                job.finished_at = time.time()
+            else:
+                job.message = "Cancel requested — stopping at next segment…"
+            return True, "cancel_requested", job
+
     def _update(
         self,
         job_id: str,
@@ -179,6 +215,13 @@ class VideoJobQueue:
             job = self._jobs.get(job_id)
             if not job:
                 return
+            if job.cancel_requested or job.status == "cancelled":
+                job.status = "cancelled"
+                job.stage = "cancelled"
+                job.message = "Cancelled before start"
+                job.finished_at = time.time()
+                job.updated_at = time.time()
+                return
             scenario_id = job.scenario_id
             choice_id = job.choice_id
             use_llm = job.use_llm
@@ -190,6 +233,8 @@ class VideoJobQueue:
             job.updated_at = time.time()
 
         def on_progress(stage: str, pct: float, message: str) -> None:
+            if self.is_cancel_requested(job_id):
+                raise JobCancelled("cancelled by user")
             self._update(job_id, stage=stage, pct=pct, message=message, status="running")
 
         try:
@@ -207,6 +252,10 @@ class VideoJobQueue:
                 use_llm=use_llm,
                 on_progress=on_progress,
             )
+            # Race: cancel arrived after last progress tick
+            if self.is_cancel_requested(job_id):
+                raise JobCancelled("cancelled by user")
+
             # Public-safe result — never expose absolute filesystem paths to clients
             rel_mp4 = f"{scenario_id}-{choice_id}/{result.out_mp4.name}"
             payload = {
@@ -217,21 +266,43 @@ class VideoJobQueue:
             with self._lock:
                 job = self._jobs.get(job_id)
                 if job:
-                    job.status = "completed"
-                    job.stage = "done"
-                    job.pct = 100.0
-                    job.message = "Render complete"
-                    job.result = payload
+                    if job.cancel_requested:
+                        job.status = "cancelled"
+                        job.stage = "cancelled"
+                        job.message = "Cancelled"
+                        job.finished_at = time.time()
+                        job.updated_at = time.time()
+                    else:
+                        job.status = "completed"
+                        job.stage = "done"
+                        job.pct = 100.0
+                        job.message = "Render complete"
+                        job.result = payload
+                        job.finished_at = time.time()
+                        job.updated_at = time.time()
+        except JobCancelled:
+            with self._lock:
+                job = self._jobs.get(job_id)
+                if job:
+                    job.status = "cancelled"
+                    job.stage = "cancelled"
+                    job.message = "Cancelled"
+                    job.cancel_requested = True
                     job.finished_at = time.time()
                     job.updated_at = time.time()
         except Exception as e:
             with self._lock:
                 job = self._jobs.get(job_id)
                 if job:
-                    job.status = "failed"
-                    job.stage = "error"
-                    job.message = "Render failed"
-                    job.error = str(e)[:400]
+                    if job.cancel_requested:
+                        job.status = "cancelled"
+                        job.stage = "cancelled"
+                        job.message = "Cancelled"
+                    else:
+                        job.status = "failed"
+                        job.stage = "error"
+                        job.message = "Render failed"
+                        job.error = str(e)[:400]
                     job.finished_at = time.time()
                     job.updated_at = time.time()
 
