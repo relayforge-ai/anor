@@ -1281,3 +1281,31 @@ python3 -m unittest webapp.tests.test_catalog_cache -v
 
 ### RESULT
 New renders show as available on the next catalog fetch without waiting out the cache TTL.
+
+---
+
+## Iteration 44 — 2026-07-19
+
+### OBSERVE
+In-process rate limiters retained a dict entry per client key forever — under many distinct peers (or header floods with trust-proxy) memory could grow without bound on a long-lived server.
+
+### PLAN
+**One high-impact change:** purge stale limiter keys and cap map size (`ANOR_RATE_LIMIT_MAX_KEYS`, default 10_000).
+
+Expected outcome: empty/expired keys dropped periodically; overflow evicts coldest keys.
+
+### EXECUTE
+- `RateLimiter._purge_stale_locked` / `_enforce_max_keys_locked`
+- `key_count()` for tests
+- Env documented in `.env.example`
+- Tests: stale purge after window; max_keys cap
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security.TestApiRateHelpers \
+  webapp.tests.test_security.TestForkEndpointSecurity.test_rate_limit_trips -v
+→ Ran 5 tests — OK
+```
+
+### RESULT
+Rate-limit maps stay bounded for long-running Forked History processes.

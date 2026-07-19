@@ -56,18 +56,69 @@ class ValidationError:
 
 
 class RateLimiter:
-    """Sliding-window rate limiter keyed by client identity."""
+    """Sliding-window rate limiter keyed by client identity.
 
-    def __init__(self, limit: int, window_s: float):
+    Stale keys are purged periodically and when the map exceeds ``max_keys`` so
+    a long-lived process cannot grow unbounded under many distinct client keys
+    (NAT churn, probes, or misconfigured trusted-proxy header floods).
+    """
+
+    def __init__(
+        self,
+        limit: int,
+        window_s: float,
+        *,
+        max_keys: int | None = None,
+    ):
         self.limit = limit
         self.window_s = window_s
+        # Default cap: generous for real users, finite under attack
+        self.max_keys = (
+            max_keys
+            if max_keys is not None
+            else _env_int("ANOR_RATE_LIMIT_MAX_KEYS", 10_000)
+        )
         self._hits: dict[str, Deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._ops = 0
+
+    def _purge_stale_locked(self, now: float) -> None:
+        """Drop keys with no hits inside the active window."""
+        cutoff = now - self.window_s
+        dead = [
+            k
+            for k, q in self._hits.items()
+            if not q or q[-1] < cutoff
+        ]
+        for k in dead:
+            del self._hits[k]
+
+    def _enforce_max_keys_locked(self, now: float) -> None:
+        """If still over max_keys after stale purge, drop oldest-by-last-hit keys."""
+        if len(self._hits) <= self.max_keys:
+            return
+        self._purge_stale_locked(now)
+        if len(self._hits) <= self.max_keys:
+            return
+        # Sort by most recent hit ascending (evict coldest first)
+        ranked = sorted(
+            self._hits.items(),
+            key=lambda kv: kv[1][-1] if kv[1] else 0.0,
+        )
+        overflow = len(self._hits) - self.max_keys
+        for k, _ in ranked[:overflow]:
+            del self._hits[k]
 
     def allow(self, key: str) -> tuple[bool, int, int]:
         """Return (allowed, remaining, retry_after_seconds)."""
         now = time.monotonic()
         with self._lock:
+            self._ops += 1
+            # Periodic maintenance (every 64 calls)
+            if self._ops % 64 == 0:
+                self._purge_stale_locked(now)
+                self._enforce_max_keys_locked(now)
+
             q = self._hits[key]
             cutoff = now - self.window_s
             while q and q[0] < cutoff:
@@ -76,12 +127,23 @@ class RateLimiter:
                 retry = max(1, int(self.window_s - (now - q[0])) + 1)
                 return False, 0, retry
             q.append(now)
-            remaining = max(0, self.limit - len(q))
+            # New key may push over max — enforce after insert
+            if len(self._hits) > self.max_keys:
+                self._enforce_max_keys_locked(now)
+                # If we were just evicted (extreme race), re-create
+                if key not in self._hits:
+                    self._hits[key].append(now)
+            remaining = max(0, self.limit - len(self._hits[key]))
             return True, remaining, 0
+
+    def key_count(self) -> int:
+        with self._lock:
+            return len(self._hits)
 
     def reset(self) -> None:
         with self._lock:
             self._hits.clear()
+            self._ops = 0
 
 
 # Module-level limiters (shared across handler instances in one process)

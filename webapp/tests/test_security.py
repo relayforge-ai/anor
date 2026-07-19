@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -237,6 +238,25 @@ class TestApiRateHelpers(unittest.TestCase):
             self.assertIsNone(security.check_api_rate("t1", "/api/health"))
         finally:
             security.API_LIMITER = prev
+
+    def test_rate_limiter_purges_stale_keys(self):
+        lim = security.RateLimiter(5, window_s=0.05, max_keys=100)
+        for i in range(20):
+            lim.allow(f"client-{i}")
+        self.assertEqual(lim.key_count(), 20)
+        time.sleep(0.08)
+        # Force periodic purge path by many ops
+        for _ in range(64):
+            lim.allow("keep-alive")
+        # Old clients should be gone; keep-alive remains
+        self.assertLess(lim.key_count(), 20)
+        self.assertEqual(lim.key_count(), 1)
+
+    def test_rate_limiter_enforces_max_keys(self):
+        lim = security.RateLimiter(100, window_s=60, max_keys=10)
+        for i in range(25):
+            lim.allow(f"flood-{i}")
+        self.assertLessEqual(lim.key_count(), 10)
 
 
 class _FakeHandler:
