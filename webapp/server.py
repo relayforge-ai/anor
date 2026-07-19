@@ -26,10 +26,13 @@ import json
 import mimetypes
 import os
 import sys
+import threading
+import time
 import uuid
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 WEBAPP = Path(__file__).resolve().parent
@@ -52,13 +55,123 @@ from webapp.http_range import parse_byte_range  # noqa: E402
 
 _CHUNK = 64 * 1024  # 64 KiB streaming chunks for media
 
+# Built catalog (with available flags) — avoid re-statting every video on each GET
+_catalog_cache_lock = threading.Lock()
+_catalog_cache: Optional[dict[str, Any]] = None  # payload, sig, ts
+
 
 def _read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return default
+
+
+def _catalog_cache_ttl_s() -> int:
+    """Seconds to reuse a built catalog body. 0 disables (always rebuild)."""
+    raw = os.environ.get("ANOR_CATALOG_CACHE_S", "").strip()
+    if raw == "0":
+        return 0
+    return _env_int("ANOR_CATALOG_CACHE_S", 15)
+
+
+def _videos_fingerprint() -> str:
+    """Cheap signature of outputs/videos so new renders invalidate catalog cache."""
+    if not VIDEOS.exists():
+        return "missing"
+    try:
+        st = VIDEOS.stat()
+        # Include dir names + nested file mtimes for top-level packs only (cheap)
+        parts: list[str] = [f"root:{getattr(st, 'st_mtime_ns', int(st.st_mtime * 1e9))}"]
+        for child in sorted(VIDEOS.iterdir(), key=lambda p: p.name):
+            if not child.is_dir():
+                continue
+            try:
+                cst = child.stat()
+                # Prefer mp4 mtime when present (availability signal)
+                mp4s = list(child.glob("*.mp4"))
+                if mp4s:
+                    mt = max(
+                        getattr(m.stat(), "st_mtime_ns", int(m.stat().st_mtime * 1e9))
+                        for m in mp4s
+                    )
+                    parts.append(f"{child.name}:{mt}")
+                else:
+                    parts.append(
+                        f"{child.name}:dir:{getattr(cst, 'st_mtime_ns', int(cst.st_mtime * 1e9))}"
+                    )
+            except OSError:
+                parts.append(f"{child.name}:err")
+        return "|".join(parts)
+    except OSError:
+        return "err"
+
+
+def _catalog_file_mtime_ns() -> int:
+    try:
+        st = CATALOG.stat()
+        return getattr(st, "st_mtime_ns", int(st.st_mtime * 1e9))
+    except OSError:
+        return 0
+
+
+def clear_catalog_cache() -> None:
+    """Drop built-catalog cache (tests / after operators add media)."""
+    global _catalog_cache
+    with _catalog_cache_lock:
+        _catalog_cache = None
+
+
+def build_catalog_payload() -> dict[str, Any]:
+    """Catalog JSON with per-video ``available`` flags (filesystem checked).
+
+    Cached briefly so repeated boot/library hits do not re-stat every media file.
+    Invalidates when catalog.json mtime or video pack fingerprint changes.
+    """
+    global _catalog_cache
+    ttl = _catalog_cache_ttl_s()
+    sig = f"{_catalog_file_mtime_ns()}:{_videos_fingerprint()}"
+    now = time.monotonic()
+    if ttl > 0:
+        with _catalog_cache_lock:
+            if _catalog_cache is not None:
+                if (
+                    _catalog_cache.get("sig") == sig
+                    and now - float(_catalog_cache.get("ts", 0)) < ttl
+                ):
+                    return _catalog_cache["payload"]
+
+    cat = _read_json(CATALOG)
+    safe_videos = []
+    for v in cat.get("videos", []):
+        if not isinstance(v, dict):
+            continue
+        rel = v.get("file")
+        target = safe_join(VIDEOS, rel) if isinstance(rel, str) else None
+        entry = dict(v)
+        entry["available"] = bool(target and target.is_file())
+        if target is None:
+            entry.pop("file", None)
+            entry["available"] = False
+        safe_videos.append(entry)
+    cat = dict(cat)
+    cat["videos"] = safe_videos
+
+    if ttl > 0:
+        with _catalog_cache_lock:
+            _catalog_cache = {"payload": cat, "sig": sig, "ts": now}
+    return cat
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.19"
+    server_version = "ForkedHistory/1.20"
     # Do not advertise Python version (default is "BaseHTTP/x.y Python/a.b")
     sys_version = ""
 
@@ -355,23 +468,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/catalog":
-            cat = _read_json(CATALOG)
-            safe_videos = []
-            for v in cat.get("videos", []):
-                if not isinstance(v, dict):
-                    continue
-                rel = v.get("file")
-                target = safe_join(VIDEOS, rel) if isinstance(rel, str) else None
-                entry = dict(v)
-                entry["available"] = bool(target and target.is_file())
-                # Never echo a path that failed safe_join
-                if target is None:
-                    entry.pop("file", None)
-                    entry["available"] = False
-                safe_videos.append(entry)
-            cat = dict(cat)
-            cat["videos"] = safe_videos
-            return self._json_revalidatable(cat, max_age=30)
+            return self._json_revalidatable(build_catalog_payload(), max_age=30)
 
         if path == "/api/scenarios":
             return self._json_revalidatable(list_scenarios(), max_age=60)

@@ -1226,3 +1226,32 @@ python3 -m unittest webapp.tests.test_render_deps \
 
 ### RESULT
 Health/queue stats no longer spawn ffmpeg on every request while renders still preflight live.
+
+---
+
+## Iteration 42 — 2026-07-19
+
+### OBSERVE
+`/api/catalog` re-read `catalog.json` and `stat` every video file on each request to set `available` — wasteful under boot + library reloads even with client ETags.
+
+### PLAN
+**One high-impact change:** short-TTL cache of the built catalog payload, invalidated when catalog.json or video pack fingerprint changes.
+
+Expected outcome: second build within TTL skips re-stat; new renders still invalidate via fingerprint.
+
+### EXECUTE
+- `build_catalog_payload()` + `clear_catalog_cache()`
+- Env `ANOR_CATALOG_CACHE_S` (default 15, 0 = off)
+- Fingerprint: catalog mtime + pack dir / mp4 mtimes
+- Tests: cache hit skips is_file; disabled rebuilds
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_catalog_cache \
+  webapp.tests.test_webapp.TestWebapp.test_catalog \
+  webapp.tests.test_webapp.TestWebapp.test_catalog_etag_304 -v
+→ Ran 5 tests — OK
+```
+
+### RESULT
+Catalog GETs reuse a built payload briefly without re-statting media on every hit.
