@@ -19,7 +19,7 @@ Suggested channel names (for Ryan to claim):
 
 Brand line: *Real decision points. Labeled speculation. Receipts on screen.*
 
-## Batch 001 — three pilots
+## Batch 001 — pilots
 
 | File | Scenario | Cut | Platforms |
 |------|----------|-----|-----------|
@@ -29,6 +29,16 @@ Brand line: *Real decision points. Labeled speculation. Receipts on screen.*
 | `batch-001/ELO-013-launch.md` | Arkhipov | nightmare branch (labeled) | YT only (sensitive) |
 | `batch-001/ELO-001-historical.md` | Barbarossa night | historical | YT + TT |
 
+## Batch 002 — EXCOMM (ELO-007)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-002/ELO-007-historical.md` | EXCOMM quarantine | historical | YT + TT |
+| `batch-002/ELO-007-surgical_strike.md` | airstrike first | simulated | YT + TT |
+| `batch-002/ELO-007-invasion.md` | full invasion | simulated · sensitive | YT only |
+
+See `batch-002/README.md` and `batch-002/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -36,6 +46,8 @@ export ANOR_MOCK_MEDIA=1   # or set LLM_URL IMAGE_URL TTS_URL
 python -m pipeline.cli video --scenario ELO-003 --choice historical
 python -m pipeline.cli video --scenario ELO-003 --choice march
 python -m pipeline.cli video --scenario ELO-013 --choice historical
+python -m pipeline.cli video --scenario ELO-007 --choice historical
+python -m pipeline.cli video --scenario ELO-007 --choice surgical_strike
 ```
 
 ## Human gate checklist

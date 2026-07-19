@@ -1561,3 +1561,30 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_paths_and_
 
 ### RESULT
 Forked History link previews and route titles carry brand + speculation-aware descriptions without hardcoding a production host.
+
+---
+
+## Iteration 54 — 2026-07-19
+
+### OBSERVE
+ELO-007 public pack shipped, but social pipeline only had batch-001 (Cannae / Arkhipov / Barbarossa). No captions or Postiz skeleton for EXCOMM cuts; human-gate drafts lag content.
+
+### PLAN
+**One high-impact change:** batch-002 DRAFTS for ELO-007 (historical + strike + invasion) with Postiz draft payload and hygiene tests.
+
+Expected outcome: Ryan-reviewable captions; `status: draft` + placeholder integrations; invasion YT-only; 🧪 labels on simulations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-002/*` (3 cut MDs, `postiz-drafts.json`, README)
+- Parent `content/drafts/README.md` batch table
+- Tests: `scripts/tests/test_social_drafts.py`
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 12 tests — OK
+```
+
+### RESULT
+EXCOMM social creative is staged as drafts only, paired with batch-001 Arkhipov for a coherent Missile Crisis arc.

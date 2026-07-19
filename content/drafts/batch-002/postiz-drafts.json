@@ -1,0 +1,91 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-002",
+  "created": "2026-07-19",
+  "theme": "Cuban Missile Crisis — EXCOMM (ELO-007), pairs with batch-001 Arkhipov (ELO-013)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review ELO-007 invasion draft before any public surface (YT only)",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-007-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1962. Missiles in Cuba. Bombs or a blockade?\n📗 Documented: quarantine first.\nNot vibes — a presidential clock.\n#history #coldwar #kennedy #fyp",
+      "media_local": "outputs/videos/ELO-007-historical/ELO-007-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-007-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "October 1962: Kennedy chooses quarantine, not airstrike",
+      "caption": "U-2 photos make the missiles real. EXCOMM fills the Cabinet Room.\n\n📗 Documented baseline: naval quarantine first — pressure without an irreversible airstrike on day one.\n\nCompanion near-miss under the sea: Arkhipov on B-59 (ELO-013).\nSeries: ANOR Fork / ELOSTIRION\n\n#cubanmissilecrisis #kennedy #coldwar #history",
+      "media_local": "outputs/videos/ELO-007-historical/ELO-007-historical.mp4",
+      "settings": {
+        "title": "October 1962: Kennedy chooses quarantine, not airstrike",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "coldwar", "label": "coldwar"},
+          {"value": "cubanmissilecrisis", "label": "cubanmissilecrisis"}
+        ]
+      }
+    },
+    {
+      "id": "elo-007-surgical-strike-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if EXCOMM says STRIKE first?\nWe label this 🧪 SIMULATED. History chose quarantine.\nIncomplete intel ≠ clean win.\n#althistory #historytok #coldwar",
+      "media_local": "outputs/videos/ELO-007-surgical_strike/ELO-007-surgical_strike.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-007-surgical-strike-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if the U.S. struck the Cuba missile sites first?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: quarantine was the opening move.\n🧪 Strike path is labeled simulation: incomplete coverage, Soviet dead, escalation risk.\n\n#althistory #cubanmissilecrisis #speculationlabeled",
+      "media_local": "outputs/videos/ELO-007-surgical_strike/ELO-007-surgical_strike.mp4",
+      "settings": {
+        "title": "SPECULATION: What if the U.S. struck the Cuba missile sites first?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "coldwar", "label": "coldwar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-007-invasion-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: Full invasion of Cuba in October 1962",
+      "caption": "⚠️ SIMULATED. Historical opening move = quarantine.\n\nNo glamorous invasion montage. Largest conventional bet of the three EXCOMM branches.\n\n🧪 Simulated · 📗 baseline = quarantine first\nRequires pinned comment with historical outcome.\n\n#althistory #cubanmissilecrisis",
+      "media_local": "outputs/videos/ELO-007-invasion/ELO-007-invasion.mp4",
+      "settings": {
+        "title": "SPECULATION: Full invasion of Cuba in October 1962",
+        "type": "public"
+      },
+      "sensitivity": "high",
+      "tiktok": false
+    }
+  ]
+}
