@@ -683,7 +683,7 @@ class Handler(BaseHTTPRequestHandler):
         # Fail closed before queueing if host cannot render (ffmpeg / disk)
         from webapp.jobs import check_render_dependencies
 
-        ok, dep_msg = check_render_dependencies()
+        ok, dep_msg = check_render_dependencies(force=True)
         if not ok:
             code = (
                 "insufficient_disk"

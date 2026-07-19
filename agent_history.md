@@ -1196,3 +1196,33 @@ python3 -m unittest webapp.tests.test_security_headers -v
 
 ### RESULT
 Production can enable HSTS without code changes; unknown endpoints reveal less.
+
+---
+
+## Iteration 41 — 2026-07-19
+
+### OBSERVE
+`QUEUE.stats()` / health called `ffmpeg -version` on every probe — expensive subprocess spam under frequent health checks and job list stats.
+
+### PLAN
+**One high-impact change:** short-TTL cache for ffmpeg probe (default 30s); live `force=True` at enqueue/worker.
+
+Expected outcome: repeated stats hit cache; enqueue still fail-closed with a fresh probe.
+
+### EXECUTE
+- `check_ffmpeg(force=...)` + `clear_ffmpeg_cache()`
+- Env `ANOR_FFMPEG_CHECK_CACHE_S` (0 disables)
+- Enqueue + worker use `force=True`
+- Tests: cache hit count + missing ffmpeg still detected
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_render_deps \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_health_includes_queue -v
+→ Ran 8 tests — OK
+```
+- Cached path: one subprocess.run for three check_ffmpeg calls
+- force=True runs each time
+
+### RESULT
+Health/queue stats no longer spawn ffmpeg on every request while renders still preflight live.

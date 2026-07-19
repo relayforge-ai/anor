@@ -9,6 +9,7 @@ Env:
   ANOR_VIDEO_JOB_TTL_S       (default 3600) — finished jobs retained this long
   ANOR_VIDEO_JOB_TIMEOUT_S   (default 600) — max wall time for a running render
   ANOR_MIN_FREE_DISK_MB      (default 512) — refuse enqueue when free space under outputs/ is below this (0 = skip check)
+  ANOR_FFMPEG_CHECK_CACHE_S  (default 30) — cache ffmpeg -version results for stats/health (0 = no cache)
 """
 
 from __future__ import annotations
@@ -88,20 +89,59 @@ def sanitize_public_error(message: object, *, limit: int = 400) -> str:
     return text
 
 
-def check_ffmpeg() -> tuple[bool, str]:
-    """Fail fast if ffmpeg is missing or not runnable."""
+# ffmpeg -version is relatively expensive; stats()/health called often.
+_ffmpeg_cache_lock = threading.Lock()
+_ffmpeg_cache: Optional[tuple[float, bool, str]] = None  # (monotonic_ts, ok, msg)
+
+
+def clear_ffmpeg_cache() -> None:
+    """Drop cached ffmpeg probe (tests / after install changes)."""
+    global _ffmpeg_cache
+    with _ffmpeg_cache_lock:
+        _ffmpeg_cache = None
+
+
+def _ffmpeg_cache_ttl_s() -> int:
+    raw = os.environ.get("ANOR_FFMPEG_CHECK_CACHE_S", "").strip()
+    if raw == "0":
+        return 0
+    return _env_int("ANOR_FFMPEG_CHECK_CACHE_S", 30)
+
+
+def check_ffmpeg(*, force: bool = False) -> tuple[bool, str]:
+    """Fail fast if ffmpeg is missing or not runnable.
+
+    Results are cached briefly (ANOR_FFMPEG_CHECK_CACHE_S, default 30s) so
+    frequent health/queue stats probes do not spawn ffmpeg on every request.
+    Use ``force=True`` at enqueue/worker start for a live check.
+    """
+    global _ffmpeg_cache
+    ttl = _ffmpeg_cache_ttl_s()
+    now = time.monotonic()
+    if not force and ttl > 0:
+        with _ffmpeg_cache_lock:
+            if _ffmpeg_cache is not None:
+                ts, ok, msg = _ffmpeg_cache
+                if now - ts < ttl:
+                    return ok, msg
+
     if not shutil.which("ffmpeg"):
-        return False, "ffmpeg not found on PATH — install ffmpeg to render videos"
-    try:
-        subprocess.run(
-            ["ffmpeg", "-version"],
-            check=True,
-            capture_output=True,
-            timeout=5,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        return False, f"ffmpeg not runnable: {e}"
-    return True, "ok"
+        ok, msg = False, "ffmpeg not found on PATH — install ffmpeg to render videos"
+    else:
+        try:
+            subprocess.run(
+                ["ffmpeg", "-version"],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+            ok, msg = True, "ok"
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+            ok, msg = False, f"ffmpeg not runnable: {e}"
+
+    with _ffmpeg_cache_lock:
+        _ffmpeg_cache = (now, ok, msg)
+    return ok, msg
 
 
 def check_disk_space(min_free_mb: int | None = None) -> tuple[bool, str, int]:
@@ -140,9 +180,12 @@ def check_disk_space(min_free_mb: int | None = None) -> tuple[bool, str, int]:
     return True, "ok", free_mb
 
 
-def check_render_dependencies() -> tuple[bool, str]:
-    """Fail fast if the host cannot run the video pipeline (ffmpeg + free disk)."""
-    ok, msg = check_ffmpeg()
+def check_render_dependencies(*, force: bool = False) -> tuple[bool, str]:
+    """Fail fast if the host cannot run the video pipeline (ffmpeg + free disk).
+
+    ``force=True`` bypasses the ffmpeg probe cache (use at enqueue / worker start).
+    """
+    ok, msg = check_ffmpeg(force=force)
     if not ok:
         return False, msg
     ok, msg, _free = check_disk_space()
@@ -566,7 +609,7 @@ class VideoJobQueue:
         path_lock: Optional[threading.Lock] = None
         try:
             # Fail fast before burning LLM/image cycles
-            ok, dep_msg = check_render_dependencies()
+            ok, dep_msg = check_render_dependencies(force=True)
             if not ok:
                 raise RuntimeError(dep_msg)
 
