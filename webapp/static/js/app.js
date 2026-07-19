@@ -400,11 +400,14 @@
 
     const player = $("#player");
     const gate = $("#player-gate");
+    const studioCta = $("#watch-studio");
+    studioCta?.classList.remove("pulse-cta");
     player.pause();
     player.removeAttribute("src");
     player.onloadedmetadata = null;
     player.oncanplay = null;
     player.onerror = null;
+    player.onended = null;
     player.load();
     gate.classList.remove("open");
 
@@ -428,6 +431,34 @@
     player.oncanplay = () => setPlayerLoading(false);
     player.onerror = () => {
       setPlayerLoading(true, "Could not load this episode. Try Studio → Queue video render.");
+    };
+    // After a full playthrough, nudge viewers into the decision studio
+    player.onended = () => {
+      if (access2.mode === "preview") {
+        // Preview ceiling usually fires first; still open paywall if they reach true end
+        gate.classList.add("open");
+        return;
+      }
+      toast("Episode complete — open Studio to fork this decision.");
+      const cta = $("#watch-studio");
+      if (cta) {
+        cta.classList.add("pulse-cta");
+        try {
+          cta.focus({ preventScroll: true });
+        } catch (_) {
+          cta.focus();
+        }
+      }
+      const quota = $("#watch-quota");
+      if (quota && !quota.querySelector(".watch-end-note")) {
+        const note = document.createElement("p");
+        note.className = "note watch-end-note";
+        note.setAttribute("role", "status");
+        note.style.marginTop = "0.75rem";
+        note.textContent =
+          "You finished this cut. Pull a different thread in Studio — speculation stays labeled.";
+        quota.appendChild(note);
+      }
     };
 
     player.onloadedmetadata = () => {

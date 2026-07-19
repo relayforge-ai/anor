@@ -1181,6 +1181,30 @@ body.modal-open {
   overflow: hidden;
 }
 
+/* Watch: pulse Studio CTA after episode ends */
+.pulse-cta {
+  animation: pulseCta 1.2s ease-in-out 3;
+  box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.45);
+}
+@keyframes pulseCta {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(212, 168, 67, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 168, 67, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-cta {
+    animation: none;
+    outline: 2px solid var(--gold, #d4a843);
+    outline-offset: 2px;
+  }
+}
+
 /* Boot failure — full-width ledger when catalog cannot load */
 .boot-error {
   max-width: 36rem;

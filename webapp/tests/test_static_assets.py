@@ -75,6 +75,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "A fork is already in progress",
             "fh:cache:scenario:",
             "loadScenarioDetail",
+            "onended",
+            "pulse-cta",
+            "watch-end-note",
+            "Episode complete",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -85,6 +89,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".rate-wait", css)
         self.assertIn("body.modal-open", css)
         self.assertIn(".boot-error", css)
+        self.assertIn(".pulse-cta", css)
+        self.assertIn("pulseCta", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

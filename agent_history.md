@@ -1338,3 +1338,30 @@ python3 -m unittest webapp.tests.test_access_log \
 
 ### RESULT
 Ops logs stay quieter under probes; non-JS visitors see a clear message; media 404s are less chatty.
+
+---
+
+## Iteration 46 — 2026-07-19
+
+### OBSERVE
+After a full episode finished, watch mode offered no completion feedback — Studio CTA sat static while freemium preview already had a hard paywall gate mid-play.
+
+### PLAN
+**One high-impact change:** `ended` handler for full watches — toast, pulse Studio CTA, status note.
+
+Expected outcome: finishing a full cut focuses Studio CTA with reduced-motion-safe emphasis; preview still opens paywall.
+
+### EXECUTE
+- `player.onended` for full vs preview
+- CSS `.pulse-cta` + prefers-reduced-motion outline
+- Clear handlers/classes on re-render
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 6 tests — OK
+```
+
+### RESULT
+Viewers are guided from finished episode into the decision studio without leaving the watch page.
