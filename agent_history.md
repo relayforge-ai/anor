@@ -1647,3 +1647,30 @@ python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
 
 ### RESULT
 Studio/library gain Dunkirk as a WW2 operational decision point with speculation labels intact.
+
+---
+
+## Iteration 57 — 2026-07-19
+
+### OBSERVE
+ELO-009 Dunkirk pack shipped; social pipeline stopped at batch-002 (EXCOMM). No Ryan-reviewable captions or Postiz skeleton for the halt / press / air-heavy cuts.
+
+### PLAN
+**One high-impact change:** batch-003 DRAFTS for ELO-009 with human-gate Postiz payload and extended hygiene tests.
+
+Expected outcome: draft-only captions; 📗/🧪 labels; placeholder integrations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-003/*` (3 cut MDs, postiz-drafts.json, README)
+- Parent drafts README table
+- Tests: batch-003 presence + pack reference + label checks
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 16 tests — OK
+```
+
+### RESULT
+Dunkirk social creative is staged as drafts only, aligned with the new public pack.

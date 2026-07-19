@@ -1,0 +1,89 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-003",
+  "created": "2026-07-19",
+  "theme": "Dunkirk 1940 halt order (ELO-009)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review press-armor and luftwaffe cuts for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-009-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "May 1940. Pocket at the sea.\nArmor could finish it — or halt.\n📗 Documented: they halt. Ships come.\n#history #ww2 #dunkirk #fyp",
+      "media_local": "outputs/videos/ELO-009-historical/ELO-009-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-009-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "May 1940: German armor halts — and a fleet comes for Dunkirk",
+      "caption": "The pocket is real. The sea is behind the Allies.\n\n📗 Documented baseline: armored thrusts pause; Operation Dynamo lifts a living army to Britain.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#dunkirk #ww2 #history #1940",
+      "media_local": "outputs/videos/ELO-009-historical/ELO-009-historical.mp4",
+      "settings": {
+        "title": "May 1940: German armor halts — and a fleet comes for Dunkirk",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "ww2", "label": "ww2"},
+          {"value": "dunkirk", "label": "dunkirk"}
+        ]
+      }
+    },
+    {
+      "id": "elo-009-press-armor-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if the panzers don’t stop?\nWe label this 🧪 SIMULATED. History records a halt.\nCanal country ≠ clean map arrow.\n#althistory #historytok #dunkirk",
+      "media_local": "outputs/videos/ELO-009-press_armor/ELO-009-press_armor.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-009-press-armor-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if German armor never halted at Dunkirk?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: the halt is documented.\n🧪 Press path is labeled simulation: tempo, canals, attrition — not a scoreboard.\n\n#althistory #dunkirk #speculationlabeled",
+      "media_local": "outputs/videos/ELO-009-press_armor/ELO-009-press_armor.mp4",
+      "settings": {
+        "title": "SPECULATION: What if German armor never halted at Dunkirk?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "dunkirk", "label": "dunkirk"}
+        ]
+      }
+    },
+    {
+      "id": "elo-009-luftwaffe-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if Dunkirk were left mostly to the Luftwaffe?",
+      "caption": "⚠️ Dramatized process emphasis — not secret history.\n\n📗 Baseline remains the halt + Dynamo under air attack.\nThis cut studies air power as pocket-finisher — labeled so clips cannot lie.\n\n#althistory #dunkirk #ww2",
+      "media_local": "outputs/videos/ELO-009-luftwaffe_only/ELO-009-luftwaffe_only.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if Dunkirk were left mostly to the Luftwaffe?",
+        "type": "public"
+      }
+    }
+  ]
+}

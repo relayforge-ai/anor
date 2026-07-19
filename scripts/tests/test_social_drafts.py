@@ -25,6 +25,18 @@ class TestSocialDrafts(unittest.TestCase):
         ):
             self.assertTrue((b2 / name).is_file(), f"missing {name}")
 
+    def test_batch_003_present(self):
+        b3 = DRAFTS / "batch-003"
+        self.assertTrue(b3.is_dir())
+        for name in (
+            "ELO-009-historical.md",
+            "ELO-009-press_armor.md",
+            "ELO-009-luftwaffe_only.md",
+            "postiz-drafts.json",
+            "README.md",
+        ):
+            self.assertTrue((b3 / name).is_file(), f"missing {name}")
+
     def test_postiz_payloads_are_draft_human_gate(self):
         for path in DRAFTS.glob("batch-*/postiz-drafts.json"):
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -63,12 +75,29 @@ class TestSocialDrafts(unittest.TestCase):
             self.assertNotIn("mandos", text.lower())
             self.assertNotIn("master source", text.lower())
 
+    def test_batch_003_references_public_pack_only(self):
+        pack = PUBLIC / "ELO-009.json"
+        self.assertTrue(pack.is_file())
+        for path in (DRAFTS / "batch-003").glob("ELO-009*.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("ELO-009", text)
+            self.assertNotIn("mandos", text.lower())
+            self.assertNotIn("master source", text.lower())
+
     def test_simulated_drafts_carry_label(self):
-        for name in ("ELO-007-surgical_strike.md", "ELO-007-invasion.md"):
-            text = (DRAFTS / "batch-002" / name).read_text(encoding="utf-8")
+        labeled = [
+            DRAFTS / "batch-002" / "ELO-007-surgical_strike.md",
+            DRAFTS / "batch-002" / "ELO-007-invasion.md",
+            DRAFTS / "batch-003" / "ELO-009-press_armor.md",
+            DRAFTS / "batch-003" / "ELO-009-luftwaffe_only.md",
+        ]
+        for path in labeled:
+            text = path.read_text(encoding="utf-8")
             self.assertTrue(
-                "SIMULATED" in text.upper() or "🧪" in text,
-                f"{name} must label simulation",
+                "SIMULATED" in text.upper()
+                or "DRAMATIZED" in text.upper()
+                or "🧪" in text,
+                f"{path.name} must label non-historical cut",
             )
 
     def test_no_secrets_in_draft_tree(self):

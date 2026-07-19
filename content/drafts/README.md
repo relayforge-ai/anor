@@ -39,6 +39,16 @@ Brand line: *Real decision points. Labeled speculation. Receipts on screen.*
 
 See `batch-002/README.md` and `batch-002/postiz-drafts.json`.
 
+## Batch 003 — Dunkirk (ELO-009)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-003/ELO-009-historical.md` | Dunkirk halt | historical | YT + TT |
+| `batch-003/ELO-009-press_armor.md` | press armor | simulated | YT + TT |
+| `batch-003/ELO-009-luftwaffe_only.md` | air-heavy | dramatized | YT + TT |
+
+See `batch-003/README.md` and `batch-003/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -48,6 +58,8 @@ python -m pipeline.cli video --scenario ELO-003 --choice march
 python -m pipeline.cli video --scenario ELO-013 --choice historical
 python -m pipeline.cli video --scenario ELO-007 --choice historical
 python -m pipeline.cli video --scenario ELO-007 --choice surgical_strike
+python -m pipeline.cli video --scenario ELO-009 --choice historical
+python -m pipeline.cli video --scenario ELO-009 --choice press_armor
 ```
 
 ## Human gate checklist
