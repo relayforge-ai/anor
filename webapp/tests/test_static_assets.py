@@ -110,6 +110,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "Branch compare",
             "historical baseline",
             "compare-grid",
+            "renderStudioSources",
+            "studio-sources-body",
+            "no MANDOS master sources",
+            "Public sources",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -137,6 +141,9 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("data-lib-filter", html)
         self.assertIn("Documented", html)
         self.assertIn("Simulated", html)
+        self.assertIn('id="studio-sources"', html)
+        self.assertIn("Sources", html)
+        self.assertIn('id="studio-sources-body"', html)
 
     def test_index_noscript_guidance(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

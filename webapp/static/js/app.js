@@ -747,6 +747,10 @@
     } catch (e) {
       toast(String(e.message || e));
       $("#studio-opening").textContent = "";
+      if ($("#studio-sources-body")) {
+        $("#studio-sources-body").innerHTML =
+          `<p class="note">${escapeHtml(String(e.message || e))}</p>`;
+      }
       $("#fork-result").innerHTML = renderForkError(String(e.message || e), "load_failed");
       return;
     }
@@ -759,6 +763,7 @@
       "\n\n" +
       (detail.opening?.what_they_knew || "") +
       (detail.opening?.pressure ? "\n\nPressure: " + detail.opening.pressure : "");
+    renderStudioSources(detail);
 
     const member = FHFreemium.isMember();
     const choices = detail.choices || [];
@@ -853,6 +858,46 @@
       }
     }
     renderStudioControls();
+  }
+
+  function renderStudioSources(detail) {
+    /** Public sources + provenance — historical integrity surface (no master sources). */
+    const body = $("#studio-sources-body");
+    const countEl = $("#studio-sources-count");
+    if (!body) return;
+    const sources = Array.isArray(detail?.sources) ? detail.sources : [];
+    const prov = detail?.provenance && typeof detail.provenance === "object" ? detail.provenance : {};
+    const discipline = prov.discipline || "";
+    const notes = prov.notes || "";
+    const corpus = prov.corpus || "";
+    if (countEl) {
+      countEl.textContent = sources.length
+        ? `· ${sources.length} source${sources.length === 1 ? "" : "s"}`
+        : "";
+    }
+    const srcList = sources.length
+      ? `<ul class="studio-sources-list">${sources
+          .map((s) => `<li>${escapeHtml(s)}</li>`)
+          .join("")}</ul>`
+      : `<p class="note">No source list on this pack (still public ELOSTIRION framing).</p>`;
+    body.innerHTML = `
+      <p class="note" style="margin:0.5rem 0 0.65rem">
+        <span class="pill pill-doc">📗 documented</span>
+        <span class="pill pill-sim">🧪 simulated</span>
+        Counterfactuals never overwrite the known outcome.
+      </p>
+      ${
+        discipline
+          ? `<p class="studio-sources-discipline"><strong>Discipline:</strong> ${escapeHtml(
+              discipline
+            )}</p>`
+          : ""
+      }
+      ${notes ? `<p class="note">${escapeHtml(notes)}</p>` : ""}
+      ${corpus ? `<p class="note"><strong>Corpus:</strong> ${escapeHtml(corpus)}</p>` : ""}
+      <p class="note" style="margin-top:0.65rem;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem">Public sources</p>
+      ${srcList}
+      <p class="note" style="margin-top:0.75rem">Public ANOR / ELOSTIRION packs only · no MANDOS master sources.</p>`;
   }
 
   function selectChoice(btn, allBtns) {

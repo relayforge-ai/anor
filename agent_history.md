@@ -1975,3 +1975,30 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Explorer can study labeled branch differences without a membership wall; Scholar remains the path for LLM narrative and export.
+
+---
+
+## Iteration 69 — 2026-07-19
+
+### OBSERVE
+Studio loaded opening + known outcome + choices but buried pack `sources` and `provenance` (already in the API payload). Users could fork without seeing the public source list or ELOSTIRION discipline notes.
+
+### PLAN
+**One high-impact change:** collapsible Studio “Sources & provenance” panel with public source list, discipline/notes/corpus, and 📗/🧪 reminder — no MANDOS material.
+
+Expected outcome: every pack open surfaces citations and integrity language without cluttering the default UI.
+
+### EXECUTE
+- `#studio-sources` details element in index
+- `renderStudioSources(detail)` after pack load
+- CSS for summary/list
+- Static tests for markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 14 tests — OK
+```
+
+### RESULT
+Studio makes receipts first-class: public sources and speculation discipline are one click from the decision list.

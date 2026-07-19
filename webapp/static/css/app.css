@@ -1343,6 +1343,39 @@ body.boot-failed .member-strip {
   outline-offset: 2px;
 }
 
+/* Studio sources / provenance */
+.studio-sources {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+.studio-sources-summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  list-style-position: outside;
+}
+.studio-sources-summary::-webkit-details-marker {
+  color: var(--ink-dim);
+}
+.studio-sources-body {
+  margin-top: 0.55rem;
+}
+.studio-sources-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink-dim);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+.studio-sources-discipline {
+  color: var(--ink-dim);
+  line-height: 1.5;
+  margin: 0.35rem 0;
+  font-size: 0.92rem;
+}
+
 /* Studio branch compare */
 .compare-grid {
   align-items: stretch;
