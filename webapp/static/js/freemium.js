@@ -8,6 +8,7 @@
   const DEFAULTS = {
     isMember: false,
     plan: "explorer",
+    memberToken: null, // server-issued Scholar token (X-ANOR-Member)
     fullVideosUnlocked: [], // video ids fully watched/unlocked free
     previewVideos: [], // videos where preview was used
     forksToday: 0,
@@ -62,13 +63,46 @@
       return !!load().isMember;
     },
 
-    setMember(plan = "scholar", note = "demo") {
+    setMember(plan = "scholar", note = "demo", token = null) {
       const s = load();
       s.isMember = true;
       s.plan = plan;
       s.demoNote = note;
+      if (token) s.memberToken = token;
       save(s);
       return s;
+    },
+
+    memberToken() {
+      return load().memberToken || null;
+    },
+
+    authHeaders(extra) {
+      const h = Object.assign({ "Content-Type": "application/json" }, extra || {});
+      const t = load().memberToken;
+      if (t) h["X-ANOR-Member"] = t;
+      return h;
+    },
+
+    async acquireDemoToken(plan = "scholar") {
+      const r = await fetch("/api/member/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const err = new Error(data.error || "Demo token failed");
+        err.code = data.code;
+        throw err;
+      }
+      const s = load();
+      s.isMember = true;
+      s.plan = data.plan || plan;
+      s.memberToken = data.token;
+      s.demoNote = "server demo token";
+      save(s);
+      return data;
     },
 
     clearMember() {
@@ -76,6 +110,7 @@
       s.isMember = false;
       s.plan = "explorer";
       s.demoNote = null;
+      s.memberToken = null;
       save(s);
       return s;
     },

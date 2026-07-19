@@ -91,6 +91,10 @@ VIDEO_JOB_LIMITER = RateLimiter(
     limit=_env_int("ANOR_VIDEO_RATE_LIMIT", 3),
     window_s=float(_env_int("ANOR_VIDEO_RATE_WINDOW", 300)),
 )
+DEMO_TOKEN_LIMITER = RateLimiter(
+    limit=_env_int("ANOR_DEMO_TOKEN_RATE_LIMIT", 10),
+    window_s=float(_env_int("ANOR_DEMO_TOKEN_RATE_WINDOW", 3600)),
+)
 
 MAX_BODY_BYTES = _env_int("ANOR_MAX_BODY_BYTES", 16_384)
 MAX_SEED_CHARS = _env_int("ANOR_MAX_SEED_CHARS", 500)
@@ -192,6 +196,17 @@ def check_video_job_rate(key: str) -> Optional[ValidationError]:
             429,
             f"video render rate limit exceeded — retry in {retry}s",
             "video_rate_limited",
+        )
+    return None
+
+
+def check_demo_token_rate(key: str) -> Optional[ValidationError]:
+    ok, _, retry = DEMO_TOKEN_LIMITER.allow(f"demo:{key}")
+    if not ok:
+        return ValidationError(
+            429,
+            f"demo token rate limit exceeded — retry in {retry}s",
+            "demo_rate_limited",
         )
     return None
 

@@ -257,3 +257,35 @@ python3 -m unittest webapp.tests.test_paths_and_media ... (full suite)
 
 ### RESULT
 Media serving scales without loading whole files; path join no longer mis-handles `../` via `lstrip`.
+
+---
+
+## Iteration 9 — 2026-07-18
+
+### OBSERVE
+Freemium was client-only (`localStorage`). Anyone could `POST /api/video/jobs` or `use_llm=true` without membership. Demo unlock never contacted the server.
+
+### PLAN
+**One high-impact change:** HMAC membership tokens + server enforcement on expensive endpoints; demo unlock mints a real token.
+
+Expected outcome: with `ANOR_MEMBER_SECRET` set, video jobs and LLM forks return 401 without `X-ANOR-Member`; basic authored forks remain free; demo endpoint issues signed tokens.
+
+### EXECUTE
+- `webapp/membership.py` — issue/verify HMAC tokens
+- Gate: video enqueue; fork when `use_llm` or custom seed
+- `POST /api/member/demo` (rate-limited)
+- Client: `acquireDemoToken`, `authHeaders`
+- Tests: `webapp/tests/test_membership.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_membership webapp.tests.test_video_jobs ... 
+→ 47 tests OK
+```
+- Signed tokens verify; tamper rejected
+- Video/LLM without token → 401 when enforced
+- Basic authored fork remains free
+- Other suites green after env restore
+
+### RESULT
+Expensive ops can be server-gated for production; demo unlock mints real tokens the client attaches automatically.

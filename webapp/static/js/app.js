@@ -88,9 +88,15 @@
            <button class="btn btn-ghost btn-sm" id="btn-demo-member">Demo unlock</button>
          </div>`;
 
-    $("#btn-demo-member")?.addEventListener("click", () => {
-      FHFreemium.setMember("scholar", "demo unlock for Ryan review");
-      toast("Scholar unlocked (demo). Stripe not charged.");
+    $("#btn-demo-member")?.addEventListener("click", async () => {
+      try {
+        await FHFreemium.acquireDemoToken("scholar");
+        toast("Scholar unlocked (demo token). Stripe not charged.");
+      } catch (e) {
+        // Offline / open mode without demo endpoint — local flag only
+        FHFreemium.setMember("scholar", "local demo unlock");
+        toast("Scholar unlocked locally (server token unavailable).");
+      }
       refreshChrome();
       route();
     });
@@ -574,7 +580,7 @@
       }
       const r = await fetch("/api/fork", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FHFreemium.authHeaders(),
         body: JSON.stringify(body),
       });
       const data = await r.json().catch(() => ({}));
@@ -654,7 +660,7 @@
     try {
       const r = await fetch("/api/video/jobs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FHFreemium.authHeaders(),
         body: JSON.stringify({
           scenario_id: state.scenarioId,
           choice_id: state.choiceId,
@@ -833,10 +839,15 @@
           `Unlock ${plan}`,
           `Recommended: Scholar at $4.99/mo (or $39/yr). Checkout is stubbed for this build — demo unlock simulates membership so Ryan can review the full product.`
         );
-        $("#pay-confirm").onclick = () => {
-          FHFreemium.setMember(plan, "demo checkout stub");
+        $("#pay-confirm").onclick = async () => {
+          try {
+            await FHFreemium.acquireDemoToken(plan);
+            toast(`${plan} unlocked (demo token). Wire Stripe when ready.`);
+          } catch (e) {
+            FHFreemium.setMember(plan, "demo checkout stub");
+            toast(`${plan} unlocked locally.`);
+          }
           closePaywall();
-          toast(`${plan} unlocked (demo). Wire Stripe when ready.`);
           refreshChrome();
           renderPricing();
         };
@@ -848,8 +859,12 @@
       <div class="h3" style="margin-top:0">${escapeHtml(ot.name)} — ${money(ot.price)}</div>
       <p style="color:var(--ink-dim);margin:0.4rem 0 1rem">${escapeHtml(ot.description)}</p>
       <button class="btn btn-ghost" id="btn-pass">Demo Library Pass</button>`;
-    $("#btn-pass").onclick = () => {
-      FHFreemium.setMember("library_pass", "90-day pass demo");
+    $("#btn-pass").onclick = async () => {
+      try {
+        await FHFreemium.acquireDemoToken("library_pass");
+      } catch (e) {
+        FHFreemium.setMember("library_pass", "90-day pass demo");
+      }
       toast("Library Pass demo unlocked");
       refreshChrome();
     };
@@ -934,16 +949,24 @@
 
     // player gate buttons
     $("#gate-upgrade")?.addEventListener("click", () => navigate("pricing"));
-    $("#gate-demo")?.addEventListener("click", () => {
-      FHFreemium.setMember("scholar", "demo from paywall");
+    $("#gate-demo")?.addEventListener("click", async () => {
+      try {
+        await FHFreemium.acquireDemoToken("scholar");
+      } catch (e) {
+        FHFreemium.setMember("scholar", "demo from paywall");
+      }
       closePaywall();
       toast("Scholar unlocked (demo)");
       if (state.videoId) renderWatch(state.videoId);
       refreshChrome();
     });
     $("#pay-close")?.addEventListener("click", closePaywall);
-    $("#pay-demo")?.addEventListener("click", () => {
-      FHFreemium.setMember("scholar", "demo from modal");
+    $("#pay-demo")?.addEventListener("click", async () => {
+      try {
+        await FHFreemium.acquireDemoToken("scholar");
+      } catch (e) {
+        FHFreemium.setMember("scholar", "demo from modal");
+      }
       closePaywall();
       toast("Scholar unlocked (demo)");
       refreshChrome();

@@ -9,6 +9,7 @@ Serves:
   /api/scenario/:id pack detail
   /api/fork         decision fork (authored or LLM) — rate-limited + validated
   /api/video/jobs   async video render queue (POST create, GET list/status)
+  /api/member/demo  issue short-lived Scholar token (rate-limited demo)
   /media/videos/*   rendered explainers from outputs/videos
 
 Usage:
@@ -40,6 +41,7 @@ from pipeline.fork_engine import list_scenarios, run_fork, scenario_payload  # n
 from pipeline.clients import healthcheck  # noqa: E402
 from pipeline.validate import ScenarioValidationError  # noqa: E402
 from webapp import security as sec  # noqa: E402
+from webapp import membership as mem  # noqa: E402
 from webapp.jobs import QUEUE  # noqa: E402
 from webapp.paths import safe_join  # noqa: E402
 
@@ -51,7 +53,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.4"
+    server_version = "ForkedHistory/1.5"
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
@@ -236,6 +238,7 @@ class Handler(BaseHTTPRequestHandler):
                         "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
                         "max_body_bytes": sec.MAX_BODY_BYTES,
                         "max_seed_chars": sec.MAX_SEED_CHARS,
+                        "member_enforcement": mem.enforcement_enabled(),
                     },
                     "video_queue": QUEUE.stats(),
                     "pipeline": healthcheck(cfg),
@@ -305,6 +308,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urllib.parse.urlparse(self.path)
 
+        if parsed.path == "/api/member/demo":
+            return self._post_member_demo()
+
         if parsed.path == "/api/video/jobs":
             return self._post_video_job()
 
@@ -330,6 +336,13 @@ class Handler(BaseHTTPRequestHandler):
         seed, seed_err = sec.sanitize_custom_seed(data.get("custom_seed"))
         if seed_err:
             return self._validation_error(seed_err)
+
+        # Custom seeds and LLM re-renders are Scholar-tier server-side
+        if use_llm or seed:
+            denied = mem.require_member(self)
+            if denied:
+                status, body = denied
+                return self._json(status, body)
 
         key = sec.client_key(self)
         rate_err = sec.check_fork_rate(key, use_llm=use_llm)
@@ -383,6 +396,11 @@ class Handler(BaseHTTPRequestHandler):
             if v_err:
                 return self._validation_error(v_err)
 
+        denied = mem.require_member(self)
+        if denied:
+            status, body = denied
+            return self._json(status, body)
+
         key = sec.client_key(self)
         rate_err = sec.check_video_job_rate(key)
         if rate_err:
@@ -397,6 +415,43 @@ class Handler(BaseHTTPRequestHandler):
 
         # 202 Accepted — client polls GET /api/video/jobs/{id}
         return self._json(202, job.to_public())
+
+    def _post_member_demo(self) -> None:
+        """Issue a short-lived Scholar token for demo unlock / review."""
+        key = sec.client_key(self)
+        rate_err = sec.check_demo_token_rate(key)
+        if rate_err:
+            return self._validation_error(rate_err)
+
+        # Optional body for plan name
+        plan = "scholar"
+        length = int(self.headers.get("Content-Length") or "0")
+        if length > 0:
+            data, err = self._read_json_body()
+            if err:
+                return self._validation_error(err)
+            if data and isinstance(data.get("plan"), str):
+                plan = data["plan"][:32]
+
+        token = mem.issue_token(plan)
+        if not token:
+            return self._json(
+                503,
+                {
+                    "error": "membership tokens unavailable (set ANOR_MEMBER_SECRET)",
+                    "code": "token_unavailable",
+                },
+            )
+        return self._json(
+            200,
+            {
+                "token": token,
+                "plan": plan,
+                "ttl_s": mem.token_ttl_s(),
+                "enforcement": mem.enforcement_enabled(),
+                "header": "X-ANOR-Member",
+            },
+        )
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8787) -> None:
