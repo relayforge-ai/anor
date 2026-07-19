@@ -22,9 +22,18 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, TextIO
 
 ROOT = Path(__file__).resolve().parents[1]
+
+try:
+    import fcntl as _fcntl
+except ImportError:  # pragma: no cover — Windows hosts
+    _fcntl = None  # type: ignore
+
+# In-process fallback when fcntl is unavailable (still serializes same out_dir)
+_RENDER_PATH_LOCKS: dict[str, threading.Lock] = {}
+_RENDER_PATH_LOCKS_GUARD = threading.Lock()
 
 
 def _env_int(name: str, default: int) -> int:
@@ -98,6 +107,82 @@ def check_render_dependencies() -> tuple[bool, str]:
     if not ok:
         return False, msg
     return True, "ok"
+
+
+class RenderLockBusy(RuntimeError):
+    """Another worker (process or thread) is already writing this render dir."""
+
+
+def acquire_render_lock(out_dir: Path) -> tuple[Optional[TextIO], Optional[threading.Lock]]:
+    """Exclusive lock on a scenario-choice output directory.
+
+    Prevents concurrent ffmpeg/concat from corrupting the same ``work/`` and
+    final MP4 (cross-process via fcntl when available; in-process lock always).
+
+    Returns (file_handle, thread_lock). Pass both to :func:`release_render_lock`.
+    Raises :class:`RenderLockBusy` if the lock is held.
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    key = str(out_dir.resolve())
+
+    with _RENDER_PATH_LOCKS_GUARD:
+        tlock = _RENDER_PATH_LOCKS.get(key)
+        if tlock is None:
+            tlock = threading.Lock()
+            _RENDER_PATH_LOCKS[key] = tlock
+
+    if not tlock.acquire(blocking=False):
+        raise RenderLockBusy(
+            f"render already in progress for {out_dir.name} — wait or cancel"
+        )
+
+    fh: Optional[TextIO] = None
+    if _fcntl is not None:
+        lock_path = out_dir / ".render.lock"
+        try:
+            fh = open(lock_path, "a+", encoding="utf-8")
+            try:
+                _fcntl.flock(fh.fileno(), _fcntl.LOCK_EX | _fcntl.LOCK_NB)
+            except BlockingIOError:
+                fh.close()
+                tlock.release()
+                raise RenderLockBusy(
+                    f"render already in progress for {out_dir.name} — wait or cancel"
+                ) from None
+            fh.seek(0)
+            fh.truncate()
+            fh.write(f"pid={os.getpid()} ts={time.time():.3f}\n")
+            fh.flush()
+        except RenderLockBusy:
+            raise
+        except OSError as e:
+            tlock.release()
+            raise RuntimeError(f"could not lock render dir: {e}") from e
+
+    return fh, tlock
+
+
+def release_render_lock(
+    fh: Optional[TextIO],
+    tlock: Optional[threading.Lock],
+) -> None:
+    """Release locks acquired by :func:`acquire_render_lock`."""
+    if fh is not None:
+        try:
+            if _fcntl is not None:
+                _fcntl.flock(fh.fileno(), _fcntl.LOCK_UN)
+        except OSError:
+            pass
+        try:
+            fh.close()
+        except OSError:
+            pass
+    if tlock is not None:
+        try:
+            tlock.release()
+        except RuntimeError:
+            pass
 
 
 class JobCancelled(Exception):
@@ -423,6 +508,8 @@ class VideoJobQueue:
                 )
             self._update(job_id, stage=stage, pct=pct, message=message, status="running")
 
+        lock_fh: Optional[TextIO] = None
+        path_lock: Optional[threading.Lock] = None
         try:
             # Fail fast before burning LLM/image cycles
             ok, dep_msg = check_render_dependencies()
@@ -435,6 +522,15 @@ class VideoJobQueue:
 
             cfg = PipelineConfig.from_env()
             out_dir = ROOT / "outputs" / "videos" / f"{scenario_id}-{choice_id}"
+            # Serialize writers for this scenario-choice (cross-process when fcntl works)
+            lock_fh, path_lock = acquire_render_lock(out_dir)
+            self._update(
+                job_id,
+                stage="starting",
+                pct=2.0,
+                message="Acquired render lock",
+                status="running",
+            )
             result = render_video(
                 scenario_id,
                 choice_id=choice_id,
@@ -510,6 +606,8 @@ class VideoJobQueue:
                         job.error = str(e)[:400]
                     job.finished_at = time.time()
                     job.updated_at = time.time()
+        finally:
+            release_render_lock(lock_fh, path_lock)
 
 
 # Process-wide singleton

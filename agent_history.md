@@ -767,3 +767,33 @@ python3 -m unittest webapp.tests.test_job_privacy \
 
 ### RESULT
 Video job inventory is no longer a cross-tenant leak; clients still poll by id from the enqueue response.
+
+---
+
+## Iteration 26 — 2026-07-19
+
+### OBSERVE
+Concurrent writers for the same `scenario_id-choice_id` output dir could interleave stills/clips/concat (tests and multi-worker hosts), producing corrupt MP4s and flaky ffmpeg exit 254.
+
+### PLAN
+**One high-impact change:** exclusive render lock per output directory (fcntl cross-process + in-process lock).
+
+Expected outcome: second writer fails fast with `RenderLockBusy`; first writer holds lock until complete/fail.
+
+### EXECUTE
+- `acquire_render_lock` / `release_render_lock` / `RenderLockBusy`
+- Worker acquires lock before `render_video`, releases in `finally`
+- Tests: second acquire busy; independent dirs OK
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_render_lock \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_enqueue_and_complete \
+  webapp.tests.test_job_timeout -v
+→ Ran 6 tests — OK
+```
+- Double lock → RenderLockBusy
+- Full enqueue→complete still green
+
+### RESULT
+Same-path renders cannot corrupt each other's intermediates or final MP4.
