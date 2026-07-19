@@ -400,3 +400,35 @@ python3 -m unittest webapp.tests.test_render_deps webapp.tests.test_paths_and_me
 
 ### RESULT
 Render fails closed without ffmpeg; browsers can HEAD media; library guides users when files are missing.
+
+---
+
+## Iteration 14 — 2026-07-19
+
+### OBSERVE
+Running video jobs had no wall-clock limit — a hung LLM/image/ffmpeg path could hold the single worker indefinitely. After a successful render, the library catalog was not refreshed so `available` stayed false until reload.
+
+### PLAN
+**One high-impact change:** per-job wall-clock timeout (cooperative via progress ticks) + refresh catalog after successful render.
+
+Expected outcome: jobs exceed `ANOR_VIDEO_JOB_TIMEOUT_S` → `timed_out`; studio shows timeout error; library updates after complete.
+
+### EXECUTE
+- `JobTimedOut` + `deadline_at` checked in progress callback
+- Status `timed_out` / stage `timeout`
+- Client handles timed_out + re-fetches `/api/catalog`
+- Tests: `test_job_timeout.py` with setUp/tearDown so short timeout cannot poison process-wide `QUEUE`
+- Integration tests force `QUEUE.timeout_s >= 600`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_job_timeout webapp.tests.test_job_dedupe \
+  webapp.tests.test_render_deps webapp.tests.test_video_jobs -v
+→ Ran 16 tests — OK
+```
+- Worker marks `timed_out` when progress ticks past deadline
+- API enqueue completes under default wall-clock (no env leak)
+- Dedupe / render-deps still green
+
+### RESULT
+Hung renders free the single worker after `ANOR_VIDEO_JOB_TIMEOUT_S` (default 600s). Studio surfaces timeout; library catalog refreshes after successful render.

@@ -28,9 +28,13 @@ from webapp import security as sec  # noqa: E402
 class TestVideoJobsAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Generous limits so multi-job tests don't trip 429
+        # Generous limits so multi-job tests don't trip 429 / wall-clock timeout
         os.environ["ANOR_VIDEO_RATE_LIMIT"] = "100"
         os.environ["ANOR_VIDEO_RATE_WINDOW"] = "60"
+        os.environ.pop("ANOR_VIDEO_JOB_TIMEOUT_S", None)
+        # Process-wide QUEUE may have been constructed under a short timeout
+        # from unit tests — restore a production-like budget for integration.
+        QUEUE.timeout_s = max(getattr(QUEUE, "timeout_s", 600), 600)
         sec.VIDEO_JOB_LIMITER = sec.RateLimiter(100, 60)
         sec.VIDEO_JOB_LIMITER.reset()
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -45,6 +49,9 @@ class TestVideoJobsAPI(unittest.TestCase):
 
     def setUp(self):
         sec.VIDEO_JOB_LIMITER.reset()
+        # Defensive: other modules must not leave a 1s wall-clock on the singleton
+        if getattr(QUEUE, "timeout_s", 600) < 120:
+            QUEUE.timeout_s = 600
 
     def post_job(self, payload: dict):
         req = urllib.request.Request(
@@ -76,7 +83,7 @@ class TestVideoJobsAPI(unittest.TestCase):
                 self.base + "/api/video/jobs/" + job_id, timeout=10
             ) as r:
                 final = json.loads(r.read())
-            if final["status"] in ("completed", "failed"):
+            if final["status"] in ("completed", "failed", "timed_out", "cancelled"):
                 break
             time.sleep(0.4)
 

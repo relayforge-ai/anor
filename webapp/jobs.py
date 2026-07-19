@@ -7,6 +7,7 @@ Env:
   ANOR_VIDEO_MAX_CONCURRENT  (default 1)
   ANOR_VIDEO_MAX_QUEUED      (default 8)
   ANOR_VIDEO_JOB_TTL_S       (default 3600) — finished jobs retained this long
+  ANOR_VIDEO_JOB_TIMEOUT_S   (default 600) — max wall time for a running render
 """
 
 from __future__ import annotations
@@ -55,13 +56,17 @@ class JobCancelled(Exception):
     """Raised cooperatively when a running render is cancelled."""
 
 
+class JobTimedOut(Exception):
+    """Raised cooperatively when a running render exceeds wall-clock timeout."""
+
+
 @dataclass
 class VideoJob:
     id: str
     scenario_id: str
     choice_id: str
     use_llm: bool
-    status: str = "queued"  # queued | running | completed | failed | cancelled
+    status: str = "queued"  # queued | running | completed | failed | cancelled | timed_out
     stage: str = "queued"
     pct: float = 0.0
     message: str = "Queued"
@@ -71,6 +76,7 @@ class VideoJob:
     updated_at: float = field(default_factory=time.time)
     started_at: Optional[float] = None
     finished_at: Optional[float] = None
+    deadline_at: Optional[float] = None
     cancel_requested: bool = False
 
     def to_public(self) -> dict[str, Any]:
@@ -88,6 +94,7 @@ class VideoJob:
             "updated_at": self.updated_at,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
+            "deadline_at": self.deadline_at,
             "cancel_requested": self.cancel_requested,
         }
         if self.result:
@@ -102,6 +109,7 @@ class VideoJobQueue:
         self.max_concurrent = _env_int("ANOR_VIDEO_MAX_CONCURRENT", 1)
         self.max_queued = _env_int("ANOR_VIDEO_MAX_QUEUED", 8)
         self.ttl_s = _env_int("ANOR_VIDEO_JOB_TTL_S", 3600)
+        self.timeout_s = _env_int("ANOR_VIDEO_JOB_TIMEOUT_S", 600)
         self._jobs: dict[str, VideoJob] = {}
         self._lock = threading.Lock()
         self._executor = ThreadPoolExecutor(
@@ -130,6 +138,7 @@ class VideoJobQueue:
                 "max_concurrent": self.max_concurrent,
                 "max_queued": self.max_queued,
                 "ttl_s": self.ttl_s,
+                "timeout_s": self.timeout_s,
                 "jobs": len(self._jobs),
                 "by_status": statuses,
                 "ffmpeg_ok": ok,
@@ -227,7 +236,7 @@ class VideoJobQueue:
             job = self._jobs.get(job_id)
             if not job:
                 return False, "not_found", None
-            if job.status in ("completed", "failed", "cancelled"):
+            if job.status in ("completed", "failed", "cancelled", "timed_out"):
                 return False, "already_terminal", job
             job.cancel_requested = True
             job.updated_at = time.time()
@@ -286,14 +295,20 @@ class VideoJobQueue:
             use_llm = job.use_llm
             job.status = "running"
             job.started_at = time.time()
+            job.deadline_at = job.started_at + float(self.timeout_s)
             job.stage = "starting"
-            job.message = "Worker picked up job"
+            job.message = f"Worker picked up job (timeout {self.timeout_s}s)"
             job.pct = 1.0
             job.updated_at = time.time()
+            deadline_at = job.deadline_at
 
         def on_progress(stage: str, pct: float, message: str) -> None:
             if self.is_cancel_requested(job_id):
                 raise JobCancelled("cancelled by user")
+            if deadline_at is not None and time.time() > deadline_at:
+                raise JobTimedOut(
+                    f"render exceeded {self.timeout_s}s wall-clock limit"
+                )
             self._update(job_id, stage=stage, pct=pct, message=message, status="running")
 
         try:
@@ -319,6 +334,10 @@ class VideoJobQueue:
             # Race: cancel arrived after last progress tick
             if self.is_cancel_requested(job_id):
                 raise JobCancelled("cancelled by user")
+            if deadline_at is not None and time.time() > deadline_at:
+                raise JobTimedOut(
+                    f"render exceeded {self.timeout_s}s wall-clock limit"
+                )
 
             # Public-safe result — never expose absolute filesystem paths to clients
             rel_mp4 = f"{scenario_id}-{choice_id}/{result.out_mp4.name}"
@@ -352,6 +371,16 @@ class VideoJobQueue:
                     job.stage = "cancelled"
                     job.message = "Cancelled"
                     job.cancel_requested = True
+                    job.finished_at = time.time()
+                    job.updated_at = time.time()
+        except JobTimedOut as e:
+            with self._lock:
+                job = self._jobs.get(job_id)
+                if job:
+                    job.status = "timed_out"
+                    job.stage = "timeout"
+                    job.message = "Timed out"
+                    job.error = str(e)[:400]
                     job.finished_at = time.time()
                     job.updated_at = time.time()
         except Exception as e:

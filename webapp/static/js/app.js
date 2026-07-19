@@ -800,11 +800,17 @@
               ${
                 url
                   ? `<a class="btn btn-primary btn-sm" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open MP4</a>
+                     <a class="btn btn-ghost btn-sm" href="#/library">Open library</a>
                      <video controls playsinline style="width:100%;margin-top:0.8rem;border-radius:12px;border:1px solid var(--line)" src="${escapeHtml(url)}"></video>`
                   : ""
               }
             </div>`;
           toast("Video ready");
+          // Refresh catalog so library marks the new file available
+          try {
+            const cr = await fetch("/api/catalog");
+            if (cr.ok) state.catalog = await cr.json();
+          } catch (_) {}
         } else if (st.status === "cancelled") {
           done = true;
           $("#fork-result").innerHTML =
@@ -816,6 +822,21 @@
               indeterminate: false,
             }) + `<p class="note" style="margin-top:0.8rem">Job <code>${escapeHtml(jobId)}</code> was cancelled.</p>`;
           toast("Render cancelled");
+        } else if (st.status === "timed_out") {
+          done = true;
+          $("#fork-result").innerHTML =
+            renderSimProgress({
+              stages,
+              activeIndex: idx,
+              pct: st.pct || 0,
+              label: "Timed out",
+              indeterminate: false,
+            }) +
+            renderForkError(
+              st.error || "Render exceeded the wall-clock timeout",
+              "video_timed_out"
+            );
+          toast("Render timed out");
         } else if (st.status === "failed") {
           done = true;
           $("#fork-result").innerHTML =
