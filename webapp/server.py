@@ -39,6 +39,7 @@ WEBAPP = Path(__file__).resolve().parent
 STATIC = WEBAPP / "static"
 CATALOG = WEBAPP / "data" / "catalog.json"
 VIDEOS = ROOT / "outputs" / "videos"
+SCENARIOS_PUBLIC = ROOT / "scenarios" / "public"
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -58,6 +59,10 @@ _CHUNK = 64 * 1024  # 64 KiB streaming chunks for media
 # Built catalog (with available flags) — avoid re-statting every video on each GET
 _catalog_cache_lock = threading.Lock()
 _catalog_cache: Optional[dict[str, Any]] = None  # payload, sig, ts
+
+# Public pack index — avoid re-reading/validating every JSON on each GET/health
+_scenarios_list_cache_lock = threading.Lock()
+_scenarios_list_cache: Optional[dict[str, Any]] = None  # payload, sig, ts
 
 
 def _read_json(path: Path):
@@ -80,6 +85,14 @@ def _catalog_cache_ttl_s() -> int:
     if raw == "0":
         return 0
     return _env_int("ANOR_CATALOG_CACHE_S", 15)
+
+
+def _scenarios_list_cache_ttl_s() -> int:
+    """Seconds to reuse the public pack list. 0 disables (always rebuild)."""
+    raw = os.environ.get("ANOR_SCENARIOS_CACHE_S", "").strip()
+    if raw == "0":
+        return 0
+    return _env_int("ANOR_SCENARIOS_CACHE_S", 30)
 
 
 def _videos_fingerprint() -> str:
@@ -127,6 +140,62 @@ def clear_catalog_cache() -> None:
     global _catalog_cache
     with _catalog_cache_lock:
         _catalog_cache = None
+
+
+def clear_scenarios_list_cache() -> None:
+    """Drop public pack list cache (tests / after operators add packs)."""
+    global _scenarios_list_cache
+    with _scenarios_list_cache_lock:
+        _scenarios_list_cache = None
+
+
+def _scenarios_dir_fingerprint() -> str:
+    """Cheap signature of scenarios/public JSON so pack edits invalidate cache."""
+    if not SCENARIOS_PUBLIC.exists():
+        return "missing"
+    try:
+        st = SCENARIOS_PUBLIC.stat()
+        parts: list[str] = [
+            f"root:{getattr(st, 'st_mtime_ns', int(st.st_mtime * 1e9))}"
+        ]
+        for child in sorted(SCENARIOS_PUBLIC.glob("*.json"), key=lambda p: p.name):
+            try:
+                cst = child.stat()
+                parts.append(
+                    f"{child.name}:{getattr(cst, 'st_mtime_ns', int(cst.st_mtime * 1e9))}:"
+                    f"{cst.st_size}"
+                )
+            except OSError:
+                parts.append(f"{child.name}:err")
+        return "|".join(parts)
+    except OSError:
+        return "err"
+
+
+def list_scenarios_cached() -> list[dict[str, str]]:
+    """Public pack index with short TTL so boot/health do not re-validate every JSON.
+
+    Invalidates when any ``scenarios/public/*.json`` mtime/size changes.
+    """
+    global _scenarios_list_cache
+    ttl = _scenarios_list_cache_ttl_s()
+    sig = _scenarios_dir_fingerprint()
+    now = time.monotonic()
+    if ttl > 0:
+        with _scenarios_list_cache_lock:
+            if _scenarios_list_cache is not None:
+                if (
+                    _scenarios_list_cache.get("sig") == sig
+                    and now - float(_scenarios_list_cache.get("ts", 0)) < ttl
+                ):
+                    return _scenarios_list_cache["payload"]
+
+    payload = list_scenarios(SCENARIOS_PUBLIC)
+
+    if ttl > 0:
+        with _scenarios_list_cache_lock:
+            _scenarios_list_cache = {"payload": payload, "sig": sig, "ts": now}
+    return payload
 
 
 def build_catalog_payload() -> dict[str, Any]:
@@ -498,7 +567,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json_revalidatable(build_catalog_payload(), max_age=30)
 
         if path == "/api/scenarios":
-            return self._json_revalidatable(list_scenarios(), max_age=60)
+            return self._json_revalidatable(list_scenarios_cached(), max_age=60)
 
         if path == "/api/health":
             return self._json(200, self._health_payload())
@@ -617,7 +686,7 @@ class Handler(BaseHTTPRequestHandler):
         payload["videos_count"] = (
             sum(1 for p in VIDEOS.iterdir() if p.is_dir()) if VIDEOS.exists() else 0
         )
-        payload["scenarios_count"] = len(list_scenarios())
+        payload["scenarios_count"] = len(list_scenarios_cached())
         return payload
 
     def _require_json_content_type(self) -> sec.ValidationError | None:

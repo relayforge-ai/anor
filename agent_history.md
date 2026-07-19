@@ -1419,3 +1419,31 @@ python3 -m unittest webapp.tests.test_security webapp.tests.test_security_header
 
 ### RESULT
 SPA and reverse proxies can read standard rate-limit headers on 429 without scraping English error text.
+
+---
+
+## Iteration 49 — 2026-07-19
+
+### OBSERVE
+`/api/scenarios` and detailed health re-ran `list_scenarios()` (read + validate every public JSON) on every request. Catalog already had a short TTL cache; the pack index did not.
+
+### PLAN
+**One high-impact change:** TTL + mtime/size fingerprint cache for the public pack list; wire into `/api/scenarios` and health `scenarios_count`.
+
+Expected outcome: repeated boot/library hits reuse the list; pack edits invalidate via fingerprint; `ANOR_SCENARIOS_CACHE_S=0` disables.
+
+### EXECUTE
+- `list_scenarios_cached()` / `clear_scenarios_list_cache()` / `_scenarios_dir_fingerprint()`
+- Default TTL 30s (`ANOR_SCENARIOS_CACHE_S`)
+- `.env.example` knob
+- Tests: `webapp/tests/test_scenarios_cache.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_scenarios_cache webapp.tests.test_catalog_cache \
+  webapp.tests.test_webapp webapp.tests.test_health_privacy -v
+→ Ran 20 tests — OK
+```
+
+### RESULT
+Studio boot and health no longer re-validate every public pack JSON on each hit.
