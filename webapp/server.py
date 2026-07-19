@@ -41,6 +41,9 @@ from pipeline.clients import healthcheck  # noqa: E402
 from pipeline.validate import ScenarioValidationError  # noqa: E402
 from webapp import security as sec  # noqa: E402
 from webapp.jobs import QUEUE  # noqa: E402
+from webapp.paths import safe_join  # noqa: E402
+
+_CHUNK = 64 * 1024  # 64 KiB streaming chunks for media
 
 
 def _read_json(path: Path):
@@ -48,7 +51,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.3"
+    server_version = "ForkedHistory/1.4"
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
@@ -96,39 +99,79 @@ class Handler(BaseHTTPRequestHandler):
             extra=headers or None,
         )
 
-    def _file(self, path: Path, content_type: str | None = None) -> None:
+    def _stream_file(
+        self,
+        path: Path,
+        content_type: str | None = None,
+        *,
+        support_range: bool = False,
+    ) -> None:
+        """Serve a file without loading the entire body into memory."""
         if not path.exists() or not path.is_file():
-            self._json(404, {"error": "not found", "path": str(path.name)})
+            self._json(404, {"error": "not found", "path": path.name})
             return
-        data = path.read_bytes()
+        try:
+            size = path.stat().st_size
+        except OSError:
+            self._json(404, {"error": "not found", "path": path.name})
+            return
+
         ctype = content_type or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-        range_h = self.headers.get("Range")
-        if range_h and range_h.startswith("bytes=") and path.suffix.lower() in {
-            ".mp4",
-            ".webm",
-            ".mov",
-        }:
+        range_h = self.headers.get("Range") if support_range else None
+        start, end = 0, size - 1
+        status = 200
+
+        if range_h and range_h.startswith("bytes=") and size > 0:
             try:
                 _, rng = range_h.split("=", 1)
                 start_s, end_s = (rng.split("-", 1) + [""])[:2]
                 start = int(start_s) if start_s else 0
-                end = int(end_s) if end_s else len(data) - 1
-                end = min(end, len(data) - 1)
+                end = int(end_s) if end_s else size - 1
+                end = min(end, size - 1)
                 if start < 0 or start > end:
                     raise ValueError("bad range")
-                chunk = data[start : end + 1]
-                self.send_response(206)
-                self.send_header("Content-Type", ctype)
-                self.send_header("Content-Length", str(len(chunk)))
-                self.send_header("Content-Range", f"bytes {start}-{end}/{len(data)}")
-                self.send_header("Accept-Ranges", "bytes")
-                self._security_headers()
-                self.end_headers()
-                self.wfile.write(chunk)
-                return
+                status = 206
             except Exception:
-                pass
-        self._send(200, data, ctype, extra={"Accept-Ranges": "bytes"})
+                start, end = 0, size - 1
+                status = 200
+
+        length = end - start + 1 if size > 0 else 0
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(length))
+        self.send_header("Accept-Ranges", "bytes" if support_range else "none")
+        if status == 206:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        # Immutable media can be cached briefly by the browser; HTML/API stay no-store
+        if support_range:
+            self.send_header("Cache-Control", "public, max-age=300")
+        else:
+            self.send_header("Cache-Control", "no-store")
+        self._security_headers()
+        self.end_headers()
+
+        if self.command == "HEAD" or length <= 0:
+            return
+
+        with path.open("rb") as fh:
+            fh.seek(start)
+            remaining = length
+            while remaining > 0:
+                chunk = fh.read(min(_CHUNK, remaining))
+                if not chunk:
+                    break
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+                remaining -= len(chunk)
+
+    def _file(self, path: Path, content_type: str | None = None) -> None:
+        # Small static assets: stream without range (HTML/CSS/JS)
+        self._stream_file(path, content_type, support_range=False)
+
+    def _media_file(self, path: Path) -> None:
+        self._stream_file(path, support_range=True)
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
@@ -144,23 +187,35 @@ class Handler(BaseHTTPRequestHandler):
 
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
-            target = (STATIC / rel).resolve()
-            if not str(target).startswith(str(STATIC.resolve())):
-                return self._json(403, {"error": "forbidden"})
+            target = safe_join(STATIC, rel)
+            if target is None:
+                return self._json(403, {"error": "forbidden", "code": "bad_path"})
             return self._file(target)
 
         if path.startswith("/media/videos/"):
             rel = path[len("/media/videos/") :]
-            target = (VIDEOS / rel).resolve()
-            if not str(target).startswith(str(VIDEOS.resolve())):
-                return self._json(403, {"error": "forbidden"})
-            return self._file(target)
+            target = safe_join(VIDEOS, rel)
+            if target is None:
+                return self._json(403, {"error": "forbidden", "code": "bad_path"})
+            return self._media_file(target)
 
         if path == "/api/catalog":
             cat = _read_json(CATALOG)
+            safe_videos = []
             for v in cat.get("videos", []):
-                f = VIDEOS / v["file"]
-                v["available"] = f.exists()
+                if not isinstance(v, dict):
+                    continue
+                rel = v.get("file")
+                target = safe_join(VIDEOS, rel) if isinstance(rel, str) else None
+                entry = dict(v)
+                entry["available"] = bool(target and target.is_file())
+                # Never echo a path that failed safe_join
+                if target is None:
+                    entry.pop("file", None)
+                    entry["available"] = False
+                safe_videos.append(entry)
+            cat = dict(cat)
+            cat["videos"] = safe_videos
             return self._json(200, cat)
 
         if path == "/api/scenarios":

@@ -230,3 +230,30 @@ python3 -m unittest pipeline.tests.test_validate pipeline.tests.test_pipeline \
 
 ### RESULT
 Scenario state is structurally trustworthy at the boundary; remaining path-leak surfaces cleaned.
+
+---
+
+## Iteration 8 — 2026-07-18
+
+### OBSERVE
+Media handler loaded entire files with `read_bytes()` — memory-hostile for growing MP4s. Path checks used string `startswith` only. Catalog trusted `file` fields without safe-join when probing availability.
+
+### PLAN
+**One high-impact change:** stream media with Range support + centralized safe path join for static/media/catalog.
+
+Expected outcome: range requests stream 64KiB chunks; traversal URLs get 403; catalog only marks available when path is under videos root.
+
+### EXECUTE
+- `webapp/paths.py` — `safe_join()`
+- `_stream_file` / `_media_file` with Range + chunked read
+- Catalog availability via safe_join
+- Tests: `webapp/tests/test_paths_and_media.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_paths_and_media ... (full suite)
+→ paths/media OK; range 206; traversal 403
+```
+
+### RESULT
+Media serving scales without loading whole files; path join no longer mis-handles `../` via `lstrip`.
