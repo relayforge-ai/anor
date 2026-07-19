@@ -651,6 +651,7 @@ class VideoJobQueue:
                 "segments": len(result.segments),
                 "mock_media": result.mock_media,
             }
+            completed_ok = False
             with self._lock:
                 job = self._jobs.get(job_id)
                 if job:
@@ -668,6 +669,16 @@ class VideoJobQueue:
                         job.result = payload
                         job.finished_at = time.time()
                         job.updated_at = time.time()
+                        completed_ok = True
+            # New MP4 on disk — drop catalog available-flag cache immediately
+            # (mtime fingerprint alone can lag on coarse filesystems within TTL).
+            if completed_ok:
+                try:
+                    from webapp.server import clear_catalog_cache
+
+                    clear_catalog_cache()
+                except Exception:
+                    pass
         except JobCancelled:
             with self._lock:
                 job = self._jobs.get(job_id)

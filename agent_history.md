@@ -1255,3 +1255,29 @@ python3 -m unittest webapp.tests.test_catalog_cache \
 
 ### RESULT
 Catalog GETs reuse a built payload briefly without re-statting media on every hit.
+
+---
+
+## Iteration 43 — 2026-07-19
+
+### OBSERVE
+Catalog cache (iter 42) could keep stale `available: false` for up to the TTL after a successful render if filesystem mtime fingerprint did not change quickly enough — library would lag behind new MP4s.
+
+### PLAN
+**One high-impact change:** clear catalog cache when a video job completes successfully.
+
+Expected outcome: post-render catalog rebuild sees new files immediately.
+
+### EXECUTE
+- On job `completed`, call `clear_catalog_cache()` from worker
+- Tests: clear forces rebuild; job complete nulls cache
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_catalog_cache -v
+→ Ran 5 tests — OK
+```
+- Successful mock render leaves `_catalog_cache is None`
+
+### RESULT
+New renders show as available on the next catalog fetch without waiting out the cache TTL.

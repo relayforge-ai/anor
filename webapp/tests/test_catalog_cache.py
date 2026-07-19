@@ -61,6 +61,59 @@ class TestCatalogCache(unittest.TestCase):
         self.assertGreater(n1, 0)
         self.assertGreater(n2, n1)
 
+    def test_clear_catalog_cache_forces_rebuild(self):
+        server_mod.clear_catalog_cache()
+        server_mod.build_catalog_payload()
+        server_mod.clear_catalog_cache()
+        with patch.object(Path, "is_file", side_effect=AssertionError("rebuilt")):
+            with self.assertRaises(AssertionError):
+                server_mod.build_catalog_payload()
+
+    def test_job_complete_invalidates_catalog_cache(self):
+        """Successful render must clear catalog cache so available flags refresh."""
+        import time
+        from unittest.mock import MagicMock
+        from webapp.jobs import VideoJobQueue
+
+        server_mod.clear_catalog_cache()
+        server_mod.build_catalog_payload()  # warm cache
+        self.assertIsNotNone(server_mod._catalog_cache)
+
+        q = VideoJobQueue()
+        mock_result = MagicMock()
+        mock_result.out_mp4 = Path("ELO-001-historical.mp4")
+        mock_result.segments = []
+        mock_result.mock_media = True
+
+        with patch("webapp.jobs.check_render_dependencies", return_value=(True, "ok")):
+            with patch("webapp.jobs.acquire_render_lock", return_value=(None, None)):
+                with patch("webapp.jobs.release_render_lock"):
+                    with patch(
+                        "pipeline.video_pipeline.render_video",
+                        return_value=mock_result,
+                    ):
+                        job, _ = q.enqueue(
+                            "ELO-001",
+                            "historical",
+                            use_llm=False,
+                            owner_key="t",
+                        )
+                        deadline = time.time() + 5
+                        final = None
+                        while time.time() < deadline:
+                            final = q.get(job.id)
+                            if final and final.status in (
+                                "completed",
+                                "failed",
+                                "cancelled",
+                                "timed_out",
+                            ):
+                                break
+                            time.sleep(0.02)
+                        self.assertIsNotNone(final)
+                        self.assertEqual(final.status, "completed", final.to_public())
+        self.assertIsNone(server_mod._catalog_cache)
+
 
 if __name__ == "__main__":
     unittest.main()
