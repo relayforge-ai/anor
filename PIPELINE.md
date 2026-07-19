@@ -23,6 +23,9 @@ python3 -m pipeline.cli list
 export ANOR_MOCK_MEDIA=1
 python3 -m pipeline.cli fork --scenario ELO-003 --choice march --no-llm
 python3 -m pipeline.cli video --scenario ELO-013 --choice historical
+# One still (Comfy SDXL+ESRGAN when IMAGE_URL set; mock under ANOR_MOCK_MEDIA=1)
+python3 -m pipeline.cli still --scenario ELO-013 --choice historical
+python3 -m pipeline.cli still --prompt "1944 map table archival" --out still.png --ken-burns
 
 # Product site — Forked History
 python3 -m pipeline.cli site --port 8787

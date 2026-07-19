@@ -2225,3 +2225,25 @@ Live (not CI): IMAGE_URL=http://dawes:8188 → 2 stills 4096×2304 + Ken Burns 1
 
 ### RESULT
 Monetizable image path is live-validated on Dawes SDXL+ESRGAN; CI/offline mock path unchanged. Sample assets under outputs/samples (gitignored).
+
+---
+
+## Iteration 78 — 2026-07-19
+
+### OBSERVE
+Image path green on main (`b99609b`). Operators still lacked a one-shot still CLI for social/review (full video is heavy). ELO-013 already has batch-001 drafts.
+
+### PLAN
+**One high-impact change:** `pipeline.cli still` — generate one archival PNG from freeform prompt or pack `image_prompt`, optional silent Ken Burns MP4.
+
+### EXECUTE
+- CLI `still` with `--prompt` / `--scenario` / `--choice` / `--out` / `--ken-burns`
+- Tests `pipeline/tests/test_cli_still.py`; CI module list; PIPELINE quick start
+
+### TEST
+```
+Full local CI (unittest incl. test_cli_still + compileall + pytest + pip-audit) → OK
+```
+
+### RESULT
+Content ops can mint stills (+ optional 1080p Ken Burns) without a full video render.
