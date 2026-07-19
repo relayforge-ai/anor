@@ -81,25 +81,29 @@ class TestJobTimeout(unittest.TestCase):
             raise AssertionError("should have timed out on progress")
 
         with patch.object(jobs_mod, "check_render_dependencies", return_value=(True, "ok")):
-            with patch.object(vp, "render_video", side_effect=hanging_render):
-                job, _ = q.enqueue("ELO-001", "historical", use_llm=False)
-                deadline = time.time() + 10
-                final = None
-                while time.time() < deadline:
-                    final = q.get(job.id)
-                    if final and final.status in (
-                        "timed_out",
-                        "failed",
-                        "completed",
-                        "cancelled",
-                    ):
-                        break
-                    time.sleep(0.05)
-                self.assertIsNotNone(final)
-                self.assertIn(final.status, ("timed_out", "failed"), final.to_public())
-                if final.status == "timed_out":
-                    self.assertEqual(final.stage, "timeout")
-                    self.assertIn("exceeded", (final.error or "").lower())
+            with patch.object(jobs_mod, "acquire_render_lock", return_value=(None, None)):
+                with patch.object(jobs_mod, "release_render_lock"):
+                    with patch.object(vp, "render_video", side_effect=hanging_render):
+                        job, _ = q.enqueue("ELO-001", "historical", use_llm=False)
+                        deadline = time.time() + 10
+                        final = None
+                        while time.time() < deadline:
+                            final = q.get(job.id)
+                            if final and final.status in (
+                                "timed_out",
+                                "failed",
+                                "completed",
+                                "cancelled",
+                            ):
+                                break
+                            time.sleep(0.05)
+                        self.assertIsNotNone(final)
+                        self.assertIn(
+                            final.status, ("timed_out", "failed"), final.to_public()
+                        )
+                        if final.status == "timed_out":
+                            self.assertEqual(final.stage, "timeout")
+                            self.assertIn("exceeded", (final.error or "").lower())
 
 
 if __name__ == "__main__":

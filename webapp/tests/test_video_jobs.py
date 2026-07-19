@@ -51,10 +51,30 @@ class TestVideoJobsAPI(unittest.TestCase):
         cls.httpd.shutdown()
 
     def setUp(self):
+        import shutil
+
         sec.VIDEO_JOB_LIMITER.reset()
         # Defensive: other modules must not leave a 1s wall-clock on the singleton
         if getattr(QUEUE, "timeout_s", 600) < 120:
             QUEUE.timeout_s = 600
+        # Drop stale render locks / half-built work dirs left by sibling job tests
+        videos = ROOT / "outputs" / "videos"
+        if videos.is_dir():
+            for lock in videos.glob("*/*.render.lock"):
+                try:
+                    lock.unlink()
+                except OSError:
+                    pass
+            for work in videos.glob("*/work"):
+                if work.is_dir():
+                    shutil.rmtree(work, ignore_errors=True)
+        try:
+            from webapp import jobs as jobs_mod
+
+            with jobs_mod._RENDER_PATH_LOCKS_GUARD:
+                jobs_mod._RENDER_PATH_LOCKS.clear()
+        except Exception:
+            pass
 
     def post_job(self, payload: dict):
         req = urllib.request.Request(
