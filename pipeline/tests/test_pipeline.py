@@ -77,19 +77,62 @@ class TestVideoPipeline(unittest.TestCase):
 
     def test_render_mock_mp4(self):
         cfg = PipelineConfig.from_env()
+        # Ensure default cleanup path
+        os.environ.pop("ANOR_KEEP_VIDEO_WORK", None)
         with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "out"
             result = render_video(
                 "ELO-013",
                 choice_id="historical",
-                out_dir=Path(td) / "out",
+                out_dir=out,
                 cfg=cfg,
                 use_llm=False,
             )
             self.assertTrue(result.out_mp4.exists())
             self.assertGreater(result.out_mp4.stat().st_size, 1000)
             self.assertTrue(result.script_path.exists())
-            meta = json.loads((Path(td) / "out" / "build.json").read_text())
+            meta = json.loads((out / "build.json").read_text())
             self.assertEqual(meta["scenario_id"], "ELO-013")
+            self.assertTrue(meta.get("work_cleaned"))
+            # Intermediate work/ and concat list must be gone after success
+            self.assertFalse((out / "work").exists())
+            self.assertFalse(result.out_mp4.with_suffix(".txt").exists())
+            # No absolute host paths in build.json (path leak hygiene)
+            blob = json.dumps(meta)
+            self.assertNotIn(str(td), blob)
+            self.assertNotIn(str(ROOT), blob)
+            for seg in meta.get("segments") or []:
+                for key in ("image", "audio", "clip"):
+                    val = seg.get(key) or ""
+                    self.assertNotIn("/", val)
+                    self.assertNotIn("\\", val)
+
+    def test_render_keep_work_when_flagged(self):
+        cfg = PipelineConfig.from_env()
+        prev = os.environ.get("ANOR_KEEP_VIDEO_WORK")
+        os.environ["ANOR_KEEP_VIDEO_WORK"] = "1"
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                out = Path(td) / "out"
+                result = render_video(
+                    "ELO-001",
+                    choice_id="historical",
+                    out_dir=out,
+                    cfg=cfg,
+                    use_llm=False,
+                )
+                self.assertTrue(result.out_mp4.exists())
+                meta = json.loads((out / "build.json").read_text())
+                self.assertFalse(meta.get("work_cleaned"))
+                self.assertTrue((out / "work").is_dir())
+                # At least one intermediate clip should remain
+                clips = list((out / "work").glob("*.mp4"))
+                self.assertGreaterEqual(len(clips), 1)
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_KEEP_VIDEO_WORK", None)
+            else:
+                os.environ["ANOR_KEEP_VIDEO_WORK"] = prev
 
 
 class TestConfig(unittest.TestCase):

@@ -7,6 +7,8 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +22,32 @@ ProgressCb = Callable[[str, float, str], None]  # stage, pct 0-100, message
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "outputs" / "videos"
+
+
+def _keep_work() -> bool:
+    """When true, leave work/ intermediates for debugging (default: clean up)."""
+    return (os.environ.get("ANOR_KEEP_VIDEO_WORK") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def cleanup_video_work(work_dir: Path, *extra_files: Path) -> None:
+    """Remove intermediate stills/audio/clips after a successful final MP4.
+
+    Keeps the final deliverable directory lean (mp4 + script.md + build.json).
+    Safe to call when paths are missing.
+    """
+    work_dir = Path(work_dir)
+    if work_dir.is_dir():
+        shutil.rmtree(work_dir, ignore_errors=True)
+    for p in extra_files:
+        try:
+            Path(p).unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 @dataclass
@@ -231,30 +259,39 @@ def render_video(
         dur = _ffprobe_duration(audio_file)
         _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
         clips.append(clip_path)
+        # Relative names only — never absolute host paths in build.json
         seg_meta.append(
             {
                 "id": seg["id"],
                 "title": seg["title"],
                 "tag": seg["tag"],
-                "image": str(img_path),
-                "audio": str(audio_file),
-                "clip": str(clip_path),
+                "image": img_path.name,
+                "audio": Path(audio_file).name,
+                "clip": clip_path.name,
                 "duration_s": dur,
             }
         )
 
     progress("concat", 90, "Concatenating final MP4")
     out_mp4 = out_dir / f"{scenario_id}-{choice_id}.mp4"
+    list_file = out_mp4.with_suffix(".txt")
     _concat_clips(clips, out_mp4)
+
+    cleaned = False
+    if not _keep_work():
+        progress("concat", 96, "Cleaning intermediate work files")
+        cleanup_video_work(work, list_file)
+        cleaned = True
 
     meta = {
         "scenario_id": scenario_id,
         "choice_id": choice_id,
-        "out_mp4": str(out_mp4),
+        "out_mp4": out_mp4.name,
         "speculation_level": fork.speculation_level,
         "is_historical": fork.is_historical,
         "provenance_ribbon": fork.provenance_ribbon,
         "segments": seg_meta,
+        "work_cleaned": cleaned,
         "config": cfg.describe(),
     }
     (out_dir / "build.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")

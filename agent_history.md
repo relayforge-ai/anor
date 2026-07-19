@@ -556,3 +556,33 @@ python3 -m unittest pipeline.tests.test_safe_fetch pipeline.tests.test_retry \
 
 ### RESULT
 Secondary media downloads cannot pivot to local files or cloud metadata, and cannot OOM the worker via huge bodies.
+
+---
+
+## Iteration 19 — 2026-07-19
+
+### OBSERVE
+Successful video renders left full `work/` trees (stills, VO audio, per-segment MP4s) plus concat `.txt` lists — ~8MB intermediates per branch while only the final MP4 is served. `build.json` also stored absolute host paths.
+
+### PLAN
+**One high-impact change:** delete intermediate work files after successful concat (opt-out via env); store relative names only in build.json.
+
+Expected outcome: default render leaves mp4 + script.md + build.json; disk reclaimed; no absolute paths in meta.
+
+### EXECUTE
+- `cleanup_video_work()` + `ANOR_KEEP_VIDEO_WORK` opt-out
+- Post-concat cleanup of `work/` and concat list file
+- Segment meta / out_mp4 recorded as basenames
+- Tests: cleaned by default; keep when flagged; no path leaks
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline webapp.tests.test_video_jobs -v
+→ Ran 17 tests — OK
+```
+- work/ absent after success; present with ANOR_KEEP_VIDEO_WORK=1
+- build.json has no absolute paths
+- Async video job complete still green
+
+### RESULT
+Each successful render reclaims intermediate disk; debug keep flag remains for operators.
