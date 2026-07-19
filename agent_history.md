@@ -1113,3 +1113,30 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Browser actions are correlatable with server `[forked-history] rid=` log lines.
+
+---
+
+## Iteration 38 — 2026-07-19
+
+### OBSERVE
+Studio fork buttons could be double-activated before `setBusy` applied (or via rate-limit retry while still settling), risking duplicate POSTs and burning freemium fork quota.
+
+### PLAN
+**One high-impact change:** process-wide `forkInFlight` re-entrancy guard around `runFork`.
+
+Expected outcome: second concurrent call toasts and returns; flag cleared in `finally`.
+
+### EXECUTE
+- `forkInFlight` gate + toast “already in progress”
+- Clear in `finally` with setBusy(false)
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 5 tests — OK
+```
+- JS contains forkInFlight and toast copy
+
+### RESULT
+Double-clicks no longer enqueue parallel fork simulations.

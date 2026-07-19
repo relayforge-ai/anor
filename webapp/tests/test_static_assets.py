@@ -71,6 +71,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "Membership —",
             "apiHeaders",
             "FHFreemium.apiHeaders",
+            "forkInFlight",
+            "A fork is already in progress",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")

@@ -787,6 +787,9 @@
       <p class="ribbon" style="margin-top:1rem">${escapeHtml((fork.provenance_ribbon || []).join(" · "))}</p>`;
   }
 
+  /** Prevent double-click / concurrent fork POSTs (burns freemium quota). */
+  let forkInFlight = false;
+
   async function runFork({ useLlm }) {
     if (!state.scenarioId || !state.choiceId) {
       toast("Select a scenario and a decision first.");
@@ -799,6 +802,11 @@
       );
       return;
     }
+    if (forkInFlight) {
+      toast("A fork is already in progress…");
+      return;
+    }
+    forkInFlight = true;
 
     const btn = useLlm ? $("#btn-llm") : $("#btn-fork");
     const other = useLlm ? $("#btn-fork") : $("#btn-llm");
@@ -905,6 +913,7 @@
     } finally {
       if (tickTimer) clearInterval(tickTimer);
       setBusy(false);
+      forkInFlight = false;
       renderStudioControls();
     }
   }
