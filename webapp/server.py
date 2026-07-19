@@ -873,7 +873,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(status, body)
 
         key = sec.client_key(self)
-        rate_err = sec.check_fork_rate(key, use_llm=use_llm)
+        rate_err, rate_headers = sec.check_fork_rate(key, use_llm=use_llm)
         if rate_err:
             return self._validation_error(rate_err)
 
@@ -897,7 +897,7 @@ class Handler(BaseHTTPRequestHandler):
                 ribbon = list(payload.get("provenance_ribbon") or [])
                 ribbon.append("seed:user")
                 payload["provenance_ribbon"] = ribbon
-            return self._json(200, payload)
+            return self._json(200, payload, extra=rate_headers or None)
         except FileNotFoundError:
             return self._json(404, {"error": "scenario not found", "code": "not_found"})
         except ScenarioValidationError as e:
@@ -930,7 +930,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(status, body)
 
         key = sec.client_key(self)
-        rate_err = sec.check_video_job_rate(key)
+        rate_err, rate_headers = sec.check_video_job_rate(key)
         if rate_err:
             return self._validation_error(rate_err)
 
@@ -965,13 +965,16 @@ class Handler(BaseHTTPRequestHandler):
         # Deduped responses reuse the active job (no second GPU worker)
         payload = QUEUE.to_public_enriched(job)
         payload["deduped"] = deduped
-        extra = {"X-Job-Deduped": "1" if deduped else "0"}
+        extra = {
+            "X-Job-Deduped": "1" if deduped else "0",
+            **rate_headers,
+        }
         return self._json(202, payload, extra=extra)
 
     def _post_member_demo(self) -> None:
         """Issue a short-lived Scholar token for demo unlock / review."""
         key = sec.client_key(self)
-        rate_err = sec.check_demo_token_rate(key)
+        rate_err, rate_headers = sec.check_demo_token_rate(key)
         if rate_err:
             return self._validation_error(rate_err)
 
@@ -1003,6 +1006,7 @@ class Handler(BaseHTTPRequestHandler):
                 "enforcement": mem.enforcement_enabled(),
                 "header": "X-ANOR-Member",
             },
+            extra=rate_headers or None,
         )
 
 

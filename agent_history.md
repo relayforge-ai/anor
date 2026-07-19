@@ -1783,3 +1783,31 @@ python3 -m unittest scripts.tests.test_social_drafts \
 
 ### RESULT
 Rubicon social creative is staged as drafts only, aligned with the new public pack.
+
+---
+
+## Iteration 62 — 2026-07-19
+
+### OBSERVE
+Rate-limit headers only appeared on **429**. Successful `/api/fork`, video enqueue, and demo-token responses did not report remaining budget, so the SPA could not warn before the hard limit.
+
+### PLAN
+**One high-impact change:** return `(error, rate_headers)` from endpoint rate checks; attach `X-RateLimit-Limit/Remaining` on success; SPA soft-toast when remaining is low.
+
+Expected outcome: first fork returns Remaining=limit-1; clients can throttle; 429 path unchanged.
+
+### EXECUTE
+- `rate_limit_headers` + tuple returns from `check_fork_rate` / `check_video_job_rate` / `check_demo_token_rate`
+- Server attaches headers on 200/202 success
+- SPA: `parseRateLimitRemaining` / `noteRateRemaining`
+- Tests: `test_fork_success_exposes_rate_remaining` + static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security webapp.tests.test_static_assets \
+  webapp.tests.test_webapp webapp.tests.test_membership -v
+→ Ran 43 tests — OK
+```
+
+### RESULT
+Expensive endpoints advertise remaining quota on success; studio warns when the window is nearly spent.

@@ -85,6 +85,25 @@
     return 0;
   }
 
+  function parseRateLimitRemaining(response) {
+    if (!response || !response.headers) return null;
+    const raw = response.headers.get("X-RateLimit-Remaining");
+    if (raw == null || raw === "") return null;
+    const n = parseInt(String(raw).trim(), 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
+  function noteRateRemaining(response, kind) {
+    /** Soft UX when the server reports remaining budget after success. */
+    const left = parseRateLimitRemaining(response);
+    if (left === null) return;
+    if (left === 0) {
+      toast(`${kind} rate budget used for this window`);
+    } else if (left <= 2) {
+      toast(`${kind} rate budget: ${left} left this window`);
+    }
+  }
+
   function clearRateLimitTimer() {
     if (rateLimitTimer) {
       clearInterval(rateLimitTimer);
@@ -985,6 +1004,7 @@
       renderStudioControls();
       refreshChrome();
       toast(useLlm ? "LLM fork ready" : "Fork ready");
+      noteRateRemaining(r, useLlm ? "LLM fork" : "Fork");
     } catch (e) {
       if (tickTimer) clearInterval(tickTimer);
       const stagesErr = stages.map((s, i) => ({
@@ -1325,6 +1345,7 @@
         startedAt: Date.now(),
       });
       toast(job.deduped ? "Joined existing render job" : "Video job queued");
+      noteRateRemaining(r, "Video");
       await pollVideoJob(jobId, { resumed: false });
     } catch (e) {
       const code = e.code || "video_error";

@@ -132,6 +132,41 @@ class TestForkEndpointSecurity(unittest.TestCase):
         except urllib.error.HTTPError as e:
             self.assertIn(e.code, (400, 404))
 
+    def test_fork_success_exposes_rate_remaining(self):
+        """200 fork responses include X-RateLimit-Limit/Remaining for client backoff."""
+        import webapp.server as server_mod
+
+        tight = security.RateLimiter(5, 60)
+        server_mod.sec.FORK_LIMITER = tight
+        security.FORK_LIMITER = tight
+        server_mod.sec.API_LIMITER = security.RateLimiter(1000, 60)
+        security.API_LIMITER = server_mod.sec.API_LIMITER
+        try:
+            req = urllib.request.Request(
+                self.base + "/api/fork",
+                data=json.dumps(
+                    {
+                        "scenario_id": "ELO-003",
+                        "choice_id": "historical",
+                        "use_llm": False,
+                    }
+                ).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as r:
+                self.assertEqual(r.status, 200)
+                self.assertEqual(r.headers.get("X-RateLimit-Limit"), "5")
+                rem = r.headers.get("X-RateLimit-Remaining")
+                self.assertIsNotNone(rem)
+                self.assertEqual(int(rem), 4)  # 5 limit, one used
+        finally:
+            restored = security.RateLimiter(1000, 60)
+            server_mod.sec.FORK_LIMITER = restored
+            security.FORK_LIMITER = restored
+            server_mod.sec.API_LIMITER = restored
+            security.API_LIMITER = restored
+
     def test_rate_limit_trips(self):
         import webapp.server as server_mod
 

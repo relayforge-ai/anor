@@ -284,58 +284,87 @@ def check_body_size(content_length: Optional[str]) -> Optional[ValidationError]:
     return None
 
 
-def check_fork_rate(key: str, use_llm: bool) -> Optional[ValidationError]:
+def rate_limit_headers(limit: int, remaining: int) -> dict[str, str]:
+    """Standard rate-limit headers for 200 and 429 responses."""
+    return {
+        "X-RateLimit-Limit": str(int(limit)),
+        "X-RateLimit-Remaining": str(max(0, int(remaining))),
+    }
+
+
+def check_fork_rate(
+    key: str, use_llm: bool
+) -> tuple[Optional[ValidationError], dict[str, str]]:
+    """Enforce fork (and optional LLM) limits.
+
+    Returns ``(error_or_None, rate_headers)``. On success, headers include
+    remaining budget so clients can throttle before the next 429.
+    """
     ok, remaining, retry = FORK_LIMITER.allow(f"fork:{key}")
     if not ok:
-        return ValidationError(
-            429,
-            f"rate limit exceeded — retry in {retry}s",
-            "rate_limited",
-            limit=FORK_LIMITER.limit,
-            remaining=0,
-            retry_after=retry,
-        )
-    if use_llm:
-        ok_llm, _, retry_llm = LLM_FORK_LIMITER.allow(f"llm:{key}")
-        if not ok_llm:
-            return ValidationError(
+        return (
+            ValidationError(
                 429,
-                f"LLM fork rate limit exceeded — retry in {retry_llm}s",
-                "llm_rate_limited",
-                limit=LLM_FORK_LIMITER.limit,
+                f"rate limit exceeded — retry in {retry}s",
+                "rate_limited",
+                limit=FORK_LIMITER.limit,
                 remaining=0,
-                retry_after=retry_llm,
+                retry_after=retry,
+            ),
+            rate_limit_headers(FORK_LIMITER.limit, 0),
+        )
+    headers = rate_limit_headers(FORK_LIMITER.limit, remaining)
+    if use_llm:
+        ok_llm, rem_llm, retry_llm = LLM_FORK_LIMITER.allow(f"llm:{key}")
+        if not ok_llm:
+            return (
+                ValidationError(
+                    429,
+                    f"LLM fork rate limit exceeded — retry in {retry_llm}s",
+                    "llm_rate_limited",
+                    limit=LLM_FORK_LIMITER.limit,
+                    remaining=0,
+                    retry_after=retry_llm,
+                ),
+                rate_limit_headers(LLM_FORK_LIMITER.limit, 0),
             )
-    return None
+        # LLM path is the tighter budget — surface that remaining
+        headers = rate_limit_headers(LLM_FORK_LIMITER.limit, rem_llm)
+    return None, headers
 
 
-def check_video_job_rate(key: str) -> Optional[ValidationError]:
-    ok, _, retry = VIDEO_JOB_LIMITER.allow(f"video:{key}")
+def check_video_job_rate(key: str) -> tuple[Optional[ValidationError], dict[str, str]]:
+    ok, remaining, retry = VIDEO_JOB_LIMITER.allow(f"video:{key}")
     if not ok:
-        return ValidationError(
-            429,
-            f"video render rate limit exceeded — retry in {retry}s",
-            "video_rate_limited",
-            limit=VIDEO_JOB_LIMITER.limit,
-            remaining=0,
-            retry_after=retry,
+        return (
+            ValidationError(
+                429,
+                f"video render rate limit exceeded — retry in {retry}s",
+                "video_rate_limited",
+                limit=VIDEO_JOB_LIMITER.limit,
+                remaining=0,
+                retry_after=retry,
+            ),
+            rate_limit_headers(VIDEO_JOB_LIMITER.limit, 0),
         )
-    return None
+    return None, rate_limit_headers(VIDEO_JOB_LIMITER.limit, remaining)
 
 
-def check_demo_token_rate(key: str) -> Optional[ValidationError]:
-    ok, _, retry = DEMO_TOKEN_LIMITER.allow(f"demo:{key}")
+def check_demo_token_rate(key: str) -> tuple[Optional[ValidationError], dict[str, str]]:
+    ok, remaining, retry = DEMO_TOKEN_LIMITER.allow(f"demo:{key}")
     if not ok:
-        return ValidationError(
-            429,
-            f"demo token rate limit exceeded — retry in {retry}s",
-            "demo_rate_limited",
-            limit=DEMO_TOKEN_LIMITER.limit,
-            remaining=0,
-            retry_after=retry,
+        return (
+            ValidationError(
+                429,
+                f"demo token rate limit exceeded — retry in {retry}s",
+                "demo_rate_limited",
+                limit=DEMO_TOKEN_LIMITER.limit,
+                remaining=0,
+                retry_after=retry,
+            ),
+            rate_limit_headers(DEMO_TOKEN_LIMITER.limit, 0),
         )
-    return None
-
+    return None, rate_limit_headers(DEMO_TOKEN_LIMITER.limit, remaining)
 
 def api_rate_exempt(path: str) -> bool:
     """True when path should not consume the global API budget."""

@@ -96,6 +96,9 @@ class TestStaticProgressUI(unittest.TestCase):
             "labeled speculation",
             "Documented baseline",
             "formatForkMarkdown",
+            "parseRateLimitRemaining",
+            "noteRateRemaining",
+            "X-RateLimit-Remaining",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
