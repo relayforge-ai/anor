@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relayforge.tools/schemas/fork_scenario.schema.json",
+  "title": "ANOR/ELOSTIRION public fork scenario",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "title",
+    "era",
+    "location",
+    "datetime",
+    "known_outcome",
+    "decision_question",
+    "opening",
+    "choices",
+    "provenance"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string" },
+    "title": { "type": "string" },
+    "era": { "type": "string" },
+    "location": { "type": "string" },
+    "datetime": { "type": "string" },
+    "domain": { "type": "string" },
+    "known_outcome": { "type": "string" },
+    "decision_question": { "type": "string" },
+    "opening": {
+      "type": "object",
+      "required": ["cold_open", "what_they_knew"],
+      "properties": {
+        "cold_open": { "type": "string" },
+        "what_they_knew": { "type": "string" },
+        "pressure": { "type": "string" }
+      }
+    },
+    "choices": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "is_historical", "summary", "speculation_level"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "is_historical": { "type": "boolean" },
+          "summary": { "type": "string" },
+          "immediate": { "type": "string" },
+          "near_term": { "type": "string" },
+          "longer_arc": { "type": "string" },
+          "speculation_level": {
+            "type": "string",
+            "enum": ["documented", "dramatized", "simulated"]
+          },
+          "image_prompt": { "type": "string" },
+          "vo_script": { "type": "string" }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["discipline", "notes"],
+      "properties": {
+        "discipline": { "type": "string" },
+        "notes": { "type": "string" },
+        "corpus": { "type": "string" }
+      }
+    },
+    "style_lock": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

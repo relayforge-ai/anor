@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-001",
+  "title": "Stalin's dacha — the night Barbarossa begins",
+  "era": "1941",
+  "location": "Stalin's dacha, Kuntsevo, near Moscow",
+  "datetime": "22 June 1941, the first hours of the German invasion",
+  "domain": "WW2 command / information and denial under shock",
+  "known_outcome": "The German invasion of the Soviet Union begins. Soviet leadership struggles through shock, delayed orders, and catastrophic early losses. The war becomes the Great Patriotic War; the initial hours remain a study in how power processes unbearable news.",
+  "decision_question": "When invasion reports arrive that contradict preferred assumptions, does the center accept the reality of full-scale war quickly enough to issue coherent orders?",
+  "opening": {
+    "cold_open": "Before dawn on 22 June 1941, the largest invasion force in history crosses into the Soviet Union. At the political center, the first problem is not maps — it is belief. What kind of war is this, and who is allowed to say so?",
+    "what_they_knew": "There had been warnings. There had also been reasons, true and false, to distrust warnings. Once the frontier is burning, the question becomes tempo: how fast can a hyper-centralized system authorize the obvious?",
+    "pressure": "Personal risk of bringing bad news. Institutional habits of suspicion. The cost of delay measured in encirclements."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Process through shock — delayed, centralized response",
+      "is_historical": true,
+      "summary": "The historical path: confusion, delayed full recognition, and orders that cannot match the speed of the frontier collapse.",
+      "immediate": "Frontier districts absorb the first blow while the center catches up to the scale of the attack.",
+      "near_term": "Encircling battles and catastrophic losses mark the opening weeks.",
+      "longer_arc": "The USSR survives through later mobilization and depth — but the opening remains a permanent lesson in warning, belief, and command latency.",
+      "speculation_level": "documented",
+      "image_prompt": "1941 Soviet dacha interior at night, maps and telephones, tense silhouettes, historical documentary painting, no text",
+      "vo_script": "Barbarossa did not begin as a clean briefing. It began as a fight between evidence and the stories powerful men preferred. The historical path is delay under shock — and a frontier that could not wait for the center to finish arguing with reality."
+    },
+    {
+      "id": "immediate_accept",
+      "label": "Immediate full acceptance — war orders without theater",
+      "is_historical": false,
+      "summary": "SPECULATION: The center treats the first credible reports as full-scale war and pushes coherent defensive authorization faster.",
+      "immediate": "Some units may receive clearer authority to fight as a country at war rather than a border incident.",
+      "near_term": "Even faster acceptance cannot erase German operational surprise — but it can change the shape of early chaos.",
+      "longer_arc": "This is simulated process improvement, not a guaranteed inverted war. Logistics, doctrine, and force posture still dominate. Label the optimism.",
+      "speculation_level": "simulated",
+      "image_prompt": "night war room 1941, officers moving with urgency, telephones, maps of the western frontier, serious historical still, no text",
+      "vo_script": "What if the center believed the first true reports? This branch is speculation. Faster recognition is not a magic counteroffensive. It is a narrower question: how many hours of coherence can a shocked system buy when the frontier is already on fire?"
+    },
+    {
+      "id": "disinformation_trap",
+      "label": "Double down on 'provocation' framing",
+      "is_historical": false,
+      "summary": "SPECULATION: Leadership treats early reports as provocation or local excess longer than the historical record already shows.",
+      "immediate": "Orders remain confused; local commanders pay in encirclement.",
+      "near_term": "The opening disaster deepens. Political storytelling consumes operational time.",
+      "longer_arc": "A darker branch of an already dark opening. Simulated — and constrained by the fact that reality eventually becomes undeniable.",
+      "speculation_level": "simulated",
+      "image_prompt": "dim office, unanswered phones, distant red horizon implying invasion, oppressive atmosphere, historical painting style, no text",
+      "vo_script": "There is a worse version of denial. Not the historical struggle to accept — but a longer performance that the fire is still a misunderstanding. We simulate it carefully. The frontier does not care about the performance."
+    }
+  ],
+  "sources": [
+    "Established WW2 scholarship on 22 June 1941 and Soviet high-command response",
+    "Published documentary collections on the opening of the German-Soviet war",
+    "ELOSTIRION ELO-001 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a complex historiography into a playable decision. Counterfactual branches are labeled simulated.",
+    "corpus": "ELOSTIRION ELO-001 public pack"
+  },
+  "style_lock": "1941 Soviet night interiors, heavy shadows, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "Barbarossa", "Stalin", "WW2", "decision-point"]
+}

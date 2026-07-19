@@ -33,3 +33,26 @@ jobs:
 
       - name: Dependency consistency
         run: python -m pip check
+
+  pipeline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Pipeline unit tests (offline / mock media)
+        env:
+          ANOR_MOCK_MEDIA: "1"
+          PYTHONPATH: .
+        run: python -m unittest pipeline.tests.test_pipeline -v
+
+      - name: Pipeline syntax check
+        run: python -m compileall -q pipeline

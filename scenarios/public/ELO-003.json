@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-003",
+  "title": "Hannibal after Cannae — March on Rome?",
+  "era": "216 BC",
+  "location": "Carthaginian field camp, Cannae battlefield, Apulia",
+  "datetime": "Evening of 2 August 216 BC",
+  "domain": "Ancient warfare / command decision",
+  "known_outcome": "Hannibal does not march on Rome. He consolidates south Italian allies, winters around Capua, and Rome rebuilds. The war continues for more than a decade.",
+  "decision_question": "In the hours after the greatest battlefield victory of the ancient world, does Hannibal order a cavalry march on Rome within ~48 hours?",
+  "opening": {
+    "cold_open": "Forty-seven to seventy thousand Romans dead on a wheat field. One consul dead. Eighty senators dead. Maharbal — the Numidian cavalry commander who closed the trap — stands in the command tent and will not sit. He has already proposed the ride north. He has already been refused.",
+    "what_they_knew": "Maharbal believed cavalry could reach Rome in about five days. Hannibal knew Rome had walls and he had no siege train. Capua looked ripe to defect. Carthage, not Rome, was the partner he needed for a long war. Survivors were already rallying at Canusium under surviving officers including the young Scipio.",
+    "pressure": "The window for a psychological shock march is measured in days. Every hour of delay is an hour Rome uses to reorganize. But every mile toward Rome without siege gear risks a cavalry raid that cannot take a walled city."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Refuse the march — play the long alliance game",
+      "is_historical": true,
+      "summary": "Hannibal holds. Mago carries the gold rings and the victory news to Carthage. The army turns toward Capua and the Italian allies.",
+      "immediate": "No cavalry column leaves for Rome. Survivors at Canusium consolidate without a pursuit from Hannibal's main force.",
+      "near_term": "Capua and other southern allies peel toward Carthage. Rome raises new legions under the Fabian shadow and refuses a single knockout peace.",
+      "longer_arc": "The war becomes attritional. Hannibal remains undefeated in Italy for years but never forces Rome's political collapse. The famous counterfactual — 'what if he marched?' — is born from this night.",
+      "speculation_level": "documented",
+      "image_prompt": "dusk over blood-soaked wheat fields of Cannae, Carthaginian command tent with map table, oil lamps, exhausted officers, painterly historical documentary still, no text",
+      "vo_script": "On the night after Cannae, Maharbal begged for five days. Ride for Rome. Hannibal said no. That refusal is not a meme — it is a strategic theory of war. He believed Rome would die when its allies left, not when cavalry rattled the walls. History followed his theory. Whether the theory was wrong is the question that never dies."
+    },
+    {
+      "id": "recon",
+      "label": "Order reconnaissance and a limited probe north",
+      "is_historical": false,
+      "summary": "SPECULATION: Hannibal authorizes a fast probe — not the full army — to test Roman morale and road security toward the capital.",
+      "immediate": "Numidian squadrons push north as a screen. Panic reports reach Rome faster than a full army would, but the city walls remain intact.",
+      "near_term": "Senate terror rises; emergency levies accelerate. Without a siege force, the probe cannot convert fear into surrender.",
+      "longer_arc": "The war may shorten or lengthen depending on whether the probe becomes a march — or becomes the proof Hannibal uses to demand Carthaginian reinforcements. Label: simulated counterfactual, not a fact.",
+      "speculation_level": "simulated",
+      "image_prompt": "Numidian cavalry silhouettes on an Italian road at night, distant glow of Rome on the horizon, tense historical drama still, painterly, no text",
+      "vo_script": "What if Hannibal did not refuse entirely — what if he sent a probe? This branch is speculation. Cavalry can carry terror farther than they can carry a city. The walls still stand. The question becomes whether panic in Rome buys Carthage the reinforcements Hannibal never fully received."
+    },
+    {
+      "id": "march",
+      "label": "Order the cavalry march on Rome",
+      "is_historical": false,
+      "summary": "SPECULATION: Hannibal accepts Maharbal's proposal and commits elite cavalry toward Rome within the crisis window.",
+      "immediate": "A cavalry column rides north. Rome faces the psychological shock of the victor of Cannae on the road.",
+      "near_term": "Without siege engines, taking Rome is still unlikely. But a close approach could fracture Italian alliances faster — or unite Italy in existential panic behind Rome.",
+      "longer_arc": "Historians still split: some argue the march was the missed knockout; others argue it was a romantic dead end. Any confident 'Rome falls in five days' claim is overreach. This branch must stay labeled simulated.",
+      "speculation_level": "simulated",
+      "image_prompt": "Hannibal and Maharbal at a map of Italy, cavalry forming by torchlight, the road north emphasized, dramatic chiaroscuro historical painting style, no text",
+      "vo_script": "Maharbal's line becomes legend: the gods gave everything except the will to take it. If Hannibal rides, the map of the third century BC bends. But legend is not logistics. Rome's walls, Hannibal's missing siege train, and Carthage's politics all still exist. We simulate the fork — we do not invent a guaranteed conquest."
+    }
+  ],
+  "sources": [
+    "Livy, Ab Urbe Condita 22 (Cannae aftermath; Canusium; Scipio)",
+    "Polybius 3 (Cannae campaign structure)",
+    "Standard modern syntheses on Hannibal's Italian strategy (alliance theory vs. decisive march debate)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Historical baseline is the refusal to march. Counterfactual choices are simulated, not documented outcomes.",
+    "corpus": "ELOSTIRION ELO-003 public pack"
+  },
+  "style_lock": "painterly historical documentary, muted earth and torchlight, Valiant-Hearts-adjacent illustration, no anachronistic gear, no text overlays in the image itself",
+  "tags": ["alt-history", "Cannae", "Hannibal", "Rome", "decision-point"]
+}

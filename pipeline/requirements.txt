@@ -1,0 +1,3 @@
+# Content pipeline uses Python stdlib + ffmpeg on PATH.
+# Optional: install nothing for fork site + authored branches + system TTS.
+# Optional paid/cloud keys are read from env only when you set *_URL endpoints.

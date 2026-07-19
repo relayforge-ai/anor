@@ -1,0 +1,67 @@
+{
+  "_comment": "Human-gate drafts for Postiz. type must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media paths must be uploaded via `postiz upload` first — never raw filesystem paths at publish time.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-001",
+  "created": "2026-07-18",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review captions; approve flip draft→schedule"
+  ],
+  "posts": [
+    {
+      "id": "elo-003-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "Cannae, night of the victory. Maharbal: five days to Rome. Hannibal: no.\nNot a vibes take — a strategic theory of war.\n📗 Documented baseline. Sources in bio.\n#history #althistory #hannibal #cannae #fyp",
+      "media_local": "outputs/videos/ELO-003-historical/ELO-003-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-003-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "After Cannae, Maharbal begged to ride on Rome. Hannibal said no.",
+      "caption": "On the night of 2 August 216 BC, after Cannae, Maharbal proposed a cavalry march on Rome. Hannibal refused.\n\n📗 Documented baseline · Livy 22, Polybius 3\nSeries: ANOR Fork / ELOSTIRION\n\n#history #althistory #hannibal #cannae",
+      "media_local": "outputs/videos/ELO-003-historical/ELO-003-historical.mp4",
+      "settings": {
+        "title": "After Cannae, Maharbal begged to ride on Rome. Hannibal said no.",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "althistory", "label": "althistory"}
+        ]
+      }
+    },
+    {
+      "id": "elo-013-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "caption": "1962. Submarine B-59. Nuclear torpedo. One man refuses.\n📗 Documented. Not a movie twist — a near miss.\n#history #coldwar #arkhipov #fyp",
+      "media_local": "outputs/videos/ELO-013-historical/ELO-013-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE"
+      }
+    },
+    {
+      "id": "elo-013-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "One vote on a Soviet submarine may have saved the world (1962)",
+      "caption": "27 October 1962. B-59. Heat, depth charges, incomplete information.\nDocumented path: Arkhipov refuses. The boat surfaces.\n\n📗 Public historical literature · ANOR Fork series\n\n#cubanmissilecrisis #arkhipov #coldwar",
+      "media_local": "outputs/videos/ELO-013-historical/ELO-013-historical.mp4",
+      "settings": {
+        "title": "One vote on a Soviet submarine may have saved the world (1962)",
+        "type": "public"
+      }
+    }
+  ]
+}

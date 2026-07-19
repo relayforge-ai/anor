@@ -1,8 +1,17 @@
 # Run output logs
 runs/*.json
 
+# Pipeline renders & local env
+outputs/
+.env
+*.mp4
+*.wav
+*.aiff
+*.mp3
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
 .venv/
+.pytest_cache/

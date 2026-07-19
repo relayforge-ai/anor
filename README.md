@@ -4,6 +4,34 @@ ANOR is an open-source engine for running branching decision-tree scenarios agai
 
 ANOR is the runtime component of the [MANDOS](https://github.com/relayforge-ai/mandos) benchmarking program.
 
+It also ships a **public content pipeline** for ELOSTIRION-style alternate-history decision packs: an interactive fork site (viewer changes the decision → history splits) and a narrated video path (script → TTS → stills → ffmpeg). See [`PIPELINE.md`](PIPELINE.md).
+
+---
+
+## Content pipeline (interactive forks + video)
+
+```bash
+# Health (shows LLM_URL / IMAGE_URL / TTS_URL — no secrets)
+python3 -m pipeline.cli health
+
+# List public decision packs
+python3 -m pipeline.cli list
+
+# Offline fork (authored branches; no network)
+export ANOR_MOCK_MEDIA=1
+python3 -m pipeline.cli fork --scenario ELO-003 --choice march --no-llm
+
+# Render a draft explainer (requires ffmpeg on PATH)
+python3 -m pipeline.cli video --scenario ELO-013 --choice historical
+
+# Interactive site
+python3 -m pipeline.cli site --port 8787
+```
+
+**Fleet portability:** all model/media calls read `LLM_URL`, `IMAGE_URL`, and `TTS_URL` from the environment — no hardcoded hosts — so the same code runs on Dawes now and Nauvoo later. Copy [`.env.example`](.env.example).
+
+**Guardrails:** public packs live in `scenarios/public/` only. MANDOS master sources stay internal. Social posts are staged as **drafts** under `content/drafts/` for human approval.
+
 ---
 
 ## What ANOR Does
@@ -104,14 +132,12 @@ Authoring guidelines:
 
 ```
 anor/
-├── sim/
-│   ├── mandos_sim.py     # main runner
-│   ├── branch.py         # decision tree traversal
-│   └── report.py         # output formatter
-├── schema/
-│   └── scenario_schema.json
-├── examples/
-│   └── sample_scenario.json
+├── sim/                  # decision-tree sim engine (benchmark runtime)
+├── pipeline/             # content pipeline: fork site + video
+├── scenarios/public/     # shareable ELOSTIRION decision packs
+├── content/drafts/       # social captions staged for human gate
+├── docs/
+├── PIPELINE.md
 ├── LICENSE
 └── README.md
 ```

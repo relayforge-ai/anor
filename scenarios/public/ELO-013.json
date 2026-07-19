@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-013",
+  "title": "Arkhipov on B-59 — One vote from nuclear war",
+  "era": "1962",
+  "location": "Soviet Foxtrot-class submarine B-59, Sargasso Sea / Caribbean approaches",
+  "datetime": "27 October 1962, roughly 16:00–18:00 local",
+  "domain": "Cold War nuclear crisis / command under extreme stress",
+  "known_outcome": "Vasili Arkhipov refuses to authorize use of the nuclear torpedo. B-59 surfaces. The submarine is escorted out of the quarantine zone. Nuclear war does not begin that afternoon.",
+  "decision_question": "With batteries dying, CO2 rising, and depth charges shaking the hull, does the flotilla staff officer join a launch authorization — or refuse?",
+  "opening": {
+    "cold_open": "It is the hottest day of the Cuban Missile Crisis under the sea. Temperature in compartments climbs past 110°F. Practice depth charges hammer the hull. B-59 has not heard from Moscow in days. Some officers believe war may already have started.",
+    "what_they_knew": "They knew U.S. ships were above them. They knew a nuclear-armed torpedo was among their weapons. They did not know the depth charges were intended as signaling charges, not a full attack. They did not have a clear picture of whether global war had begun.",
+    "pressure": "Heat, CO2, sleep debt, and the belief that silence from Moscow means catastrophe. Launch authority culture on a Foxtrot was not a Hollywood red-button myth — it was a human argument in a steel tube."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Refuse — force surface and live",
+      "is_historical": true,
+      "summary": "Arkhipov holds the line against launch. The boat surfaces into the American screen and is forced out of the area.",
+      "immediate": "No nuclear torpedo is fired. B-59 comes up. U.S. destroyers dominate the scene with conventional force.",
+      "near_term": "The crisis continues on the surface track of diplomacy. Kennedy and Khrushchev still have a path short of city-killing exchange.",
+      "longer_arc": "Later testimony and scholarship make Arkhipov's role a canonical near-miss of the nuclear age. The decision becomes a teaching case in restraint under incomplete information.",
+      "speculation_level": "documented",
+      "image_prompt": "interior of a cramped 1960s Soviet diesel submarine, exhausted officers, dim red lighting, depth charge shock, tense documentary still, no text",
+      "vo_script": "On October 27, 1962, three men on a Soviet submarine held the difference between a bad day and the end of cities. The historical path is restraint. Arkhipov does not authorize the nuclear shot. The boat surfaces. History continues."
+    },
+    {
+      "id": "surface_delay",
+      "label": "Delay the vote — demand another attempt to contact Moscow",
+      "is_historical": false,
+      "summary": "SPECULATION: The council stalls for a radio attempt or a further battery assessment before any launch vote finalizes.",
+      "immediate": "Minutes stretch. Depth charges continue. Risk of accident or misread intent remains high even without a nuclear shot.",
+      "near_term": "A successful contact attempt could clarify that war has not started — or silence could harden the worst assumptions.",
+      "longer_arc": "This branch is dramatized process, not a recorded minute-by-minute alternate. It explores how thin the margin was between procedure and catastrophe.",
+      "speculation_level": "dramatized",
+      "image_prompt": "submarine radio room, operator straining through static, officers waiting, cold war tension, painterly documentary, no text",
+      "vo_script": "What if they waited for Moscow one more time? This is dramatized process, not a second history book. The air is still poison-hot. The charges still fall. Delay can save a world — or waste the last minutes before someone decides the war already began."
+    },
+    {
+      "id": "launch",
+      "label": "Authorize the nuclear torpedo",
+      "is_historical": false,
+      "summary": "SPECULATION: Launch authority aligns for a nuclear torpedo shot against the American screen. This is the nightmare branch.",
+      "immediate": "A nuclear detonation at sea against U.S. naval forces would almost certainly be read in Washington as the opening of general war.",
+      "near_term": "Escalation ladders that were still diplomatic could collapse into strategic exchange within hours.",
+      "longer_arc": "Any detailed 'who wins' story after this point is fantasy. The responsible claim is simple: this branch is the reason the historical refusal matters. Label: simulated catastrophe path.",
+      "speculation_level": "simulated",
+      "image_prompt": "abstract restrained image of a submarine silhouette under destroyers, ominous sky, no mushroom cloud gore, serious historical warning still, no text",
+      "vo_script": "If the vote goes the other way, we leave the realm of what is known. A nuclear shot at sea on the worst day of the Missile Crisis is not a clever wargame ending — it is a plausible road to general war. We mark this branch as simulation, not history, because the only honest detail is the scale of the risk."
+    }
+  ],
+  "sources": [
+    "Public historical accounts of B-59 / Vasili Arkhipov during the Cuban Missile Crisis",
+    "U.S. and Soviet secondary literature on the quarantine and submarine incidents of October 1962",
+    "ELOSTIRION corpus notes: decision-point framing; incomplete information; no hindsight smuggling"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Baseline is refusal and surfacing. Launch and extended-delay branches are counterfactual and must remain labeled.",
+    "corpus": "ELOSTIRION ELO-013 public pack"
+  },
+  "style_lock": "cold war documentary realism, cramped metal interiors, heat and sweat implied, restrained palette, no text, no propaganda posters",
+  "tags": ["alt-history", "Cuban Missile Crisis", "Arkhipov", "nuclear", "decision-point"]
+}
