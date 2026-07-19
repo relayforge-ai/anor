@@ -48,20 +48,29 @@ jobs:
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Pipeline unit tests (offline / mock media)
+      - name: Pipeline + webapp unit tests (offline / mock media)
         env:
           ANOR_MOCK_MEDIA: "1"
           PYTHONPATH: .
-        run: python -m unittest pipeline.tests.test_pipeline -v
+        run: |
+          python -m unittest \
+            pipeline.tests.test_pipeline \
+            pipeline.tests.test_retry \
+            webapp.tests.test_webapp \
+            webapp.tests.test_security \
+            webapp.tests.test_security_headers \
+            webapp.tests.test_static_assets \
+            webapp.tests.test_video_jobs \
+            -v
 
-      - name: Pipeline syntax check
-        run: python -m compileall -q pipeline
+      - name: Pipeline + webapp syntax check
+        run: python -m compileall -q pipeline webapp scripts
 
-      - name: Webapp API smoke tests
-        env:
-          ANOR_MOCK_MEDIA: "1"
-          PYTHONPATH: .
-        run: python -m unittest webapp.tests.test_webapp -v
+      - name: Dependency pin audit
+        run: python scripts/dep_audit.py
 
-      - name: Webapp syntax check
-        run: python -m compileall -q webapp
+      - name: Dependency vulnerability scan (pip-audit)
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          python scripts/dep_audit.py --pip-audit --require-pip-audit
+

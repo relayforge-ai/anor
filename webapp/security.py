@@ -1,12 +1,16 @@
 """Security helpers for the Forked History product site.
 
-In-process rate limiting + strict request validation. No external deps.
+In-process rate limiting + strict request validation + response headers.
+No external deps for the hot path.
+
 Tune via env without code changes:
   ANOR_FORK_RATE_LIMIT   max fork requests per window (default 20)
   ANOR_FORK_RATE_WINDOW  window seconds (default 60)
   ANOR_FORK_LLM_RATE     max use_llm=true forks per window (default 5)
   ANOR_MAX_BODY_BYTES    max POST body size (default 16384)
   ANOR_MAX_SEED_CHARS    max custom_seed length (default 500)
+  ANOR_CORS_ORIGIN       CORS allow-origin (default * for local dev)
+  ANOR_CSP               override Content-Security-Policy entirely
 """
 
 from __future__ import annotations
@@ -190,3 +194,41 @@ def check_video_job_rate(key: str) -> Optional[ValidationError]:
             "video_rate_limited",
         )
     return None
+
+
+# --- Response security headers -------------------------------------------------
+
+# Default CSP: same-origin app assets + Google Fonts (used by the product SPA).
+# No inline script execution (app.js is external). style-src allows Google CSS.
+_DEFAULT_CSP = (
+    "default-src 'self'; "
+    "base-uri 'self'; "
+    "object-src 'none'; "
+    "frame-ancestors 'none'; "
+    "form-action 'self'; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com data:; "
+    "img-src 'self' data: blob:; "
+    "media-src 'self' blob:; "
+    "connect-src 'self'; "
+    "upgrade-insecure-requests"
+)
+
+
+def security_headers() -> dict[str, str]:
+    """Browser hardening headers applied to every response."""
+    csp = os.environ.get("ANOR_CSP", "").strip() or _DEFAULT_CSP
+    cors = os.environ.get("ANOR_CORS_ORIGIN", "*").strip() or "*"
+    return {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Resource-Policy": "same-site",
+        "Content-Security-Policy": csp,
+        "Access-Control-Allow-Origin": cors,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }

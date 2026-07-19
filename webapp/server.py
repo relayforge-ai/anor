@@ -47,17 +47,14 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.2"
+    server_version = "ForkedHistory/1.3"
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
 
-    def _cors(self) -> None:
-        # Product is same-origin SPA; keep CORS narrow (no credentials wildcards).
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("X-Content-Type-Options", "nosniff")
+    def _security_headers(self) -> None:
+        for k, v in sec.security_headers().items():
+            self.send_header(k, v)
 
     def _send(
         self,
@@ -70,7 +67,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
-        self._cors()
+        self._security_headers()
         if extra:
             for k, v in extra.items():
                 self.send_header(k, v)
@@ -124,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Length", str(len(chunk)))
                 self.send_header("Content-Range", f"bytes {start}-{end}/{len(data)}")
                 self.send_header("Accept-Ranges", "bytes")
-                self._cors()
+                self._security_headers()
                 self.end_headers()
                 self.wfile.write(chunk)
                 return
@@ -134,7 +131,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
-        self._cors()
+        self._security_headers()
         self.end_headers()
 
     def do_GET(self) -> None:

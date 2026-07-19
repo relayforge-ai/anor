@@ -133,3 +133,36 @@ python3 -m unittest webapp.tests.test_video_jobs webapp.tests.test_static_assets
 
 ### RESULT
 Long video renders no longer block HTTP. Studio can queue + poll with real pipeline progress.
+
+---
+
+## Iteration 5 — 2026-07-18
+
+### OBSERVE
+API hardening and video queue exist, but responses lacked a full browser security header set (only nosniff). CI ran a thin subset of tests and had no dependency vulnerability scan. Google Fonts require a deliberate CSP allowlist.
+
+### PLAN
+**One high-impact change:** security response headers + automated dependency audit in CI.
+
+Expected outcome: every response carries CSP/frame/referrer/permissions policies; `scripts/dep_audit.py` checks pins and runs pip-audit; CI covers full webapp/pipeline suite.
+
+### EXECUTE
+- `security_headers()` in `webapp/security.py`; applied on all responses
+- `scripts/dep_audit.py` — pin audit + optional pip-audit
+- CI expanded: full unittest set + dep_audit + pip-audit
+- Tests: `webapp/tests/test_security_headers.py`, `scripts/tests/test_dep_audit.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security_headers webapp.tests.test_video_jobs \
+  webapp.tests.test_static_assets webapp.tests.test_security webapp.tests.test_webapp \
+  pipeline.tests.test_retry pipeline.tests.test_pipeline -v
+→ 36 tests OK
+python3 scripts/dep_audit.py → OK (0 loose pins)
+python3 scripts/tests/test_dep_audit.py → 3 OK
+```
+- HTML/JSON responses include CSP, X-Frame-Options DENY, nosniff, Referrer-Policy
+- sim deps now have upper bounds
+
+### RESULT
+Browser-facing surface hardened; dependency drift is audited in CI.
