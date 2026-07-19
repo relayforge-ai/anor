@@ -14,10 +14,13 @@
     lastFork: null,
   };
 
-  /** sessionStorage key — resume in-flight video poll after refresh */
+  /** sessionStorage keys — survive tab refresh within the browser session */
   const ACTIVE_VIDEO_KEY = "fh:activeVideoJob";
+  const LAST_FORK_KEY = "fh:lastFork";
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
+  /** Active rate-limit countdown timer (studio) */
+  let rateLimitTimer = null;
 
   function saveActiveVideoJob(rec) {
     try {
@@ -41,6 +44,52 @@
     try {
       sessionStorage.removeItem(ACTIVE_VIDEO_KEY);
     } catch (_) {}
+  }
+
+  function saveLastFork(fork) {
+    try {
+      if (!fork || !fork.scenario_id) return;
+      const raw = JSON.stringify(fork);
+      // Cap storage so a pathological payload cannot fill sessionStorage
+      if (raw.length > 100000) return;
+      sessionStorage.setItem(LAST_FORK_KEY, raw);
+    } catch (_) {}
+  }
+
+  function loadLastFork() {
+    try {
+      const raw = sessionStorage.getItem(LAST_FORK_KEY);
+      if (!raw) return null;
+      const fork = JSON.parse(raw);
+      if (!fork || !fork.scenario_id) return null;
+      return fork;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearLastFork() {
+    try {
+      sessionStorage.removeItem(LAST_FORK_KEY);
+    } catch (_) {}
+    state.lastFork = null;
+  }
+
+  function parseRetryAfter(response) {
+    if (!response || !response.headers) return 0;
+    const raw = response.headers.get("Retry-After");
+    if (!raw) return 0;
+    const n = parseInt(String(raw).trim(), 10);
+    if (Number.isFinite(n) && n > 0) return Math.min(n, 3600);
+    // HTTP-date form — rare; ignore for countdown simplicity
+    return 0;
+  }
+
+  function clearRateLimitTimer() {
+    if (rateLimitTimer) {
+      clearInterval(rateLimitTimer);
+      rateLimitTimer = null;
+    }
   }
 
   function jobProgressLabel(st) {
@@ -439,12 +488,69 @@
       <div class="skeleton skeleton-block"></div>`;
   }
 
-  function renderForkError(message, code) {
+  function renderForkError(message, code, opts) {
+    const o = opts || {};
+    const retryAfter = Math.max(0, parseInt(o.retryAfter, 10) || 0);
+    const isRate = code === "rate_limited" || retryAfter > 0;
+    const showRetry = !!o.retryAction;
+    let waitHtml = "";
+    if (isRate && retryAfter > 0) {
+      waitHtml = `<p class="rate-wait" id="rate-wait-msg" aria-live="polite">Try again in <strong id="rate-wait-s">${retryAfter}</strong>s</p>`;
+    } else if (isRate) {
+      waitHtml = `<p class="rate-wait" id="rate-wait-msg">Rate limit reached — wait a moment, then retry.</p>`;
+    }
+    const retryHtml = showRetry
+      ? `<div class="row rate-actions" style="margin-top:0.75rem">
+           <button type="button" class="btn btn-primary btn-sm" id="btn-retry-action"${
+             retryAfter > 0 ? " disabled" : ""
+           } data-retry-action="${escapeHtml(o.retryAction)}">${
+             retryAfter > 0 ? `Wait ${retryAfter}s` : "Try again"
+           }</button>
+         </div>`
+      : "";
     return `
-      <div class="fork-error" role="alert">
+      <div class="fork-error${isRate ? " is-rate-limit" : ""}" role="alert">
         ${escapeHtml(message || "Something went wrong")}
         ${code ? `<span class="code">${escapeHtml(code)}</span>` : ""}
+        ${waitHtml}
+        ${retryHtml}
       </div>`;
+  }
+
+  function bindRateLimitRetry(retryAfter, onRetry) {
+    clearRateLimitTimer();
+    const btn = $("#btn-retry-action");
+    const sEl = $("#rate-wait-s");
+    if (!btn) return;
+    let left = Math.max(0, parseInt(retryAfter, 10) || 0);
+    const paint = () => {
+      if (left > 0) {
+        btn.disabled = true;
+        btn.textContent = `Wait ${left}s`;
+        if (sEl) sEl.textContent = String(left);
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Try again";
+        const msg = $("#rate-wait-msg");
+        if (msg) msg.textContent = "You can try again now.";
+      }
+    };
+    paint();
+    if (left > 0) {
+      rateLimitTimer = setInterval(() => {
+        left -= 1;
+        if (left <= 0) {
+          clearRateLimitTimer();
+          left = 0;
+        }
+        paint();
+      }, 1000);
+    }
+    btn.onclick = () => {
+      if (btn.disabled) return;
+      clearRateLimitTimer();
+      if (typeof onRetry === "function") onRetry();
+    };
   }
 
   async function renderStudio(scenarioId) {
@@ -547,6 +653,18 @@
     }
 
     renderStudioControls();
+    // Restore last fork narrative after refresh (same scenario only)
+    if (!state.lastFork || state.lastFork.scenario_id !== scenarioId) {
+      const stored = loadLastFork();
+      if (stored && stored.scenario_id === scenarioId) {
+        state.lastFork = stored;
+        if (stored.choice_id) {
+          state.choiceId = stored.choice_id;
+          const el = [...choiceBtns].find((b) => b.dataset.choice === stored.choice_id);
+          if (el) selectChoice(el, choiceBtns);
+        }
+      }
+    }
     const activeJob = loadActiveVideoJob();
     const resumeSame =
       activeJob &&
@@ -573,6 +691,7 @@
           ? renderForkHtml(state.lastFork)
           : `<div class="note">Pick a decision and run a fork. Documented baselines stay honest; speculation is labeled.</div>`;
     }
+    renderStudioControls();
   }
 
   function selectChoice(btn, allBtns) {
@@ -711,6 +830,8 @@
       if (!r.ok) {
         const err = new Error(data.error || `Fork failed (${r.status})`);
         err.code = data.code || (r.status === 429 ? "rate_limited" : "fork_failed");
+        err.retryAfter = parseRetryAfter(r);
+        if (r.status === 429 && !err.retryAfter) err.retryAfter = 60;
         throw err;
       }
       if (tickTimer) clearInterval(tickTimer);
@@ -718,6 +839,7 @@
       // Brief beat so users see completion before narrative replaces the bar
       await new Promise((res) => setTimeout(res, 180));
       state.lastFork = data;
+      saveLastFork(data);
       FHFreemium.recordFork();
       $("#fork-result").innerHTML = renderForkHtml(data);
       renderStudioControls();
@@ -728,20 +850,27 @@
       const stagesErr = stages.map((s, i) => ({
         ...s,
       }));
+      const code = e.code || "error";
+      const retryAfter = e.retryAfter || 0;
       $("#fork-result").innerHTML =
         renderSimProgress({
           stages: stagesErr,
           activeIndex: stageIdx,
           pct: Math.min(88, 12 + stageIdx * 22),
-          label: "Simulation interrupted",
+          label: code === "rate_limited" ? "Rate limited" : "Simulation interrupted",
           indeterminate: false,
-        }) + renderForkError(e.message || String(e), e.code || "error");
+        }) +
+        renderForkError(e.message || String(e), code, {
+          retryAfter,
+          retryAction: "fork",
+        });
       // mark active stage as error via class patch
       const active = $("#fork-result")?.querySelector(".sim-stages li.active");
       if (active) {
         active.classList.remove("active");
         active.classList.add("error");
       }
+      bindRateLimitRetry(retryAfter, () => runFork({ useLlm }));
     } finally {
       if (tickTimer) clearInterval(tickTimer);
       setBusy(false);
@@ -999,7 +1128,12 @@
       });
       const job = await r.json().catch(() => ({}));
       if (!r.ok && r.status !== 202) {
-        throw Object.assign(new Error(job.error || "Enqueue failed"), { code: job.code });
+        const err = Object.assign(new Error(job.error || "Enqueue failed"), {
+          code: job.code || (r.status === 429 ? "rate_limited" : "video_error"),
+          retryAfter: parseRetryAfter(r),
+        });
+        if (r.status === 429 && !err.retryAfter) err.retryAfter = 60;
+        throw err;
       }
 
       const jobId = job.id;
@@ -1012,7 +1146,13 @@
       toast(job.deduped ? "Joined existing render job" : "Video job queued");
       await pollVideoJob(jobId, { resumed: false });
     } catch (e) {
-      $("#fork-result").innerHTML = renderForkError(e.message || String(e), e.code || "video_error");
+      const code = e.code || "video_error";
+      const retryAfter = e.retryAfter || 0;
+      $("#fork-result").innerHTML = renderForkError(e.message || String(e), code, {
+        retryAfter,
+        retryAction: "video",
+      });
+      bindRateLimitRetry(retryAfter, () => queueVideoRender());
       if (btn) {
         btn.disabled = false;
         btn.classList.remove("busy");
@@ -1219,7 +1359,8 @@
     // studio buttons
     $("#studio-scenario")?.addEventListener("change", (e) => {
       state.choiceId = null;
-      state.lastFork = null;
+      clearLastFork();
+      clearRateLimitTimer();
       navigate("studio/" + e.target.value);
     });
     $("#btn-fork")?.addEventListener("click", () => runFork({ useLlm: false }));

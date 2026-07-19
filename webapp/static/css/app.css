@@ -1031,6 +1031,24 @@ textarea {
   text-transform: uppercase;
   color: var(--muted);
 }
+.fork-error.is-rate-limit {
+  border-color: rgba(212, 168, 67, 0.45);
+  background: rgba(212, 168, 67, 0.1);
+  color: var(--ink);
+}
+.fork-error .rate-wait {
+  margin: 0.55rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.fork-error .rate-wait strong {
+  color: var(--gold, #d4a843);
+  font-variant-numeric: tabular-nums;
+}
+.fork-error .rate-actions .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 .btn.busy {
   position: relative;

@@ -586,3 +586,34 @@ python3 -m unittest pipeline.tests.test_pipeline webapp.tests.test_video_jobs -v
 
 ### RESULT
 Each successful render reclaims intermediate disk; debug keep flag remains for operators.
+
+---
+
+## Iteration 20 — 2026-07-19
+
+### OBSERVE
+Studio lost fork narratives on refresh (export/compare disabled until re-run). Rate-limit 429 responses sent `Retry-After` but the UI showed a generic error with no countdown or retry path — poor freemium feedback under limits.
+
+### PLAN
+**One high-impact change:** persist last fork in sessionStorage + rate-limit UX (Retry-After countdown and Try again).
+
+Expected outcome: refresh restores last fork for the same scenario; 429 shows wait timer then enables retry for fork/video.
+
+### EXECUTE
+- `fh:lastFork` save/load/clear; restore on studio entry; clear on scenario change
+- `parseRetryAfter` + `bindRateLimitRetry` + rate-limit styling
+- Fork and video enqueue catch paths wire countdown + retry
+- Static asset markers for new helpers/CSS
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_security \
+  webapp.tests.test_webapp -v
+→ Ran 18 tests — OK
+```
+- JS contains `fh:lastFork`, `parseRetryAfter`, `bindRateLimitRetry`
+- CSS has `.fork-error.is-rate-limit` and `.rate-wait`
+- Security rate-limit + fork happy path still green
+
+### RESULT
+Explorers keep fork results across refresh; rate limits are actionable instead of dead-end errors.
