@@ -27,7 +27,14 @@ class TestPublicPacks(unittest.TestCase):
     def test_core_packs_present(self):
         ids = {s["scenario_id"] for s in list_scenarios()}
         self.assertTrue(
-            {"ELO-001", "ELO-003", "ELO-007", "ELO-009", "ELO-013"}.issubset(ids),
+            {
+                "ELO-001",
+                "ELO-003",
+                "ELO-004",
+                "ELO-007",
+                "ELO-009",
+                "ELO-013",
+            }.issubset(ids),
             f"missing core packs; have {sorted(ids)}",
         )
 
@@ -70,6 +77,17 @@ class TestPublicPacks(unittest.TestCase):
         self.assertFalse(r.is_historical)
         self.assertEqual(r.speculation_level, "simulated")
 
+    def test_elo_004_cross_is_documented_historical(self):
+        r = run_fork("ELO-004", "historical", use_llm=False)
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        blob = (r.narrative + r.label).lower()
+        self.assertTrue("cross" in blob or "rubicon" in blob or "civil" in blob)
+
+    def test_elo_004_stand_down_is_simulated(self):
+        r = run_fork("ELO-004", "stand_down", use_llm=False)
+        self.assertFalse(r.is_historical)
+        self.assertEqual(r.speculation_level, "simulated")
 
     def test_payload_hides_nothing_required(self):
         p = scenario_payload("ELO-003")

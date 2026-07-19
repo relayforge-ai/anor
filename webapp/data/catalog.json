@@ -194,6 +194,36 @@
       "speculation": "simulated",
       "featured": false,
       "blurb": "Counterfactual branch: no historical pause — canal country, attrition, and tempo risk, all labeled 🧪."
+    },
+    {
+      "id": "ELO-004-historical",
+      "scenario_id": "ELO-004",
+      "choice_id": "historical",
+      "title": "Rubicon: the crossing",
+      "subtitle": "49 BC — civil war becomes open",
+      "era": "49 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-004-historical/ELO-004-historical.mp4",
+      "poster_gradient": ["#1a1814", "#0f1115"],
+      "tags": ["Rome", "Caesar", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: Caesar crosses with the army; the Republic's crisis becomes civil war."
+    },
+    {
+      "id": "ELO-004-stand_down",
+      "scenario_id": "ELO-004",
+      "choice_id": "stand_down",
+      "title": "SPECULATION: Caesar stands down",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "49 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-004-stand_down/ELO-004-stand_down.mp4",
+      "poster_gradient": ["#241c18", "#121018"],
+      "tags": ["Rome", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: no armed crossing — courts, enemies, and veterans without a war, all labeled 🧪."
     }
   ]
 }

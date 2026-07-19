@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-004",
+  "title": "Caesar at the Rubicon — cross or stand down?",
+  "era": "49 BC",
+  "location": "The Rubicon (boundary of Cisalpine Gaul and Italy proper), winter 49 BC",
+  "datetime": "Early January 49 BC (conventional reckoning of the crossing)",
+  "domain": "Late Roman Republic / civil war threshold",
+  "known_outcome": "Julius Caesar leads his legion across the Rubicon into Italy, violating the norms that forbade a proconsul from bringing an army into Italy proper. Civil war follows. Caesar eventually defeats the Pompeian faction; the Republic's old balance does not recover.",
+  "decision_question": "Facing recall, prosecution risk, and a hostile political order in Rome, does Caesar cross the Rubicon with armed force — or submit to demobilization and the courts?",
+  "opening": {
+    "cold_open": "A shallow river. A legal line more than a military one. On one bank: a victorious proconsul and a legion that has followed him for years. On the other: Italy, the Senate's claim to order, and a career that ends in humiliation if he lays down arms. Later writers will put a famous phrase in his mouth. The decision is older than the slogan.",
+    "what_they_knew": "Caesar knew the Senate faction around Pompey wanted him stripped of command and exposed. He knew crossing with troops meant civil war. He did not know the full map of loyalties in Italy, how fast cities would open gates, or how long a civil war would last.",
+    "pressure": "Loss of dignitas and legal safety if he disbands. Irreversible bloodshed and the charge of tyranny if he marches. The window to decide is measured in days of political maneuver, not months of calm debate."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Cross with the army — force the issue in Italy",
+      "is_historical": true,
+      "summary": "Documented path: Caesar crosses; civil war begins; the Republic's crisis becomes open military contest.",
+      "immediate": "Troops enter Italy. Panic and calculation in Rome. Pompey's camp and the Senate must respond without a prepared Italian defense in depth.",
+      "near_term": "Rapid campaigning, sieges, and factional realignment. The war spreads beyond a single river crossing.",
+      "longer_arc": "Caesar's victory path and the transformation of Roman politics are the documented aftermath. The Rubicon becomes the emblem of an irreversible political-military threshold.",
+      "speculation_level": "documented",
+      "image_prompt": "winter river ford in northern Italy, Roman legionaries and a commander on horseback, cold documentary historical painting, no text, no modern objects",
+      "vo_script": "A river that is mostly a law. Caesar's choice is not a meme about destiny — it is a bet that force in Italy beats the courts and the Senate's timetable. History records the crossing. Civil war follows. Everything after is paid in Roman blood and political reinvention."
+    },
+    {
+      "id": "stand_down",
+      "label": "Stand down — submit to recall and trial risk",
+      "is_historical": false,
+      "summary": "SPECULATION: Caesar disbands or leaves his army and accepts the political process in Rome, gambling on allies, bribery, and legal delay rather than open war.",
+      "immediate": "No armed entry into Italy. Senate hard-liners may still prosecute; Caesar's veterans become a political problem without a commander in the field.",
+      "near_term": "Possible exile, conviction, or messy compromise. Pompey's dominance may harden — or a different bargain may form. None of this is a second history book.",
+      "longer_arc": "Simulated. We do not invent a tidy 'Republic saved' ending. Standing down removes one path to civil war and opens others: judicial destruction, street violence, or delayed conflict under someone else's command.",
+      "speculation_level": "simulated",
+      "image_prompt": "Roman commander dismounting, soldiers stacked arms near a winter camp, tense restrained historical still, no text",
+      "vo_script": "What if he does not cross? This is speculation. Laying down the army is not peace by default — it is a different risk stack: courts, enemies, and veterans without a war. We label the branch simulated because the only honest claim is the trade: less immediate civil war for more exposure to political destruction."
+    },
+    {
+      "id": "negotiate_delay",
+      "label": "Buy time — negotiate demobilization terms without crossing",
+      "is_historical": false,
+      "summary": "SPECULATION: Caesar keeps the army north of the line while bargaining for a consulship, immunity, or joint stand-down with Pompey — a dramatized path of brinkmanship without the historical ford.",
+      "immediate": "Standoff. Messengers, decrees, and mutual suspicion. The army remains a loaded instrument just outside Italy.",
+      "near_term": "Talks may collapse into the historical war by another road, or produce a brittle truce. Tempo favors whoever can hold cohesion longer.",
+      "longer_arc": "Dramatized process, not a documented alternate minute-by-minute. Explores whether the Republic still had a non-military off-ramp once armies and personal commands had grown this large.",
+      "speculation_level": "dramatized",
+      "image_prompt": "two groups of Roman officers negotiating under a gray sky near a river boundary, documentary historical painting, no text",
+      "vo_script": "What if the game is delay and terms, not the ford? Brinkmanship can spare a week of blood and spend a month of nerve. This branch is dramatized process — a way to study the off-ramp that may already have been too narrow — not a claim of a clean diplomatic save."
+    }
+  ],
+  "sources": [
+    "Ancient narrative tradition on Caesar's civil war opening (e.g. Caesar's Civil War; later accounts in Plutarch, Suetonius, Appian — used as public historiography, not secret files)",
+    "Modern scholarship on the late Republic's institutional crisis and the 49 BC outbreak of civil war",
+    "ELOSTIRION ELO-004 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a famous threshold into a playable choice. Famous quotations are later tradition; the historical branch is the armed crossing and civil war. Counterfactuals are labeled simulated or dramatized.",
+    "corpus": "ELOSTIRION ELO-004 public pack"
+  },
+  "style_lock": "Late Republican Italy, winter light, river ford, Roman military kit, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "Rome", "Caesar", "Rubicon", "Republic", "decision-point"]
+}

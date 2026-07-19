@@ -1728,3 +1728,31 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Studio clipboard path is free and label-preserving; download export remains a Scholar control.
+
+---
+
+## Iteration 60 — 2026-07-19
+
+### OBSERVE
+Six eras of product surface still only five public packs after Dunkirk; no late-Republic threshold decision between Cannae and modern crises.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-004** (Caesar at the Rubicon) with documented crossing + labeled stand-down / negotiate branches; catalog + tests.
+
+Expected outcome: six public packs; historical = documented armed crossing; stand_down = simulated; no MANDOS material.
+
+### EXECUTE
+- `scenarios/public/ELO-004.json`
+- Catalog: ELO-004-historical + ELO-004-stand_down
+- README pack table
+- Tests: core set + fork label assertions
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  webapp.tests.test_webapp webapp.tests.test_catalog_cache webapp.tests.test_scenarios_cache -v
+→ Ran 42 tests — OK
+```
+
+### RESULT
+Studio/library gain the Rubicon as a playable civil-war threshold with speculation labels intact.
