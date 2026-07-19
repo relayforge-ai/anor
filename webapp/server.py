@@ -58,7 +58,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.18"
+    server_version = "ForkedHistory/1.19"
     # Do not advertise Python version (default is "BaseHTTP/x.y Python/a.b")
     sys_version = ""
 
@@ -413,7 +413,8 @@ class Handler(BaseHTTPRequestHandler):
             if err:
                 return self._validation_error(err)
             try:
-                return self._json(200, scenario_payload(sid))
+                # Semi-static public packs — short cache + ETag like /api/scenarios
+                return self._json_revalidatable(scenario_payload(sid), max_age=120)
             except FileNotFoundError:
                 return self._json(404, {"error": "scenario not found", "code": "not_found"})
             except ScenarioValidationError as e:

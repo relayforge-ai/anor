@@ -461,18 +461,20 @@
 
   /* ——— Studio ——— */
   async function loadScenarioDetail(id) {
-    const r = await fetch("/api/scenario/" + encodeURIComponent(id), {
-      headers: FHFreemium.apiHeaders({ Accept: "application/json" }),
-    });
-    if (!r.ok) {
-      let msg = "Scenario load failed";
-      try {
-        const err = await r.json();
-        if (err.error) msg = err.error;
-      } catch (_) {}
-      throw new Error(msg);
+    // Conditional GET — packs are semi-static; reuse session ETag cache when possible
+    try {
+      const { data } = await fetchJsonRevalidatable(
+        "/api/scenario/" + encodeURIComponent(id),
+        "fh:cache:scenario:" + id
+      );
+      return data;
+    } catch (e) {
+      const err = new Error(
+        (e && e.message) || "Scenario load failed"
+      );
+      err.code = (e && e.code) || "scenario_load_failed";
+      throw err;
     }
-    return r.json();
   }
 
   /** Staged progress copy for fork simulation (authored vs LLM). */

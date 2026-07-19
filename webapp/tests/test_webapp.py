@@ -92,6 +92,25 @@ class TestWebapp(unittest.TestCase):
         self.assertNotIn("Python", server)
         self.assertNotIn("CPython", server)
 
+    def test_scenario_detail_etag_304(self):
+        status, body, headers = self.get("/api/scenario/ELO-003")
+        self.assertEqual(status, 200)
+        data = json.loads(body)
+        self.assertEqual(data.get("scenario_id"), "ELO-003")
+        etag = headers.get("ETag")
+        self.assertTrue(etag)
+        self.assertIn("max-age", (headers.get("Cache-Control") or "").lower())
+        req = urllib.request.Request(
+            self.base + "/api/scenario/ELO-003",
+            headers={"If-None-Match": etag},
+        )
+        try:
+            urllib.request.urlopen(req, timeout=5)
+            self.fail("expected 304")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 304)
+            self.assertEqual(e.headers.get("ETag"), etag)
+
     def test_fork(self):
         req = urllib.request.Request(
             self.base + "/api/fork",

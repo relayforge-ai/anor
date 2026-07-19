@@ -1140,3 +1140,30 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Double-clicks no longer enqueue parallel fork simulations.
+
+---
+
+## Iteration 39 — 2026-07-19
+
+### OBSERVE
+Studio reloads the full scenario pack on every studio visit (`/api/scenario/:id` ~3KB) with no ETag, while catalog/scenarios already revalidated. Switching packs repeatedly re-downloaded unchanged JSON.
+
+### PLAN
+**One high-impact change:** ETag + short cache for scenario detail; client revalidates via session cache key per id.
+
+Expected outcome: second GET of same scenario can 304; studio uses `fetchJsonRevalidatable`.
+
+### EXECUTE
+- Server: `_json_revalidatable(scenario_payload, max_age=120)`
+- Client: `loadScenarioDetail` → `fh:cache:scenario:{id}`
+- Tests: scenario ETag 304 + static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_webapp webapp.tests.test_static_assets -v
+→ Ran 12 tests — OK
+```
+- ELO-003 detail ETag + If-None-Match → 304
+
+### RESULT
+Studio pack loads revalidate cheaply when the public pack is unchanged.
