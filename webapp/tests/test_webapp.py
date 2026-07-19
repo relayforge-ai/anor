@@ -19,11 +19,22 @@ from http.server import ThreadingHTTPServer
 class TestWebapp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Clear any rate-limit state left by security tests in the same process
+        from webapp import security as sec
+
+        sec.FORK_LIMITER.reset()
+        sec.LLM_FORK_LIMITER.reset()
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         cls.port = cls.httpd.server_address[1]
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
         cls.base = f"http://127.0.0.1:{cls.port}"
+
+    def setUp(self):
+        from webapp import security as sec
+
+        sec.FORK_LIMITER.reset()
+        sec.LLM_FORK_LIMITER.reset()
 
     @classmethod
     def tearDownClass(cls):

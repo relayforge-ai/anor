@@ -8,6 +8,7 @@ falls back to authored branch text when offline.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Optional
@@ -53,11 +54,24 @@ def list_scenarios(directory: Path = PUBLIC_DIR) -> list[dict[str, str]]:
 
 
 def load_scenario(scenario_id: str, directory: Path = PUBLIC_DIR) -> dict:
-    path = directory / f"{scenario_id}.json"
-    if not path.exists():
-        # allow bare path
-        path = Path(scenario_id)
-    if not path.exists():
+    """Load a public pack by id only — never accept absolute/relative file paths.
+
+    Rejects path traversal and any id that does not resolve inside ``directory``.
+    """
+    if not isinstance(scenario_id, str) or not scenario_id:
+        raise FileNotFoundError("Scenario not found: empty id")
+    # Defense in depth: no separators, no parent refs
+    if ".." in scenario_id or "/" in scenario_id or "\\" in scenario_id:
+        raise FileNotFoundError(f"Scenario not found: {scenario_id}")
+    # Only the basename form {id}.json under the public directory
+    root = directory.resolve()
+    path = (root / f"{scenario_id}.json").resolve()
+    if not str(path).startswith(str(root) + os.sep) and path != root:
+        # path must be a direct child of root
+        raise FileNotFoundError(f"Scenario not found: {scenario_id}")
+    if path.parent != root:
+        raise FileNotFoundError(f"Scenario not found: {scenario_id}")
+    if not path.is_file():
         raise FileNotFoundError(f"Scenario not found: {scenario_id}")
     return json.loads(path.read_text(encoding="utf-8"))
 

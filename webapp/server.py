@@ -7,7 +7,7 @@ Serves:
   /api/catalog      pricing + video catalog
   /api/scenarios    public packs list
   /api/scenario/:id pack detail
-  /api/fork         decision fork (authored or LLM)
+  /api/fork         decision fork (authored or LLM) — rate-limited + validated
   /media/videos/*   rendered explainers from outputs/videos
 
 Usage:
@@ -37,6 +37,7 @@ if str(ROOT) not in sys.path:
 from pipeline.config import PipelineConfig  # noqa: E402
 from pipeline.fork_engine import list_scenarios, run_fork, scenario_payload  # noqa: E402
 from pipeline.clients import healthcheck  # noqa: E402
+from webapp import security as sec  # noqa: E402
 
 
 def _read_json(path: Path):
@@ -44,17 +45,25 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.0"
+    server_version = "ForkedHistory/1.1"
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
 
     def _cors(self) -> None:
+        # Product is same-origin SPA; keep CORS narrow (no credentials wildcards).
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("X-Content-Type-Options", "nosniff")
 
-    def _send(self, code: int, body: bytes, content_type: str, extra: dict | None = None) -> None:
+    def _send(
+        self,
+        code: int,
+        body: bytes,
+        content_type: str,
+        extra: dict | None = None,
+    ) -> None:
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
@@ -66,9 +75,26 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _json(self, code: int, obj) -> None:
+    def _json(self, code: int, obj, extra: dict | None = None) -> None:
         raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
-        self._send(code, raw, "application/json; charset=utf-8")
+        self._send(code, raw, "application/json; charset=utf-8", extra=extra)
+
+    def _validation_error(self, err: sec.ValidationError) -> None:
+        headers = {}
+        if err.status == 429:
+            # Extract retry seconds if present in message
+            headers["Retry-After"] = "60"
+            msg = err.error
+            if "retry in " in msg:
+                try:
+                    headers["Retry-After"] = msg.split("retry in ", 1)[1].rstrip("s")
+                except Exception:
+                    pass
+        self._json(
+            err.status,
+            {"error": err.error, "code": err.code},
+            extra=headers or None,
+        )
 
     def _file(self, path: Path, content_type: str | None = None) -> None:
         if not path.exists() or not path.is_file():
@@ -76,15 +102,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         data = path.read_bytes()
         ctype = content_type or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-        # Range support light-touch for video scrubbing
         range_h = self.headers.get("Range")
-        if range_h and range_h.startswith("bytes=") and path.suffix.lower() in {".mp4", ".webm", ".mov"}:
+        if range_h and range_h.startswith("bytes=") and path.suffix.lower() in {
+            ".mp4",
+            ".webm",
+            ".mov",
+        }:
             try:
-                unit, rng = range_h.split("=", 1)
+                _, rng = range_h.split("=", 1)
                 start_s, end_s = (rng.split("-", 1) + [""])[:2]
                 start = int(start_s) if start_s else 0
                 end = int(end_s) if end_s else len(data) - 1
                 end = min(end, len(data) - 1)
+                if start < 0 or start > end:
+                    raise ValueError("bad range")
                 chunk = data[start : end + 1]
                 self.send_response(206)
                 self.send_header("Content-Type", ctype)
@@ -113,7 +144,6 @@ class Handler(BaseHTTPRequestHandler):
 
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
-            # path traversal guard
             target = (STATIC / rel).resolve()
             if not str(target).startswith(str(STATIC.resolve())):
                 return self._json(403, {"error": "forbidden"})
@@ -128,7 +158,6 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/catalog":
             cat = _read_json(CATALOG)
-            # annotate which video files exist
             for v in cat.get("videos", []):
                 f = VIDEOS / v["file"]
                 v["available"] = f.exists()
@@ -143,6 +172,14 @@ class Handler(BaseHTTPRequestHandler):
                 200,
                 {
                     "site": "ok",
+                    "version": self.server_version,
+                    "security": {
+                        "fork_rate_limit": sec.FORK_LIMITER.limit,
+                        "fork_rate_window_s": sec.FORK_LIMITER.window_s,
+                        "llm_fork_rate_limit": sec.LLM_FORK_LIMITER.limit,
+                        "max_body_bytes": sec.MAX_BODY_BYTES,
+                        "max_seed_chars": sec.MAX_SEED_CHARS,
+                    },
                     "pipeline": healthcheck(cfg),
                     "videos_dir": str(VIDEOS),
                     "videos_present": sorted(
@@ -155,10 +192,13 @@ class Handler(BaseHTTPRequestHandler):
 
         if path.startswith("/api/scenario/"):
             sid = urllib.parse.unquote(path[len("/api/scenario/") :])
+            err = sec.validate_scenario_id(sid)
+            if err:
+                return self._validation_error(err)
             try:
                 return self._json(200, scenario_payload(sid))
             except FileNotFoundError:
-                return self._json(404, {"error": "scenario not found"})
+                return self._json(404, {"error": "scenario not found", "code": "not_found"})
 
         return self._json(404, {"error": "not found", "path": path})
 
@@ -167,20 +207,49 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path != "/api/fork":
             return self._json(404, {"error": "not found"})
 
+        body_err = sec.check_body_size(self.headers.get("Content-Length"))
+        if body_err:
+            return self._validation_error(body_err)
+
         length = int(self.headers.get("Content-Length") or "0")
-        raw = self.rfile.read(length) if length else b"{}"
+        # Cap read even if Content-Length lied
+        raw = self.rfile.read(min(length, sec.MAX_BODY_BYTES + 1)) if length else b"{}"
+        if len(raw) > sec.MAX_BODY_BYTES:
+            return self._validation_error(
+                sec.ValidationError(
+                    413,
+                    f"request body too large (max {sec.MAX_BODY_BYTES} bytes)",
+                    "body_too_large",
+                )
+            )
+
         try:
             data = json.loads(raw.decode("utf-8"))
-        except json.JSONDecodeError:
-            return self._json(400, {"error": "invalid json"})
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return self._json(400, {"error": "invalid json", "code": "bad_json"})
+
+        if not isinstance(data, dict):
+            return self._json(400, {"error": "body must be a JSON object", "code": "bad_json"})
 
         scenario_id = data.get("scenario_id")
         choice_id = data.get("choice_id")
         use_llm = bool(data.get("use_llm"))
-        custom_seed = (data.get("custom_seed") or "").strip()
 
-        if not scenario_id or not choice_id:
-            return self._json(400, {"error": "scenario_id and choice_id required"})
+        for err in (
+            sec.validate_scenario_id(scenario_id),
+            sec.validate_choice_id(choice_id),
+        ):
+            if err:
+                return self._validation_error(err)
+
+        seed, seed_err = sec.sanitize_custom_seed(data.get("custom_seed"))
+        if seed_err:
+            return self._validation_error(seed_err)
+
+        key = sec.client_key(self)
+        rate_err = sec.check_fork_rate(key, use_llm=use_llm)
+        if rate_err:
+            return self._validation_error(rate_err)
 
         cfg = PipelineConfig.from_env()
         try:
@@ -191,21 +260,25 @@ class Handler(BaseHTTPRequestHandler):
                 use_llm=use_llm,
             )
             payload = result.to_dict()
-            if custom_seed:
-                # Scholar control: annotate seed into narrative without inventing facts
-                payload["custom_seed"] = custom_seed
+            if seed:
+                payload["custom_seed"] = seed
                 payload["narrative"] = (
                     payload["narrative"]
                     + "\n\n---\n**Custom pressure seed (user-provided, not a historical source):** "
-                    + custom_seed
+                    + seed
                     + "\n*Treat this seed as a simulation prompt only.*"
                 )
                 ribbon = list(payload.get("provenance_ribbon") or [])
                 ribbon.append("seed:user")
                 payload["provenance_ribbon"] = ribbon
             return self._json(200, payload)
+        except FileNotFoundError:
+            return self._json(404, {"error": "scenario not found", "code": "not_found"})
+        except KeyError as e:
+            return self._json(400, {"error": str(e), "code": "bad_choice"})
         except Exception as e:
-            return self._json(400, {"error": str(e)})
+            # Do not leak stack traces to clients
+            return self._json(400, {"error": str(e)[:300], "code": "fork_failed"})
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8787) -> None:
@@ -214,6 +287,11 @@ def run_server(host: str = "127.0.0.1", port: int = 8787) -> None:
     print(f"  static: {STATIC}")
     print(f"  videos: {VIDEOS}")
     print(f"  packs:  {ROOT / 'scenarios' / 'public'}")
+    print(
+        f"  security: fork≤{sec.FORK_LIMITER.limit}/{int(sec.FORK_LIMITER.window_s)}s "
+        f"llm≤{sec.LLM_FORK_LIMITER.limit}/{int(sec.LLM_FORK_LIMITER.window_s)}s "
+        f"body≤{sec.MAX_BODY_BYTES}B seed≤{sec.MAX_SEED_CHARS}c"
+    )
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
