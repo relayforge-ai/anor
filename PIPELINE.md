@@ -35,6 +35,7 @@ python3 -m pipeline.cli site --port 8787
 |----|-------|-----|----------|
 | ELO-003 | Hannibal after Cannae | 216 BC | March on Rome? |
 | ELO-004 | Caesar at the Rubicon | 49 BC | Cross or stand down? |
+| ELO-005 | July Crisis blank cheque | 1914 | Underwrite Vienna or restrain? |
 | ELO-009 | Dunkirk halt | 1940 | Press armor or halt? |
 | ELO-001 | Stalin's dacha, Barbarossa | 1941 | Accept invasion reports? |
 | ELO-007 | EXCOMM quarantine | 1962 | Quarantine vs strike? |

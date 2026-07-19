@@ -1893,3 +1893,31 @@ python3 -m unittest scripts.tests.test_pipeline_docs scripts.tests.test_deploy_c
 
 ### RESULT
 Pipeline documentation matches the live product surface; pack list cannot drift silently.
+
+---
+
+## Iteration 66 — 2026-07-19
+
+### OBSERVE
+Six public packs spanned antiquity and mid-20th century but had no WWI July Crisis decision point — a core ELOSTIRION-style alliance cascade gap.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-005** (blank cheque) with documented support path + labeled restrain/localize branches; catalog + docs + tests.
+
+Expected outcome: seven public packs; historical = documented; restrain = simulated; PIPELINE/README inventory updated.
+
+### EXECUTE
+- `scenarios/public/ELO-005.json`
+- Catalog: ELO-005-historical + ELO-005-restrain
+- README + PIPELINE pack tables
+- Fork label tests
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  scripts.tests.test_pipeline_docs webapp.tests.test_webapp webapp.tests.test_catalog_cache -v
+→ Ran 44 tests — OK
+```
+
+### RESULT
+Studio/library gain the July Crisis as a playable Great Power decision with speculation labels intact.

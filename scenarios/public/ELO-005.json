@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-005",
+  "title": "July Crisis — the blank cheque",
+  "era": "1914",
+  "location": "Berlin / Vienna diplomatic circuit, after Sarajevo",
+  "datetime": "5–6 July 1914 (German assurances to Austria-Hungary) and the following cascade",
+  "domain": "Great Power crisis / alliance politics before general war",
+  "known_outcome": "Germany issues strong support for Austria-Hungary against Serbia (the so-called blank cheque). Vienna hardens its course. The July Crisis escalates through ultimatums, partial mobilizations, and alliance obligations into a general European war.",
+  "decision_question": "After the assassination at Sarajevo, does Berlin give Vienna a free hand against Serbia — or restrain Austria-Hungary and force a slower, more localized settlement path?",
+  "opening": {
+    "cold_open": "A heir is dead in Sarajevo. The Dual Monarchy wants a reckoning with Serbia. In Berlin the question is not abstract sympathy — it is whether Germany will underwrite a hard Austrian policy that may drag Russia, France, and Britain into a continental war.",
+    "what_they_knew": "They knew the Balkan powder trail ran through alliance systems. They knew Russia claimed interest in Serbia. They did not know with certainty how far each capital would go, how fast mobilizations would lock the calendar, or whether a limited Balkan war could stay limited.",
+    "pressure": "Alliance credibility versus the risk of general war. Domestic politics, military timetables, and the fear of looking weak after a public outrage."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Issue the blank cheque — full support for a hard Austrian course",
+      "is_historical": true,
+      "summary": "Documented path: Germany signals strong backing for Austria-Hungary. Vienna proceeds with a punitive policy that helps transform a Balkan crisis into a European war.",
+      "immediate": "Vienna feels licensed to draft a harsh ultimatum and prepare force. Other capitals read German support as a green light for escalation risk.",
+      "near_term": "Ultimatum, partial answers, mobilizations, and the sliding of the alliance machinery. Localization becomes harder by the day.",
+      "longer_arc": "The war that follows is the documented catastrophe of 1914. Historians still debate weights of blame; the blank-cheque episode remains a central decision point in the cascade.",
+      "speculation_level": "documented",
+      "image_prompt": "1914 European diplomatic chamber, maps of the Balkans, officers and frock coats, tense documentary historical painting, no text",
+      "vo_script": "July 1914. Sarajevo has already happened. The choice in Berlin is whether to underwrite Vienna's hard hand. History records a blank cheque — support that helped turn a Balkan crisis into a general war. This is not a meme about destiny. It is alliance politics under a stopwatch."
+    },
+    {
+      "id": "restrain",
+      "label": "Restrain Vienna — condition support on diplomacy first",
+      "is_historical": false,
+      "summary": "SPECULATION: Berlin ties support to mediation, limited aims, or a slower timetable, refusing a free hand that risks Russia immediately.",
+      "immediate": "Vienna faces a harder internal argument. A limited or delayed response may reduce the chance of a rapid Russian mobilization spiral — or may look like weakness.",
+      "near_term": "Possible conference diplomacy, a narrower Balkan war, or a different later explosion. Outcomes are not a scoreboard.",
+      "longer_arc": "Simulated. We do not invent a clean 'no Great War' ending. Restraining the ally changes the risk stack; it does not erase nationalism, militarization, or other flashpoints.",
+      "speculation_level": "simulated",
+      "image_prompt": "1914 telegraph room, delayed messages, anxious diplomats, restrained historical documentary still, no text",
+      "vo_script": "What if Berlin says not yet — diplomacy first? This is speculation. Conditioning support can slow a crisis or simply move the rupture. We label the branch simulated because the honest claim is tempo and conditionality, not a guaranteed peace."
+    },
+    {
+      "id": "localize_only",
+      "label": "Push a strictly localized Balkan war — no Russian front assumed",
+      "is_historical": false,
+      "summary": "SPECULATION: Berlin encourages a short, sharp Austrian campaign framed as local punishment while betting Russia will not fully intervene — a dramatized emphasis on the localization gamble already present in some contemporary hopes.",
+      "immediate": "Policy language stresses Serbia only. Military staffs still prepare for wider contingencies because hope is not a plan.",
+      "near_term": "If Russia mobilizes anyway, localization collapses. If Russia hesitates, a brutal Balkan war may still redraw the map under European eyes.",
+      "longer_arc": "Dramatized process, not a secret history. Explores the bet that a Great Power war could be fenced — a bet the documented cascade largely lost.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1914 staff map focused on the Balkans with Europe faded, tense officers, documentary painting, no text",
+      "vo_script": "What if the plan is localization at all costs? A short war framed as Balkan justice. This branch is dramatized process. The documented crisis shows how hard that fence was to hold once mobilizations and alliance clocks started running."
+    }
+  ],
+  "sources": [
+    "Established diplomatic histories of the July Crisis and the outbreak of the First World War",
+    "Published documentary collections on German–Austrian exchanges after Sarajevo (public historiography)",
+    "ELOSTIRION ELO-005 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-capital crisis into a Berlin-facing choice for playability. Counterfactual restrain/localize branches are labeled simulated or dramatized. No claim of a single-cause war.",
+    "corpus": "ELOSTIRION ELO-005 public pack"
+  },
+  "style_lock": "1914 European chancelleries, frock coats, maps, telegraphs, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "WW1", "July Crisis", "1914", "diplomacy", "decision-point"]
+}

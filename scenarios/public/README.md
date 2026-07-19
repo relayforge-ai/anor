@@ -21,6 +21,7 @@ See `schema/fork_scenario.schema.json`.
 |----|-------|-----|----------|
 | ELO-003 | Hannibal after Cannae | 216 BC | March on Rome? |
 | ELO-004 | Caesar at the Rubicon | 49 BC | Cross with the army or stand down? |
+| ELO-005 | July Crisis — the blank cheque | 1914 | Underwrite Vienna or restrain? |
 | ELO-009 | Dunkirk — the halt that bought a fleet | 1940 | Press armor or halt? |
 | ELO-001 | Stalin's dacha, Barbarossa | 1941 | Accept the invasion reports? |
 | ELO-007 | EXCOMM — quarantine or strike? | 1962 | Naval quarantine vs airstrike/invasion? |

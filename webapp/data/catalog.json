@@ -224,6 +224,36 @@
       "speculation": "simulated",
       "featured": false,
       "blurb": "Counterfactual branch: no armed crossing — courts, enemies, and veterans without a war, all labeled 🧪."
+    },
+    {
+      "id": "ELO-005-historical",
+      "scenario_id": "ELO-005",
+      "choice_id": "historical",
+      "title": "July 1914: the blank cheque",
+      "subtitle": "Berlin underwrites Vienna — the cascade begins",
+      "era": "1914",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-005-historical/ELO-005-historical.mp4",
+      "poster_gradient": ["#1a1c18", "#0f1115"],
+      "tags": ["WW1", "July Crisis", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: strong German support for a hard Austrian course after Sarajevo."
+    },
+    {
+      "id": "ELO-005-restrain",
+      "scenario_id": "ELO-005",
+      "choice_id": "restrain",
+      "title": "SPECULATION: Berlin restrains Vienna",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1914",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-005-restrain/ELO-005-restrain.mp4",
+      "poster_gradient": ["#221c18", "#121018"],
+      "tags": ["WW1", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: condition support on diplomacy first — tempo risk, not a guaranteed peace, labeled 🧪."
     }
   ]
 }

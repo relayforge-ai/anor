@@ -31,6 +31,7 @@ class TestPublicPacks(unittest.TestCase):
                 "ELO-001",
                 "ELO-003",
                 "ELO-004",
+                "ELO-005",
                 "ELO-007",
                 "ELO-009",
                 "ELO-013",
@@ -86,6 +87,21 @@ class TestPublicPacks(unittest.TestCase):
 
     def test_elo_004_stand_down_is_simulated(self):
         r = run_fork("ELO-004", "stand_down", use_llm=False)
+        self.assertFalse(r.is_historical)
+        self.assertEqual(r.speculation_level, "simulated")
+
+    def test_elo_005_blank_cheque_is_documented_historical(self):
+        r = run_fork("ELO-005", "historical", use_llm=False)
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        blob = (r.narrative + r.label).lower()
+        self.assertTrue(
+            "blank" in blob or "cheque" in blob or "check" in blob or "vienna" in blob
+            or "support" in blob
+        )
+
+    def test_elo_005_restrain_is_simulated(self):
+        r = run_fork("ELO-005", "restrain", use_llm=False)
         self.assertFalse(r.is_historical)
         self.assertEqual(r.speculation_level, "simulated")
 
