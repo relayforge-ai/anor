@@ -942,3 +942,32 @@ python3 -m unittest webapp.tests.test_webapp -v
 
 ### RESULT
 Repeat catalog/scenario loads can revalidate cheaply; HTTP Server header no longer fingerprints the runtime.
+
+---
+
+## Iteration 32 — 2026-07-19
+
+### OBSERVE
+Failed video jobs put raw exception text into `job.error` for client polls — ffmpeg failures often embedded absolute host paths (`/Users/.../outputs/...`), leaking layout via the public job API.
+
+### PLAN
+**One high-impact change:** sanitize client-facing job errors (redact absolute paths); keep full text in server logs.
+
+Expected outcome: public `error` has `<anor>` / `<path>/file` only; stderr still has full detail.
+
+### EXECUTE
+- `sanitize_public_error()` in `jobs.py`
+- Use for failed + timed_out job errors
+- Operator log line with full exception
+- Tests: unit redaction + worker failure path
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_error_sanitize -v
+→ Ran 4 tests — OK
+```
+- Repo root and `/Users/...` redacted
+- Worker failed job public error path-free
+
+### RESULT
+Browser-visible job errors no longer disclose host filesystem layout.

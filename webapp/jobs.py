@@ -14,8 +14,10 @@ Env:
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -25,6 +27,14 @@ from pathlib import Path
 from typing import Any, Optional, TextIO
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# Absolute filesystem paths that must never reach clients in error strings
+_ABS_PATH_RE = re.compile(
+    r"(?:"
+    r"/(?:Users|home|var|tmp|private|opt|System|Volumes|usr|etc|root)[^\s'\"\,\]\)]*"
+    r"|[A-Za-z]:\\[^\s'\"\,\]\)]*"
+    r")"
+)
 
 try:
     import fcntl as _fcntl
@@ -44,6 +54,38 @@ def _env_int(name: str, default: int) -> int:
         return max(1, int(raw))
     except ValueError:
         return default
+
+
+def sanitize_public_error(message: object, *, limit: int = 400) -> str:
+    """Redact absolute host paths from exception text before client delivery.
+
+    ffmpeg and pipeline failures often embed full command lines with
+    ``/Users/.../outputs/videos/...`` — useful for operators in logs, unsafe
+    in job JSON polled by browsers.
+    """
+    text = str(message or "")
+    root = str(ROOT)
+    if root and root in text:
+        text = text.replace(root, "<anor>")
+    # Also replace resolved/symlink forms when present
+    try:
+        resolved = str(ROOT.resolve())
+        if resolved != root and resolved in text:
+            text = text.replace(resolved, "<anor>")
+    except OSError:
+        pass
+
+    def _shorten(match: re.Match[str]) -> str:
+        raw = match.group(0)
+        name = Path(raw).name
+        return f"<path>/{name}" if name else "<path>"
+
+    text = _ABS_PATH_RE.sub(_shorten, text)
+    # Collapse runs of whitespace from long argv dumps
+    text = re.sub(r"[ \t]{2,}", " ", text).strip()
+    if len(text) > limit:
+        text = text[: limit - 1] + "…"
+    return text
 
 
 def check_ffmpeg() -> tuple[bool, str]:
@@ -600,10 +642,12 @@ class VideoJobQueue:
                     job.status = "timed_out"
                     job.stage = "timeout"
                     job.message = "Timed out"
-                    job.error = str(e)[:400]
+                    job.error = sanitize_public_error(e)
                     job.finished_at = time.time()
                     job.updated_at = time.time()
         except Exception as e:
+            # Keep full text in process logs for operators
+            sys.stderr.write(f"[forked-history] video job {job_id} failed: {e!s}\n")
             with self._lock:
                 job = self._jobs.get(job_id)
                 if job:
@@ -615,7 +659,7 @@ class VideoJobQueue:
                         job.status = "failed"
                         job.stage = "error"
                         job.message = "Render failed"
-                        job.error = str(e)[:400]
+                        job.error = sanitize_public_error(e)
                     job.finished_at = time.time()
                     job.updated_at = time.time()
         finally:

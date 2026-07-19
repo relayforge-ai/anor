@@ -73,6 +73,7 @@ jobs:
             webapp.tests.test_job_privacy \
             webapp.tests.test_render_lock \
             webapp.tests.test_health_privacy \
+            webapp.tests.test_error_sanitize \
             -v
 
       - name: Pipeline + webapp syntax check
