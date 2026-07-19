@@ -99,6 +99,12 @@ class TestStaticProgressUI(unittest.TestCase):
             "parseRateLimitRemaining",
             "noteRateRemaining",
             "X-RateLimit-Remaining",
+            "libraryFilter",
+            "filterLibraryVideos",
+            "bindLibraryFilters",
+            "scenariosChronological",
+            "eraSortKey",
+            "data-lib-filter",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -111,6 +117,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".boot-error", css)
         self.assertIn(".pulse-cta", css)
         self.assertIn("pulseCta", css)
+        self.assertIn(".library-filters", css)
+        self.assertIn(".library-filter.active", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")
@@ -120,6 +128,10 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn('id="btn-copy"', html)
         self.assertIn("Copy narrative", html)
         self.assertIn('id="btn-export"', html)
+        self.assertIn('id="library-filters"', html)
+        self.assertIn("data-lib-filter", html)
+        self.assertIn("Documented", html)
+        self.assertIn("Simulated", html)
 
     def test_index_noscript_guidance(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

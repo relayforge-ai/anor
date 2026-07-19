@@ -1331,3 +1331,14 @@ body.boot-failed .member-strip {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Library speculation filters */
+.library-filters .library-filter.active {
+  border-color: rgba(226, 196, 109, 0.55);
+  color: var(--ink);
+  background: rgba(226, 196, 109, 0.1);
+}
+.library-filters .library-filter:focus-visible {
+  outline: 2px solid var(--gold, #e2c46d);
+  outline-offset: 2px;
+}

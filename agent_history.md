@@ -1811,3 +1811,30 @@ python3 -m unittest webapp.tests.test_security webapp.tests.test_static_assets \
 
 ### RESULT
 Expensive endpoints advertise remaining quota on success; studio warns when the window is nearly spent.
+
+---
+
+## Iteration 63 — 2026-07-19
+
+### OBSERVE
+Library grew to ~10 catalog cuts across 6 packs with no filter UI. Documented and simulated episodes mixed in one grid; studio pack select was filename order, not chronology.
+
+### PLAN
+**One high-impact change:** library filter toolbar (All / Documented / Simulated / On this host) + chronological pack ordering on home and studio.
+
+Expected outcome: users can browse only 📗 or only 🧪; packs listed ancient→modern; a11y toolbar + live status count.
+
+### EXECUTE
+- `#library-filters` + `filterLibraryVideos` / `bindLibraryFilters`
+- `eraSortKey` / `scenariosChronological` for home + studio select
+- CSS active filter state
+- Static asset tests
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 14 tests — OK
+```
+
+### RESULT
+Library respects historical integrity labels as first-class browse filters; packs read in time order.

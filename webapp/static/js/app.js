@@ -12,6 +12,7 @@
     choiceId: null,
     scenarioDetail: null,
     lastFork: null,
+    libraryFilter: "all",
   };
 
   /** sessionStorage keys — survive tab refresh within the browser session */
@@ -276,7 +277,7 @@
     bindVideoCards(grid);
 
     const sgrid = $("#home-scenario-grid");
-    sgrid.innerHTML = state.scenarios
+    sgrid.innerHTML = scenariosChronological(state.scenarios)
       .map(
         (s) => `
       <article class="card video-card" data-scenario="${escapeHtml(s.scenario_id)}">
@@ -349,13 +350,86 @@
   }
 
   /* ——— Library ——— */
+  function eraSortKey(era) {
+    /** Approximate chronological order: BC years negative, AD positive. */
+    const s = String(era || "");
+    const bc = /\bbc\b/i.test(s);
+    const m = s.match(/(\d{1,4})/);
+    if (!m) return 99999;
+    const y = parseInt(m[1], 10);
+    return bc ? -y : y;
+  }
+
+  function scenariosChronological(list) {
+    return [...(list || [])].sort((a, b) => {
+      const d = eraSortKey(a.era) - eraSortKey(b.era);
+      if (d !== 0) return d;
+      return String(a.scenario_id || "").localeCompare(String(b.scenario_id || ""));
+    });
+  }
+
+  function filterLibraryVideos(videos, filter) {
+    const f = filter || "all";
+    if (f === "documented") return videos.filter((v) => v.speculation === "documented");
+    if (f === "simulated") {
+      return videos.filter(
+        (v) => v.speculation === "simulated" || v.speculation === "dramatized"
+      );
+    }
+    if (f === "available") return videos.filter((v) => v.available !== false);
+    return videos;
+  }
+
+  function bindLibraryFilters() {
+    const bar = $("#library-filters");
+    if (!bar || bar.dataset.bound === "1") return;
+    bar.dataset.bound = "1";
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-lib-filter]");
+      if (!btn) return;
+      state.libraryFilter = btn.getAttribute("data-lib-filter") || "all";
+      paintLibraryFilterBar();
+      renderLibrary();
+    });
+  }
+
+  function paintLibraryFilterBar() {
+    $$("#library-filters [data-lib-filter]").forEach((btn) => {
+      const on = btn.getAttribute("data-lib-filter") === state.libraryFilter;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
   function renderLibrary() {
     showPage("library");
     setActiveNav("library");
-    const videos = state.catalog.videos || [];
+    bindLibraryFilters();
+    paintLibraryFilterBar();
+    const all = state.catalog.videos || [];
+    const videos = filterLibraryVideos(all, state.libraryFilter);
     const grid = $("#library-grid");
-    if (!videos.length) {
+    const status = $("#library-filter-status");
+    if (status) {
+      const labels = {
+        all: "Showing all episodes",
+        documented: "Showing 📗 documented baselines only",
+        simulated: "Showing 🧪 simulated / dramatized forks only",
+        available: "Showing episodes with media on this host",
+      };
+      status.textContent = `${labels[state.libraryFilter] || labels.all} · ${videos.length} of ${all.length}`;
+    }
+    if (!all.length) {
       grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");
+      return;
+    }
+    if (!videos.length) {
+      grid.innerHTML = `
+        <div class="card side-panel library-empty" style="grid-column:1/-1">
+          <p class="eyebrow">Filter</p>
+          <h3 class="h3" style="margin-top:0">No episodes match this filter</h3>
+          <p class="lede-sm">Try <strong>All</strong> or another speculation label. Documented and simulated cuts stay separate on purpose.</p>
+        </div>`;
       return;
     }
     const anyAvailable = videos.some((v) => v.available !== false);
@@ -643,12 +717,13 @@
     state.scenarioId = scenarioId;
 
     const select = $("#studio-scenario");
-    select.innerHTML = state.scenarios
+    const ordered = scenariosChronological(state.scenarios);
+    select.innerHTML = ordered
       .map(
         (s) =>
           `<option value="${escapeHtml(s.scenario_id)}" ${
             s.scenario_id === scenarioId ? "selected" : ""
-          }>${escapeHtml(s.scenario_id)} — ${escapeHtml(s.title)}</option>`
+          }>${escapeHtml(s.era || "")} · ${escapeHtml(s.scenario_id)} — ${escapeHtml(s.title)}</option>`
       )
       .join("");
 
