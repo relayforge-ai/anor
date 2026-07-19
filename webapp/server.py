@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import hmac
 import json
@@ -346,6 +347,47 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(k, v)
         self.send_header("X-Request-ID", self._ensure_request_id())
 
+    def _gzip_enabled(self) -> bool:
+        raw = (os.environ.get("ANOR_GZIP") or "1").strip().lower()
+        return raw not in ("0", "false", "no", "off")
+
+    def _client_accepts_gzip(self) -> bool:
+        accept = (self.headers.get("Accept-Encoding") or "").lower()
+        # Crude token match is fine (q-values rare for gzip on our clients)
+        return "gzip" in accept
+
+    def _maybe_gzip(self, body: bytes, content_type: str) -> tuple[bytes, bool]:
+        """Compress text-like bodies when the client accepts gzip and it shrinks.
+
+        Skips already-small payloads and non-text types (media is streamed
+        elsewhere without going through ``_send`` compression).
+        """
+        if not self._gzip_enabled() or not self._client_accepts_gzip():
+            return body, False
+        if not body or len(body) < 512:
+            return body, False
+        ct = (content_type or "").split(";")[0].strip().lower()
+        compressible = (
+            ct.startswith("text/")
+            or ct in (
+                "application/json",
+                "application/javascript",
+                "application/xml",
+                "image/svg+xml",
+            )
+            or "javascript" in ct
+            or "json" in ct
+        )
+        if not compressible:
+            return body, False
+        try:
+            compressed = gzip.compress(body, compresslevel=5)
+        except Exception:
+            return body, False
+        if len(compressed) >= len(body):
+            return body, False
+        return compressed, True
+
     def _send(
         self,
         code: int,
@@ -354,20 +396,27 @@ class Handler(BaseHTTPRequestHandler):
         extra: dict | None = None,
     ) -> None:
         self._ensure_request_id()
+        payload, used_gzip = self._maybe_gzip(body, content_type)
         self.send_response(code)
         self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Length", str(len(payload)))
+        if used_gzip:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
         # Allow callers to override Cache-Control via extra (e.g. short-lived catalog)
         if not (extra and "Cache-Control" in extra):
             self.send_header("Cache-Control", "no-store")
         self._security_headers()
         if extra:
             for k, v in extra.items():
+                # Don't let callers clobber encoding headers accidentally
+                if used_gzip and k.lower() in ("content-encoding", "content-length"):
+                    continue
                 self.send_header(k, v)
         self.end_headers()
-        if self.command == "HEAD" or not body:
+        if self.command == "HEAD" or not payload:
             return
-        self.wfile.write(body)
+        self.wfile.write(payload)
 
     def _json(self, code: int, obj, extra: dict | None = None) -> None:
         raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")

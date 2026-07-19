@@ -84,6 +84,37 @@ class TestWebapp(unittest.TestCase):
         self.assertTrue(any(s["scenario_id"] == "ELO-003" for s in data))
         self.assertTrue(headers.get("ETag"))
 
+    def test_catalog_gzip_when_accepted(self):
+        """Clients that Accept-Encoding: gzip get compressed JSON when it helps."""
+        import gzip
+
+        req = urllib.request.Request(
+            self.base + "/api/catalog",
+            headers={"Accept-Encoding": "gzip"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
+            self.assertEqual(r.status, 200)
+            enc = (r.headers.get("Content-Encoding") or "").lower()
+            raw = r.read()
+            # Catalog is large enough to compress under the 512-byte threshold
+            self.assertEqual(enc, "gzip")
+            self.assertIn("accept-encoding", (r.headers.get("Vary") or "").lower())
+            data = json.loads(gzip.decompress(raw))
+            self.assertIn("pricing", data)
+            self.assertIn("videos", data)
+
+    def test_catalog_plain_without_gzip_accept(self):
+        req = urllib.request.Request(
+            self.base + "/api/catalog",
+            headers={"Accept-Encoding": "identity"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
+            self.assertEqual(r.status, 200)
+            enc = (r.headers.get("Content-Encoding") or "").lower()
+            self.assertNotEqual(enc, "gzip")
+            data = json.loads(r.read())
+            self.assertIn("pricing", data)
+
     def test_server_header_hides_python_version(self):
         status, _, headers = self.get("/api/health")
         self.assertEqual(status, 200)

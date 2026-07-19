@@ -2002,3 +2002,30 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Studio makes receipts first-class: public sources and speculation discipline are one click from the decision list.
+
+---
+
+## Iteration 70 — 2026-07-19
+
+### OBSERVE
+JSON/API and text responses were always sent uncompressed. Growing catalog/scenario payloads and SPA boot paid full bandwidth on every cold load; no `Accept-Encoding` handling.
+
+### PLAN
+**One high-impact change:** optional gzip for compressible bodies ≥512B when the client accepts gzip (`ANOR_GZIP`, default on). Media streaming unchanged.
+
+Expected outcome: `/api/catalog` with `Accept-Encoding: gzip` returns `Content-Encoding: gzip` + `Vary: Accept-Encoding` and a smaller body.
+
+### EXECUTE
+- `_maybe_gzip` / `_client_accepts_gzip` / `_gzip_enabled` on `_send`
+- `.env.example` `ANOR_GZIP`
+- Tests: gzip and identity catalog paths
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_webapp webapp.tests.test_paths_and_media \
+  webapp.tests.test_security_headers -v
+→ Ran 22 tests — OK
+```
+
+### RESULT
+Text and JSON responses compress when beneficial; reverse proxies and browsers can cut library boot cost without code changes on the SPA.
