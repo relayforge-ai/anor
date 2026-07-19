@@ -101,24 +101,54 @@ class Handler(BaseHTTPRequestHandler):
             extra=headers or None,
         )
 
+    def _etag_for(self, path: Path, size: int, mtime_ns: int) -> str:
+        # Weak ETag from size+mtime — good enough for local static/media revalidation
+        return f'W/"{size:x}-{mtime_ns:x}"'
+
     def _stream_file(
         self,
         path: Path,
         content_type: str | None = None,
         *,
         support_range: bool = False,
+        cache_mode: str = "no-store",
     ) -> None:
-        """Serve a file without loading the entire body into memory."""
+        """Serve a file without loading the entire body into memory.
+
+        cache_mode:
+          - no-store: HTML and anything that must stay fresh
+          - static: CSS/JS with revalidation (ETag + max-age)
+          - media: short public cache + Range
+        """
         if not path.exists() or not path.is_file():
             self._json(404, {"error": "not found", "path": path.name})
             return
         try:
-            size = path.stat().st_size
+            st = path.stat()
+            size = st.st_size
+            mtime_ns = getattr(st, "st_mtime_ns", int(st.st_mtime * 1e9))
         except OSError:
             self._json(404, {"error": "not found", "path": path.name})
             return
 
         ctype = content_type or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+        etag = self._etag_for(path, size, mtime_ns)
+
+        # Conditional GET — 304 Not Modified (skip body)
+        inm = self.headers.get("If-None-Match")
+        if inm and etag in [t.strip() for t in inm.split(",")]:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            if cache_mode == "static":
+                self.send_header("Cache-Control", "public, max-age=3600, must-revalidate")
+            elif cache_mode == "media":
+                self.send_header("Cache-Control", "public, max-age=300")
+            else:
+                self.send_header("Cache-Control", "no-store")
+            self._security_headers()
+            self.end_headers()
+            return
+
         range_h = self.headers.get("Range") if support_range else None
         start, end = 0, size - 1
         status = 200
@@ -141,11 +171,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(length))
+        self.send_header("ETag", etag)
         self.send_header("Accept-Ranges", "bytes" if support_range else "none")
         if status == 206:
             self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-        # Immutable media can be cached briefly by the browser; HTML/API stay no-store
-        if support_range:
+        if cache_mode == "static":
+            self.send_header("Cache-Control", "public, max-age=3600, must-revalidate")
+        elif cache_mode == "media":
             self.send_header("Cache-Control", "public, max-age=300")
         else:
             self.send_header("Cache-Control", "no-store")
@@ -169,11 +201,16 @@ class Handler(BaseHTTPRequestHandler):
                 remaining -= len(chunk)
 
     def _file(self, path: Path, content_type: str | None = None) -> None:
-        # Small static assets: stream without range (HTML/CSS/JS)
-        self._stream_file(path, content_type, support_range=False)
+        # HTML: always revalidate; CSS/JS: cacheable with ETag
+        suffix = path.suffix.lower()
+        if suffix in {".css", ".js", ".woff2", ".woff", ".png", ".jpg", ".jpeg", ".svg", ".ico"}:
+            mode = "static"
+        else:
+            mode = "no-store"
+        self._stream_file(path, content_type, support_range=False, cache_mode=mode)
 
     def _media_file(self, path: Path) -> None:
-        self._stream_file(path, support_range=True)
+        self._stream_file(path, support_range=True, cache_mode="media")
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)

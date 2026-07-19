@@ -115,6 +115,12 @@
         <div class="player-layout">
           <div class="player-stage">
             <video id="player" controls playsinline preload="metadata"></video>
+            <div class="player-loading" id="player-loading" hidden>
+              <div class="player-loading-inner" role="status" aria-live="polite">
+                <div class="player-spinner" aria-hidden="true"></div>
+                <p id="player-loading-text">Loading episode…</p>
+              </div>
+            </div>
             <div class="player-gate" id="player-gate">
               <div class="gate-card">
                 <span class="pill pill-warn">Preview complete</span>

@@ -209,6 +209,15 @@
     previewCeiling = null;
   }
 
+  function setPlayerLoading(on, text) {
+    const el = $("#player-loading");
+    const label = $("#player-loading-text");
+    if (!el) return;
+    if (text && label) label.textContent = text;
+    if (on) el.removeAttribute("hidden");
+    else el.setAttribute("hidden", "");
+  }
+
   function renderWatch(videoId) {
     showPage("watch");
     setActiveNav("library");
@@ -231,7 +240,8 @@
           ? `<span class="pill pill-doc">documented</span>`
           : `<span class="pill pill-sim">${escapeHtml(video.speculation)}</span>`
       }
-      <span class="pill">${escapeHtml(video.runtime_label || "")}</span>`;
+      <span class="pill">${escapeHtml(video.runtime_label || "")}</span>
+      ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
     $("#watch-studio").onclick = () => navigate("studio/" + video.scenario_id);
 
@@ -239,7 +249,11 @@
     const gate = $("#player-gate");
     player.pause();
     player.removeAttribute("src");
+    player.onloadedmetadata = null;
+    player.oncanplay = null;
+    player.onerror = null;
     player.load();
+    gate.classList.remove("open");
 
     // Claim free full if available
     if (access.mode === "claimable_full") {
@@ -248,10 +262,23 @@
     }
 
     const access2 = FHFreemium.videoAccess(videoId, state.catalog);
+
+    if (!video.file || video.available === false) {
+      setPlayerLoading(true, "Episode media not on this host yet — queue a render in Studio.");
+      refreshChrome();
+      return;
+    }
+
+    setPlayerLoading(true, "Loading episode…");
     player.src = "/media/videos/" + video.file;
-    gate.classList.remove("open");
+
+    player.oncanplay = () => setPlayerLoading(false);
+    player.onerror = () => {
+      setPlayerLoading(true, "Could not load this episode. Try Studio → Queue video render.");
+    };
 
     player.onloadedmetadata = () => {
+      setPlayerLoading(false);
       if (access2.mode === "preview") {
         FHFreemium.markPreview(videoId);
         previewCeiling = player.duration * access2.previewFraction;
@@ -675,6 +702,8 @@
       const jobId = job.id;
       toast("Video job queued");
       let done = false;
+      let pollMs = 500;
+      const pollMax = 4000;
       while (!done) {
         const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId));
         const st = await pr.json();
@@ -726,7 +755,9 @@
             active.classList.add("error");
           }
         } else {
-          await new Promise((res) => setTimeout(res, 600));
+          // Exponential backoff polling — less load while queued/running long renders
+          await new Promise((res) => setTimeout(res, pollMs));
+          pollMs = Math.min(pollMax, Math.round(pollMs * 1.35));
         }
       }
     } catch (e) {

@@ -289,3 +289,30 @@ python3 -m unittest webapp.tests.test_membership webapp.tests.test_video_jobs ..
 
 ### RESULT
 Expensive ops can be server-gated for production; demo unlock mints real tokens the client attaches automatically.
+
+---
+
+## Iteration 10 — 2026-07-18
+
+### OBSERVE
+CSS/JS always sent `Cache-Control: no-store` (no ETag). Watch page had no loading/unavailable feedback. Video job polling used a fixed interval, hammering the server during long renders.
+
+### PLAN
+**One high-impact change:** ETag + cache for static/media, player loading UX, exponential poll backoff for video jobs.
+
+Expected outcome: conditional 304 for CSS; player shows spinner/errors; poll interval grows 500ms→4s while jobs run.
+
+### EXECUTE
+- ETag (size+mtime) + 304; static max-age=3600; media max-age=300
+- Player loading overlay + unavailable/error states
+- Video job poll backoff
+- Tests extended
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_paths_and_media ... → OK
+CSS ETag + 304 verified; full regression green
+```
+
+### RESULT
+Faster repeat loads for CSS/JS; clearer watch-page feedback; lighter job polling under long renders.

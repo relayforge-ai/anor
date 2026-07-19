@@ -88,6 +88,21 @@ class TestMediaStreaming(unittest.TestCase):
             self.assertEqual(len(data), 16)
             self.assertTrue(r.headers.get("Content-Range", "").startswith("bytes 0-15/"))
             self.assertEqual(r.headers.get("Accept-Ranges"), "bytes")
+            self.assertTrue(r.headers.get("ETag"))
+
+    def test_static_css_etag_and_304(self):
+        url = self.base + "/static/css/app.css"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            self.assertEqual(r.status, 200)
+            etag = r.headers.get("ETag")
+            self.assertTrue(etag)
+            self.assertIn("max-age", (r.headers.get("Cache-Control") or "").lower())
+        req = urllib.request.Request(url, headers={"If-None-Match": etag})
+        try:
+            urllib.request.urlopen(req, timeout=10)
+            self.fail("expected 304")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 304)
 
     def test_catalog_available_flags(self):
         with urllib.request.urlopen(self.base + "/api/catalog", timeout=5) as r:

@@ -31,6 +31,8 @@ class TestStaticProgressUI(unittest.TestCase):
             'role="progressbar"',
             "queueVideoRender",
             "/api/video/jobs",
+            "setPlayerLoading",
+            "pollMs",
         ):
             self.assertIn(needle, js, f"missing {needle}")
 
@@ -50,12 +52,15 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".nav-toggle", css)
         self.assertIn(":focus-visible", css)
         self.assertIn(".skip-link", css)
+        self.assertIn(".player-loading", css)
         # Must not hide all non-cta nav links permanently on mobile
         self.assertNotIn(".nav-links a:not(.btn) {\n    display: none;", css)
         js = (STATIC / "js" / "app.js").read_text(encoding="utf-8")
         self.assertIn("setNavOpen", js)
         self.assertIn("selectChoice", js)
         self.assertIn("ArrowDown", js)
+        html_idx = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="player-loading"', html_idx)
 
 
 if __name__ == "__main__":
