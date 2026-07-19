@@ -1505,3 +1505,31 @@ python3 -m unittest scripts.tests.test_deploy_config webapp.tests.test_webapp \
 
 ### RESULT
 Forked History has a config-driven deploy path for Dawes now / Ganymede later; offline mock remains the safe default.
+
+---
+
+## Iteration 52 — 2026-07-19
+
+### OBSERVE
+Only three public decision packs (ELO-001/003/013). Library/studio depth was thin; ELO-001 had a pack but no catalog video row. Deploy/hardening foundation is in place — content is the highest-value gap.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-007** (EXCOMM quarantine vs strike/invasion), wire catalog entries, validate all packs in tests.
+
+Expected outcome: studio lists four packs; historical quarantine is `documented`; strike/invasion are `simulated`; no MANDOS material.
+
+### EXECUTE
+- `scenarios/public/ELO-007.json` (schema + sources + provenance + speculation levels)
+- Catalog: ELO-007 historical + surgical_strike; also ELO-001-historical row
+- README pack table
+- Tests: core set includes ELO-007; `test_schema_fields` walks every public pack
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  webapp.tests.test_webapp webapp.tests.test_catalog_cache webapp.tests.test_scenarios_cache -v
+→ Ran 38 tests — OK
+```
+
+### RESULT
+Public library gains the Cuban Missile Crisis presidential decision point, complementary to Arkhipov (ELO-013), with labels intact.

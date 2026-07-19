@@ -119,6 +119,51 @@
       "speculation": "documented",
       "featured": true,
       "blurb": "Heat, depth charges, incomplete information. The historical path: refuse the nuclear shot and surface."
+    },
+    {
+      "id": "ELO-007-historical",
+      "scenario_id": "ELO-007",
+      "choice_id": "historical",
+      "title": "EXCOMM chooses the quarantine",
+      "subtitle": "October 1962 — the documented opening move",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-007-historical/ELO-007-historical.mp4",
+      "poster_gradient": ["#1a2030", "#0f1115"],
+      "tags": ["Cold War", "Kennedy", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: naval quarantine first — pressure without an irreversible airstrike on day one."
+    },
+    {
+      "id": "ELO-007-surgical_strike",
+      "scenario_id": "ELO-007",
+      "choice_id": "surgical_strike",
+      "title": "SPECULATION: Strike the sites first",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-007-surgical_strike/ELO-007-surgical_strike.mp4",
+      "poster_gradient": ["#2a1818", "#121018"],
+      "tags": ["Cold War", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: open with air attack. Incomplete coverage, Soviet dead, escalation risk — all labeled 🧪."
+    },
+    {
+      "id": "ELO-001-historical",
+      "scenario_id": "ELO-001",
+      "choice_id": "historical",
+      "title": "Barbarossa night at the dacha",
+      "subtitle": "22 June 1941 — shock at the center",
+      "era": "1941",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-001-historical/ELO-001-historical.mp4",
+      "poster_gradient": ["#1a1210", "#0f1115"],
+      "tags": ["WW2", "Barbarossa", "documented"],
+      "speculation": "documented",
+      "featured": false,
+      "blurb": "Documented baseline: invasion reports meet a hyper-centralized system still arguing with reality."
     }
   ]
 }

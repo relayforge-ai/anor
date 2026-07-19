@@ -24,12 +24,18 @@ from pipeline.video_pipeline import build_script, render_video
 
 
 class TestPublicPacks(unittest.TestCase):
-    def test_three_packs_present(self):
+    def test_core_packs_present(self):
         ids = {s["scenario_id"] for s in list_scenarios()}
-        self.assertTrue({"ELO-001", "ELO-003", "ELO-013"}.issubset(ids))
+        self.assertTrue(
+            {"ELO-001", "ELO-003", "ELO-007", "ELO-013"}.issubset(ids),
+            f"missing core packs; have {sorted(ids)}",
+        )
 
     def test_schema_fields(self):
-        for sid in ("ELO-001", "ELO-003", "ELO-013"):
+        # Validate every public pack on disk (not a hardcoded trio)
+        ids = sorted(s["scenario_id"] for s in list_scenarios())
+        self.assertGreaterEqual(len(ids), 4)
+        for sid in ids:
             s = load_scenario(sid)
             self.assertIn("known_outcome", s)
             self.assertIn("decision_question", s)
@@ -40,6 +46,18 @@ class TestPublicPacks(unittest.TestCase):
                 self.assertIn(c["speculation_level"], ("documented", "dramatized", "simulated"))
                 if c.get("is_historical"):
                     self.assertEqual(c["speculation_level"], "documented")
+
+    def test_elo_007_quarantine_is_documented_historical(self):
+        r = run_fork("ELO-007", "historical", use_llm=False)
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        self.assertIn("quarantine", r.narrative.lower() + r.label.lower())
+
+    def test_elo_007_strike_is_simulated(self):
+        r = run_fork("ELO-007", "surgical_strike", use_llm=False)
+        self.assertFalse(r.is_historical)
+        self.assertEqual(r.speculation_level, "simulated")
+
 
     def test_payload_hides_nothing_required(self):
         p = scenario_payload("ELO-003")

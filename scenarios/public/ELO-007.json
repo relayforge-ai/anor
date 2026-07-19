@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-007",
+  "title": "EXCOMM — quarantine or strike?",
+  "era": "1962",
+  "location": "White House Cabinet Room / EXCOMM sessions, Washington, D.C.",
+  "datetime": "16–22 October 1962, Cuban Missile Crisis opening week",
+  "domain": "Cold War nuclear crisis / presidential choice under compressed time",
+  "known_outcome": "President Kennedy chooses a naval quarantine (blockade) of Cuba rather than an immediate airstrike or invasion. The crisis continues through tense diplomacy; the missiles are eventually withdrawn under a public/private bargain. Nuclear war is avoided.",
+  "decision_question": "With Soviet nuclear missiles confirmed in Cuba, does the President open with a naval quarantine and diplomatic clock — or with an airstrike that may kill Soviets on day one?",
+  "opening": {
+    "cold_open": "U-2 photography has turned a rumor into a fact: medium- and intermediate-range missiles are in Cuba, inside the United States' near abroad. EXCOMM fills the Cabinet Room. The map is no longer abstract. The clock is measured in days of readiness, not months of theory.",
+    "what_they_knew": "They knew the missiles were real and that more might arrive. They knew an airstrike could miss sites and kill Soviet personnel. They did not know Khrushchev's full red lines, whether local commanders had launch discretion, or how allies and the UN would hold under shock.",
+    "pressure": "Domestic politics after the Bay of Pigs. Alliance credibility. The fear that any first shot becomes general war. Incomplete intelligence on warheads, camouflage, and timeline to operational status."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Naval quarantine — buy time, force a choice on Moscow",
+      "is_historical": true,
+      "summary": "Documented path: announce a quarantine of offensive weapons, rally the OAS and public case, keep diplomatic channels open while U.S. forces raise readiness.",
+      "immediate": "Ships form a line. The world sees a measured step short of bombing. Moscow must answer without having already been attacked.",
+      "near_term": "Tense days of blockade enforcement, letters, and back-channel bargaining. Risk remains extreme — including at sea and under the sea (see also ELO-013).",
+      "longer_arc": "The quarantine becomes the canonical opening move of the crisis in public memory: pressure without an irreversible first strike. Scholarship still debates luck, skill, and margin.",
+      "speculation_level": "documented",
+      "image_prompt": "1962 White House Cabinet Room, maps of Cuba, tense advisors, black-and-white documentary painting style, no text",
+      "vo_script": "October 1962. The missiles are real. In the Cabinet Room the choice is not abstract strategy — it is whether the first American move is a blockade that still leaves room to talk, or bombs that may kill Soviets before anyone has finished arguing. History records the quarantine."
+    },
+    {
+      "id": "surgical_strike",
+      "label": "Immediate airstrike on the missile sites",
+      "is_historical": false,
+      "summary": "SPECULATION: Open with air attack on known sites, accepting incomplete coverage and the near-certainty of Soviet casualties on Cuban soil.",
+      "immediate": "Explosions on the island. Possible surviving missiles. Soviet dead. The crisis may jump several rungs of the escalation ladder on day one.",
+      "near_term": "Moscow's options narrow toward humiliation or retaliation. Berlin, Turkey, and naval forces become live flashpoints within hours.",
+      "longer_arc": "This branch is simulated. We do not invent a tidy 'clean strike' victory. Incomplete intelligence and Soviet agency make any confident 'it would have worked' claim dishonest.",
+      "speculation_level": "simulated",
+      "image_prompt": "1960s jet silhouettes over a tropical island at dawn, restrained serious historical still, no gore, no text, no flags as propaganda",
+      "vo_script": "What if the first move is bombs? This is speculation. A strike might destroy some sites and miss others. It would almost certainly kill Soviet personnel. We label the branch simulated because the only honest claim is the risk: the crisis could leave the diplomatic track before diplomacy has begun."
+    },
+    {
+      "id": "invasion",
+      "label": "Full invasion of Cuba",
+      "is_historical": false,
+      "summary": "SPECULATION: Couple or replace air action with a ground invasion aimed at regime change and total control of the island.",
+      "immediate": "Amphibious and airborne operations against a defended island with Soviet forces present. Casualties and timeline uncertainty dominate.",
+      "near_term": "Highest conventional commitment of the three branches. Greatest chance of direct U.S.–Soviet combat and of nuclear use under fog of war.",
+      "longer_arc": "Simulated catastrophe-adjacent path. Public packs refuse to script a glamorous invasion ending. The point is the scale of the bet relative to the historical quarantine.",
+      "speculation_level": "simulated",
+      "image_prompt": "amphibious ships on a grey horizon, 1962 period equipment, ominous documentary composition, no text, no triumphalism",
+      "vo_script": "Invasion is the largest conventional bet. It is not a Hollywood montage. It is a path where Americans and Soviets may fight on the same island while nuclear weapons sit in the same crisis. We mark it simulated — and refuse to dress it up as a clean solution."
+    }
+  ],
+  "sources": [
+    "Published EXCOMM transcripts and declassified U.S. documentary collections on the Cuban Missile Crisis",
+    "Established diplomatic and military histories of October 1962 (quarantine decision and crisis chronology)",
+    "ELOSTIRION ELO-007 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses EXCOMM debate into a playable presidential choice. Counterfactual branches (strike, invasion) are labeled simulated. Complements ELO-013 (submarine near-miss) without duplicating it.",
+    "corpus": "ELOSTIRION ELO-007 public pack"
+  },
+  "style_lock": "1962 Washington interiors, maps of Cuba, Cold War documentary gravity, no modern devices, no text overlays",
+  "tags": ["alt-history", "Cuban Missile Crisis", "Kennedy", "Cold War", "decision-point", "EXCOMM"]
+}
