@@ -873,15 +873,20 @@
     const member = FHFreemium.isMember();
     const st = FHFreemium.statusSummary(state.catalog);
     $("#studio-quota").innerHTML = member
-      ? `<strong>Scholar studio</strong> — LLM re-render, compare, export unlocked`
-      : `<strong>Explorer studio</strong> — basic authored forks (${st.forksLeft} counted today). LLM re-render, multi-branch compare, custom seeds & export require Scholar.`;
+      ? `<strong>Scholar studio</strong> — LLM re-render, seeds, export unlocked · compare free for all`
+      : `<strong>Explorer studio</strong> — authored forks (${st.forksLeft} counted today), free compare & copy. LLM re-render, custom seeds & export require Scholar.`;
 
     const tiles = $("#control-tiles");
     const controls = [
       { id: "authored_fork", label: "Authored fork", free: true, desc: "Canon branch text, always labeled" },
       { id: "copy_narrative", label: "Copy narrative", free: true, desc: "Clipboard with speculation labels" },
+      {
+        id: "compare_branches",
+        label: "Compare branches",
+        free: true,
+        desc: "Side-by-side authored summaries · labels preserved",
+      },
       { id: "llm_rerender", label: "LLM re-render", free: false, desc: "Live simulation prose via LLM_URL" },
-      { id: "compare_branches", label: "Compare branches", free: false, desc: "Side-by-side historical vs fork" },
       { id: "custom_seed", label: "Custom pressure seed", free: false, desc: "Inject your own divergence seed" },
       { id: "export", label: "Export markdown", free: false, desc: "Download narrative for teaching" },
     ];
@@ -899,7 +904,8 @@
     // custom seed field
     $("#seed-wrap").style.display = member ? "block" : "none";
     $("#btn-llm").disabled = !member;
-    $("#btn-compare").disabled = !member;
+    // Compare uses authored pack text only — free for Explorer
+    if ($("#btn-compare")) $("#btn-compare").disabled = !state.scenarioDetail;
     // Copy is free for everyone; export stays Scholar
     if ($("#btn-copy")) $("#btn-copy").disabled = !state.lastFork;
     $("#btn-export").disabled = !member || !state.lastFork;
@@ -1439,30 +1445,62 @@
   }
 
   function compareBranches() {
-    if (!FHFreemium.isMember()) {
-      openPaywall("Compare branches", "Scholar unlocks side-by-side historical vs counterfactual.");
+    /** Authored pack compare only — no LLM. Free for Explorer; labels mandatory. */
+    const d = state.scenarioDetail;
+    if (!d) {
+      toast("Open a scenario pack first");
       return;
     }
-    const d = state.scenarioDetail;
-    if (!d) return;
-    const hist = d.choices.find((c) => c.is_historical);
-    const cur = d.choices.find((c) => c.id === state.choiceId);
+    const hist = (d.choices || []).find((c) => c.is_historical);
+    const cur =
+      (d.choices || []).find((c) => c.id === state.choiceId) ||
+      (d.choices || []).find((c) => !c.is_historical) ||
+      null;
+    if (!hist) {
+      toast("Pack is missing a historical baseline choice");
+      return;
+    }
+    const curLevel = cur?.speculation_level || "simulated";
+    const curPill =
+      curLevel === "documented"
+        ? `<span class="pill pill-doc">documented</span>`
+        : `<span class="pill pill-sim">${escapeHtml(curLevel)}</span>`;
+    const sameAsHist = cur && hist && cur.id === hist.id;
+    const rightTitle = sameAsHist
+      ? "Select a counterfactual choice to compare"
+      : cur?.label || "Counterfactual";
+    const rightBody = sameAsHist
+      ? "Pick a non-historical decision on the left, then compare again. Documented baseline stays on the left."
+      : cur?.summary || "";
+    const rightArc = sameAsHist ? "" : cur?.longer_arc || "";
     $("#fork-result").innerHTML = `
       <div class="result-title">Branch compare</div>
-      <div class="grid grid-2" style="margin-top:0.8rem">
-        <div class="card" style="padding:1rem">
-          <span class="pill pill-doc">historical</span>
-          <h3 style="margin:0.5rem 0">${escapeHtml(hist?.label || "")}</h3>
-          <p style="color:var(--ink-dim)">${escapeHtml(hist?.summary || "")}</p>
-          <p class="note">${escapeHtml(hist?.longer_arc || "")}</p>
+      <p class="note" style="margin:0.35rem 0 0.75rem">
+        Authored pack text only · 📗 historical baseline vs labeled fork · not a live LLM re-sim
+      </p>
+      <div class="grid grid-2 compare-grid" style="margin-top:0.5rem">
+        <div class="card compare-pane" style="padding:1rem">
+          <div class="row" style="gap:0.35rem;flex-wrap:wrap">
+            <span class="pill pill-doc">📗 documented</span>
+            <span class="pill">historical baseline</span>
+          </div>
+          <h3 style="margin:0.5rem 0">${escapeHtml(hist.label || "")}</h3>
+          <p style="color:var(--ink-dim)">${escapeHtml(hist.summary || "")}</p>
+          <p class="note">${escapeHtml(hist.longer_arc || "")}</p>
         </div>
-        <div class="card" style="padding:1rem">
-          <span class="pill pill-sim">${escapeHtml(cur?.speculation_level || "simulated")}</span>
-          <h3 style="margin:0.5rem 0">${escapeHtml(cur?.label || "")}</h3>
-          <p style="color:var(--ink-dim)">${escapeHtml(cur?.summary || "")}</p>
-          <p class="note">${escapeHtml(cur?.longer_arc || "")}</p>
+        <div class="card compare-pane" style="padding:1rem">
+          <div class="row" style="gap:0.35rem;flex-wrap:wrap">
+            ${curPill}
+            <span class="pill">${sameAsHist ? "pick a fork" : "counterfactual"}</span>
+          </div>
+          <h3 style="margin:0.5rem 0">${escapeHtml(rightTitle)}</h3>
+          <p style="color:var(--ink-dim)">${escapeHtml(rightBody)}</p>
+          ${rightArc ? `<p class="note">${escapeHtml(rightArc)}</p>` : ""}
         </div>
-      </div>`;
+      </div>
+      <p class="note" style="margin-top:0.85rem">
+        Speculations never replace the baseline. Scholar unlocks LLM re-render for full narrative forks.
+      </p>`;
   }
 
   function exportFork() {

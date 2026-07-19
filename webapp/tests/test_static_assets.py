@@ -105,6 +105,11 @@ class TestStaticProgressUI(unittest.TestCase):
             "scenariosChronological",
             "eraSortKey",
             "data-lib-filter",
+            "function compareBranches",
+            "Authored pack text only",
+            "Branch compare",
+            "historical baseline",
+            "compare-grid",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")

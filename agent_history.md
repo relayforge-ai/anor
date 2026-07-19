@@ -1948,3 +1948,30 @@ python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline
 
 ### RESULT
 July Crisis social creative is staged as drafts only, aligned with the new public pack.
+
+---
+
+## Iteration 68 — 2026-07-19
+
+### OBSERVE
+Branch compare only used authored pack summaries with speculation labels, yet was gated as Scholar — free users could not see 📗 vs 🧪 side-by-side without paying.
+
+### PLAN
+**One high-impact change:** unlock authored branch compare for Explorer; strengthen label chrome; keep LLM re-render/export as Scholar.
+
+Expected outcome: free compare of historical baseline vs selected counterfactual with mandatory pills; guidance when both panes are the baseline.
+
+### EXECUTE
+- `compareBranches` free path + clearer 📗/🧪 UI
+- Control tiles + studio quota + index/README freemium copy
+- Responsive compare grid CSS
+- Static asset tests for compare markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 14 tests — OK
+```
+
+### RESULT
+Explorer can study labeled branch differences without a membership wall; Scholar remains the path for LLM narrative and export.

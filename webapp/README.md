@@ -28,12 +28,12 @@ python3 -m pipeline.cli site --port 8787   # launches this product site
 |---------|-----------------|-------------------------------------------|
 | Video | **1 full episode** of the viewer's choice | Entire library uncut |
 | After free full | **25% preview** of each additional episode | Full |
-| Studio | Opening + all choices as **authored** basic forks | LLM re-render, compare, custom seeds, export |
+| Studio | Authored forks, **labeled branch compare**, copy narrative | LLM re-render, custom seeds, export |
 | Daily | 3 free fork counters (authored still works after) | Unlimited |
 
 ### Pricing suggestions (shown in UI)
 
-1. **Explorer — $0** — museum sample: 1 full + 25% previews + basic forks  
+1. **Explorer — $0** — museum sample: 1 full + 25% previews + basic forks + free compare  
 2. **Scholar — $4.99/mo or $39/yr** *(recommended)* — full library + full studio  
 3. **Council Seat — $12/mo or $99/yr** — priority re-sim / founding credit  
 4. **Library Pass — $7.99 once / 90 days** — binge without subscription  

@@ -1342,3 +1342,16 @@ body.boot-failed .member-strip {
   outline: 2px solid var(--gold, #e2c46d);
   outline-offset: 2px;
 }
+
+/* Studio branch compare */
+.compare-grid {
+  align-items: stretch;
+}
+.compare-pane {
+  min-height: 100%;
+}
+@media (max-width: 720px) {
+  .compare-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
