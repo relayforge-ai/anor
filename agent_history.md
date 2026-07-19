@@ -1447,3 +1447,32 @@ python3 -m unittest webapp.tests.test_scenarios_cache webapp.tests.test_catalog_
 
 ### RESULT
 Studio boot and health no longer re-validate every public pack JSON on each hit.
+
+---
+
+## Iteration 50 — 2026-07-19
+
+### OBSERVE
+`GET /api/scenario/:id` still called `scenario_payload()` (disk read + full validation + projection) on every request before ETag hashing. Studio pack switches and repeat visits paid that cost even when the pack file was unchanged.
+
+### PLAN
+**One high-impact change:** in-process per-pack detail cache with mtime/size fingerprint, shared TTL knob, and max 64 entries (evict oldest). Do not cache missing packs.
+
+Expected outcome: warm studio loads reuse the projected payload; pack edits invalidate; `ANOR_SCENARIOS_CACHE_S=0` disables.
+
+### EXECUTE
+- `scenario_payload_cached()` / `clear_scenario_payload_cache()` / `_scenario_file_fingerprint()`
+- Wire `/api/scenario/:id` to the cache
+- `.env.example` documents detail caching under `ANOR_SCENARIOS_CACHE_S`
+- Tests: `webapp/tests/test_scenario_payload_cache.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_scenario_payload_cache \
+  webapp.tests.test_scenarios_cache \
+  webapp.tests.test_webapp.TestWebapp.test_scenario_detail_etag_304 -v
+→ Ran 12 tests — OK
+```
+
+### RESULT
+Studio pack detail GETs reuse validated payloads until TTL or file fingerprint changes.

@@ -64,6 +64,11 @@ _catalog_cache: Optional[dict[str, Any]] = None  # payload, sig, ts
 _scenarios_list_cache_lock = threading.Lock()
 _scenarios_list_cache: Optional[dict[str, Any]] = None  # payload, sig, ts
 
+# Per-pack detail payloads (studio GET /api/scenario/:id)
+_scenario_payload_cache_lock = threading.Lock()
+_scenario_payload_cache: dict[str, dict[str, Any]] = {}  # id -> payload, sig, ts
+_SCENARIO_PAYLOAD_MAX = 64
+
 
 def _read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -147,6 +152,60 @@ def clear_scenarios_list_cache() -> None:
     global _scenarios_list_cache
     with _scenarios_list_cache_lock:
         _scenarios_list_cache = None
+
+
+def clear_scenario_payload_cache() -> None:
+    """Drop per-pack detail cache (tests / after operators edit packs)."""
+    with _scenario_payload_cache_lock:
+        _scenario_payload_cache.clear()
+
+
+def _scenario_file_fingerprint(scenario_id: str) -> str:
+    """mtime+size of one public pack file (missing → constant)."""
+    path = SCENARIOS_PUBLIC / f"{scenario_id}.json"
+    try:
+        st = path.stat()
+        return f"{getattr(st, 'st_mtime_ns', int(st.st_mtime * 1e9))}:{st.st_size}"
+    except OSError:
+        return "missing"
+
+
+def scenario_payload_cached(scenario_id: str) -> dict[str, Any]:
+    """API-safe pack detail with short TTL so studio switches skip re-validation.
+
+    Invalidates when that pack file's mtime/size changes. Bounded entry count
+    so a long-lived process cannot grow unbounded under id probing (failed
+    loads are not cached).
+    """
+    ttl = _scenarios_list_cache_ttl_s()
+    sig = _scenario_file_fingerprint(scenario_id)
+    now = time.monotonic()
+    if ttl > 0 and sig != "missing":
+        with _scenario_payload_cache_lock:
+            hit = _scenario_payload_cache.get(scenario_id)
+            if hit is not None:
+                if hit.get("sig") == sig and now - float(hit.get("ts", 0)) < ttl:
+                    return hit["payload"]
+
+    payload = scenario_payload(scenario_id)
+
+    if ttl > 0:
+        with _scenario_payload_cache_lock:
+            _scenario_payload_cache[scenario_id] = {
+                "payload": payload,
+                "sig": sig,
+                "ts": now,
+            }
+            # Evict coldest entries if over bound
+            if len(_scenario_payload_cache) > _SCENARIO_PAYLOAD_MAX:
+                ranked = sorted(
+                    _scenario_payload_cache.items(),
+                    key=lambda kv: float(kv[1].get("ts", 0)),
+                )
+                overflow = len(_scenario_payload_cache) - _SCENARIO_PAYLOAD_MAX
+                for k, _ in ranked[:overflow]:
+                    del _scenario_payload_cache[k]
+    return payload
 
 
 def _scenarios_dir_fingerprint() -> str:
@@ -606,8 +665,10 @@ class Handler(BaseHTTPRequestHandler):
             if err:
                 return self._validation_error(err)
             try:
-                # Semi-static public packs — short cache + ETag like /api/scenarios
-                return self._json_revalidatable(scenario_payload(sid), max_age=120)
+                # Semi-static public packs — in-process payload cache + ETag revalidation
+                return self._json_revalidatable(
+                    scenario_payload_cached(sid), max_age=120
+                )
             except FileNotFoundError:
                 return self._json(404, {"error": "scenario not found", "code": "not_found"})
             except ScenarioValidationError as e:
