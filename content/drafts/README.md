@@ -69,6 +69,16 @@ See `batch-004/README.md` and `batch-004/postiz-drafts.json`.
 
 See `batch-005/README.md` and `batch-005/postiz-drafts.json`.
 
+## Batch 006 — Berlin Airlift (ELO-006)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-006/ELO-006-historical.md` | airlift | historical | YT + TT |
+| `batch-006/ELO-006-force_corridors.md` | force corridors | simulated | YT + TT |
+| `batch-006/ELO-006-negotiate_withdraw.md` | bargain under blockade | dramatized | YT + TT |
+
+See `batch-006/README.md` and `batch-006/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -84,6 +94,8 @@ python -m pipeline.cli video --scenario ELO-004 --choice historical
 python -m pipeline.cli video --scenario ELO-004 --choice stand_down
 python -m pipeline.cli video --scenario ELO-005 --choice historical
 python -m pipeline.cli video --scenario ELO-005 --choice restrain
+python -m pipeline.cli video --scenario ELO-006 --choice historical
+python -m pipeline.cli video --scenario ELO-006 --choice force_corridors
 ```
 
 ## Human gate checklist

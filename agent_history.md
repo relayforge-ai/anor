@@ -2057,3 +2057,30 @@ python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
 
 ### RESULT
 Studio/library gain the Berlin Airlift as a playable early Cold War logistics decision with speculation labels intact.
+
+---
+
+## Iteration 72 — 2026-07-19
+
+### OBSERVE
+ELO-006 Berlin Airlift pack shipped; social drafts stopped at batch-005. No Ryan-reviewable captions for airlift / force / negotiate cuts.
+
+### PLAN
+**One high-impact change:** batch-006 DRAFTS for ELO-006 with human-gate Postiz payload and hygiene tests.
+
+Expected outcome: draft-only captions; 📗/🧪 labels; placeholder integrations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-006/*` (3 cut MDs, postiz-drafts.json, README)
+- Parent drafts README + PIPELINE batch table
+- Tests: batch-006 presence + pack reference + labels
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline_docs \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 33 tests — OK
+```
+
+### RESULT
+Berlin Airlift social creative is staged as drafts only, aligned with the new public pack.
