@@ -524,3 +524,35 @@ python3 -m unittest webapp.tests.test_render_deps webapp.tests.test_video_jobs \
 
 ### RESULT
 Renders refuse to start when the volume cannot hold intermediates; operators can monitor free space via `/api/health` queue stats.
+
+---
+
+## Iteration 18 — 2026-07-19
+
+### OBSERVE
+When image backends return a download URL (instead of b64), the pipeline fetched it with unrestricted `urlopen` — any scheme, redirects, cloud metadata hosts, and unbounded body size (SSRF / OOM risk from untrusted secondary URLs).
+
+### PLAN
+**One high-impact change:** harden secondary media fetches (scheme allowlist, block metadata hosts, no redirects, size cap).
+
+Expected outcome: `file://` / metadata / oversized responses rejected; OpenAI-style image URL path and Comfy view use safe GET.
+
+### EXECUTE
+- `pipeline/safe_fetch.py` — `validate_http_url`, `safe_get_bytes`, `read_response_limited`, no-redirect opener
+- ImageClient URL path + Comfy view use `safe_get_bytes`
+- Filename query params URL-encoded for Comfy view
+- Env: `ANOR_MAX_MEDIA_BYTES` (default 25MiB)
+- Tests: `pipeline.tests.test_safe_fetch`
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_safe_fetch pipeline.tests.test_retry \
+  pipeline.tests.test_pipeline -v
+→ Ran 29 tests — OK
+```
+- file:// and 169.254.169.254 rejected from image API response
+- Content-Length / stream over limit raise
+- Mock video render + fork tests still green
+
+### RESULT
+Secondary media downloads cannot pivot to local files or cloud metadata, and cannot OOM the worker via huge bodies.

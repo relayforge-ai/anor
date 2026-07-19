@@ -9,11 +9,13 @@ import random
 import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar
 
 from .config import PipelineConfig
+from .safe_fetch import safe_get_bytes, validate_http_url  # noqa: F401
 
 T = TypeVar("T")
 
@@ -175,7 +177,17 @@ def _request_bytes(
     api_key: Optional[str] = None,
     timeout: float = 180.0,
     method: str = "POST",
+    *,
+    max_bytes: Optional[int] = None,
+    allow_redirects: bool = True,
 ) -> bytes:
+    """HTTP bytes request against operator-configured endpoints.
+
+    For untrusted secondary URLs (e.g. image CDN from a generation response),
+    prefer :func:`pipeline.safe_fetch.safe_get_bytes` instead.
+    """
+    from .safe_fetch import _NO_REDIRECT_OPENER, read_response_limited, max_media_bytes
+
     def once() -> bytes:
         data = None if payload is None else json.dumps(payload).encode("utf-8")
         headers = {"Accept": "*/*"}
@@ -184,7 +196,15 @@ def _request_bytes(
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        opener = (
+            urllib.request.urlopen
+            if allow_redirects
+            else lambda r, timeout=timeout: _NO_REDIRECT_OPENER.open(r, timeout=timeout)
+        )
+        limit = max_media_bytes() if max_bytes is None else max_bytes
+        with opener(req, timeout=timeout) as resp:
+            if limit and limit > 0:
+                return read_response_limited(resp, limit)
             return resp.read()
 
     return with_exponential_backoff(once, label=url)
@@ -272,14 +292,25 @@ class ImageClient:
             try:
                 b64 = out["data"][0]["b64_json"]
             except (KeyError, IndexError, TypeError) as e:
-                # Some servers return URL
+                # Some servers return a download URL — treat as untrusted secondary fetch
                 try:
                     img_url = out["data"][0]["url"]
-                    raw = _request_bytes(img_url, payload=None, method="GET", timeout=120)
-                    out_path.write_bytes(raw)
-                    return out_path
-                except Exception:
+                except (KeyError, IndexError, TypeError):
                     raise PipelineError(f"Unexpected image response: {out!r}") from e
+                try:
+                    raw = safe_get_bytes(img_url, timeout=120.0)
+                except ValueError as ve:
+                    raise PipelineError(
+                        f"Rejected image download URL: {ve}",
+                        retryable=False,
+                    ) from ve
+                except Exception as fe:
+                    raise PipelineError(
+                        f"Failed to download image URL: {fe}",
+                        retryable=True,
+                    ) from fe
+                out_path.write_bytes(raw)
+                return out_path
             out_path.write_bytes(base64.b64decode(b64))
             return out_path
 
@@ -355,8 +386,15 @@ class ImageClient:
                             continue
                         sub = img.get("subfolder") or ""
                         typ = img.get("type") or "output"
-                        view = f"{root}/view?filename={fname}&subfolder={sub}&type={typ}"
-                        raw = _request_bytes(view, method="GET")
+                        view = f"{root}/view?filename={urllib.parse.quote(str(fname))}&subfolder={urllib.parse.quote(str(sub))}&type={urllib.parse.quote(str(typ))}"
+                        # Secondary fetch from Comfy view — size-capped, no open redirect
+                        try:
+                            raw = safe_get_bytes(view, timeout=120.0)
+                        except ValueError as ve:
+                            raise PipelineError(
+                                f"Rejected Comfy view URL: {ve}",
+                                retryable=False,
+                            ) from ve
                         out_path.write_bytes(raw)
                         return out_path
             time.sleep(0.8)
