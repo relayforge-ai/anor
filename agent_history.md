@@ -1167,3 +1167,32 @@ python3 -m unittest webapp.tests.test_webapp webapp.tests.test_static_assets -v
 
 ### RESULT
 Studio pack loads revalidate cheaply when the public pack is unchanged.
+
+---
+
+## Iteration 40 — 2026-07-19
+
+### OBSERVE
+No HSTS option for production HTTPS; unknown API 404s echoed the request path (minor recon / log-noise).
+
+### PLAN
+**One high-impact change:** optional `Strict-Transport-Security` via env; generic API 404 without path echo.
+
+Expected outcome: ANOR_HSTS_MAX_AGE enables HSTS; `/api/no-such` returns `{code:not_found}` only.
+
+### EXECUTE
+- `hsts_header_value()` + wire into `security_headers()`
+- Env: ANOR_HSTS_MAX_AGE / SUBDOMAINS / PRELOAD
+- Catch-all API 404 omits `path`
+- Tests: HSTS on/off, 404 hygiene
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security_headers -v
+→ Ran 5 tests — OK
+```
+- Default no HSTS; max-age=31536000 + includeSubDomains when configured
+- Unknown API 404 has code, no path
+
+### RESULT
+Production can enable HSTS without code changes; unknown endpoints reveal less.

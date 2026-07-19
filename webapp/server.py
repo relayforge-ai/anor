@@ -420,7 +420,8 @@ class Handler(BaseHTTPRequestHandler):
             except ScenarioValidationError as e:
                 return self._client_error(422, e, "invalid_scenario")
 
-        return self._json(404, {"error": "not found", "path": path})
+        # Do not echo the request path (recon / log-injection hygiene)
+        return self._json(404, {"error": "not found", "code": "not_found"})
 
     def _health_detail_authorized(self) -> bool:
         """True when caller may receive full operator health (limits, pipeline, inventory).

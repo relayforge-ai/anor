@@ -14,6 +14,7 @@ Tune via env without code changes:
   ANOR_MAX_SEED_CHARS    max custom_seed length (default 500)
   ANOR_CORS_ORIGIN       CORS allow-origin (default * for local dev)
   ANOR_CSP               override Content-Security-Policy entirely
+  ANOR_HSTS_MAX_AGE      if set (seconds), send Strict-Transport-Security (HTTPS only)
 """
 
 from __future__ import annotations
@@ -310,11 +311,45 @@ _DEFAULT_CSP = (
 )
 
 
+def hsts_header_value() -> str | None:
+    """Optional Strict-Transport-Security when ANOR_HSTS_MAX_AGE is a positive int.
+
+    Off by default so local HTTP dev is not broken. Production HTTPS deployments
+    should set e.g. ANOR_HSTS_MAX_AGE=31536000 (1 year).
+    """
+    raw = (os.environ.get("ANOR_HSTS_MAX_AGE") or "").strip()
+    if not raw:
+        return None
+    try:
+        max_age = int(raw)
+    except ValueError:
+        return None
+    if max_age <= 0:
+        return None
+    # includeSubDomains is opt-in via ANOR_HSTS_SUBDOMAINS=1
+    parts = [f"max-age={max_age}"]
+    if (os.environ.get("ANOR_HSTS_SUBDOMAINS") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        parts.append("includeSubDomains")
+    if (os.environ.get("ANOR_HSTS_PRELOAD") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        parts.append("preload")
+    return "; ".join(parts)
+
+
 def security_headers() -> dict[str, str]:
     """Browser hardening headers applied to every response."""
     csp = os.environ.get("ANOR_CSP", "").strip() or _DEFAULT_CSP
     cors = os.environ.get("ANOR_CORS_ORIGIN", "*").strip() or "*"
-    return {
+    headers = {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -327,3 +362,7 @@ def security_headers() -> dict[str, str]:
         "Access-Control-Allow-Headers": "Content-Type, X-ANOR-Member, Authorization, X-Request-ID",
         "Access-Control-Expose-Headers": "X-Request-ID, ETag, Retry-After",
     }
+    hsts = hsts_header_value()
+    if hsts:
+        headers["Strict-Transport-Security"] = hsts
+    return headers
