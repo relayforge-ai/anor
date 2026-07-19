@@ -735,3 +735,35 @@ python3 -m unittest webapp.tests.test_security -v
 
 ### RESULT
 Rate limits bind to real peers unless operators explicitly trust a reverse proxy; HTTP method surface is explicit.
+
+---
+
+## Iteration 25 — 2026-07-19
+
+### OBSERVE
+`GET /api/video/jobs` returned the last 30 jobs for *all* clients — scenario choices, errors, and job ids leaked across tenants. The SPA only polls by job id, so a global list was unnecessary.
+
+### PLAN
+**One high-impact change:** scope job listing to the requesting client (`owner_key` at enqueue).
+
+Expected outcome: list returns only the caller's jobs; `owner_key` never appears in public JSON.
+
+### EXECUTE
+- `VideoJob.owner_key` (internal) + `enqueue(..., owner_key=)`
+- `list_for_owner()` for privacy-scoped listing
+- GET list uses `client_key`; response includes `scoped: true`
+- Tests: unit privacy filter + API list contains own job only
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_job_privacy \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_enqueue_and_complete \
+  webapp.tests.test_video_jobs.TestVideoJobsAPI.test_list_jobs_scoped_to_client -v
+→ Ran 4 tests — OK
+```
+- client-a list excludes client-b jobs
+- to_public omits owner_key
+- API list includes own enqueued job; `scoped` true
+
+### RESULT
+Video job inventory is no longer a cross-tenant leak; clients still poll by id from the enqueue response.

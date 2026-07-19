@@ -55,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.13"
+    server_version = "ForkedHistory/1.14"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -356,8 +356,20 @@ class Handler(BaseHTTPRequestHandler):
             )
 
         if path == "/api/video/jobs":
-            jobs = [QUEUE.to_public_enriched(j) for j in QUEUE.list_recent(30)]
-            return self._json(200, {"jobs": jobs, "queue": QUEUE.stats()})
+            # Privacy: only return jobs owned by this client (never all tenants)
+            owner = sec.client_key(self)
+            jobs = [
+                QUEUE.to_public_enriched(j)
+                for j in QUEUE.list_for_owner(owner, limit=30)
+            ]
+            return self._json(
+                200,
+                {
+                    "jobs": jobs,
+                    "queue": QUEUE.stats(),
+                    "scoped": True,
+                },
+            )
 
         if path.startswith("/api/video/jobs/"):
             jid = path[len("/api/video/jobs/") :].strip("/")
@@ -581,7 +593,12 @@ class Handler(BaseHTTPRequestHandler):
             )
 
         try:
-            job, deduped = QUEUE.enqueue(scenario_id, choice_id, use_llm=use_llm)
+            job, deduped = QUEUE.enqueue(
+                scenario_id,
+                choice_id,
+                use_llm=use_llm,
+                owner_key=key,
+            )
         except RuntimeError as e:
             return self._json(503, {"error": str(e), "code": "queue_full"})
         except Exception as e:

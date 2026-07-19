@@ -70,6 +70,7 @@ jobs:
             webapp.tests.test_job_timeout \
             webapp.tests.test_queue_position \
             webapp.tests.test_http_range \
+            webapp.tests.test_job_privacy \
             -v
 
       - name: Pipeline + webapp syntax check

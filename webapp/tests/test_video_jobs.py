@@ -129,11 +129,21 @@ class TestVideoJobsAPI(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(data.get("code"), "bad_scenario_id")
 
-    def test_list_jobs(self):
+    def test_list_jobs_scoped_to_client(self):
+        status, job = self.post_job(
+            {"scenario_id": "ELO-001", "choice_id": "historical", "use_llm": False}
+        )
+        self.assertEqual(status, 202, job)
         with urllib.request.urlopen(self.base + "/api/video/jobs", timeout=5) as r:
             data = json.loads(r.read())
         self.assertIn("jobs", data)
         self.assertIn("queue", data)
+        self.assertTrue(data.get("scoped"))
+        ids = {j["id"] for j in data["jobs"]}
+        self.assertIn(job["id"], ids)
+        # Never leak owner_key / client identity into public payloads
+        blob = json.dumps(data)
+        self.assertNotIn("owner_key", blob)
 
     def test_health_includes_queue(self):
         with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:

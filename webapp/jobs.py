@@ -126,6 +126,8 @@ class VideoJob:
     finished_at: Optional[float] = None
     deadline_at: Optional[float] = None
     cancel_requested: bool = False
+    # Rate-limit client identity at enqueue — never exposed in to_public()
+    owner_key: Optional[str] = None
 
     def to_public(self) -> dict[str, Any]:
         d = {
@@ -227,12 +229,16 @@ class VideoJobQueue:
         use_llm: bool = False,
         *,
         dedupe: bool = True,
+        owner_key: Optional[str] = None,
     ) -> tuple[VideoJob, bool]:
         """Enqueue a render. Returns (job, deduped).
 
         When ``dedupe`` is True (default), a second request for the same
         scenario/choice/use_llm while one is queued or running reuses that job
         instead of spawning duplicate GPU work.
+
+        ``owner_key`` is the rate-limit client identity used to scope job lists
+        so one client cannot enumerate another's renders.
         """
         with self._lock:
             self._purge_locked()
@@ -245,6 +251,10 @@ class VideoJobQueue:
                         and bool(j.use_llm) == bool(use_llm)
                         and not j.cancel_requested
                     ):
+                        # Attribute shared deduped job to this requester as well
+                        # so both clients can see it in their scoped list.
+                        if owner_key and not j.owner_key:
+                            j.owner_key = owner_key
                         return j, True
             active = sum(
                 1 for j in self._jobs.values() if j.status in ("queued", "running")
@@ -258,6 +268,7 @@ class VideoJobQueue:
                 scenario_id=scenario_id,
                 choice_id=choice_id,
                 use_llm=use_llm,
+                owner_key=owner_key,
             )
             self._jobs[job.id] = job
         self._executor.submit(self._run, job.id)
@@ -267,6 +278,20 @@ class VideoJobQueue:
         with self._lock:
             self._purge_locked()
             return self._jobs.get(job_id)
+
+    def list_for_owner(self, owner_key: str, limit: int = 20) -> list[VideoJob]:
+        """Jobs owned by this client only (privacy-scoped listing)."""
+        with self._lock:
+            self._purge_locked()
+            if not owner_key:
+                return []
+            mine = [
+                j
+                for j in self._jobs.values()
+                if j.owner_key and j.owner_key == owner_key
+            ]
+            mine.sort(key=lambda j: j.created_at, reverse=True)
+            return mine[:limit]
 
     def to_public_enriched(self, job: VideoJob) -> dict[str, Any]:
         """Public job dict plus queue_position / jobs_ahead for studio feedback.
