@@ -33,6 +33,8 @@ python3 -m pipeline.cli site --port 8787
 
 **Fleet portability:** all model/media calls read `LLM_URL`, `IMAGE_URL`, and `TTS_URL` from the environment — no hardcoded hosts — so the same code runs on Dawes now and Nauvoo later. Copy [`.env.example`](.env.example).
 
+**Deploy:** [`Dockerfile`](Dockerfile) + [`docker-compose.yml`](docker-compose.yml) for a portable Forked History image (mock media by default). See [`DEPLOY.md`](DEPLOY.md).
+
 **Guardrails:** public packs live in `scenarios/public/` only. MANDOS master sources stay internal. Social posts are staged as **drafts** under `content/drafts/` for human approval.
 
 ---

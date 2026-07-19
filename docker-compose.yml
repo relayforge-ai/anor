@@ -1,0 +1,52 @@
+# Forked History — Dawes now, Ganymede/Nauvoo later.
+# All model/media hosts are config-driven via environment (or optional .env).
+# Never commit secrets; copy .env.example → .env on the host.
+
+services:
+  forked-history:
+    build: .
+    image: anor-forked-history:local
+    ports:
+      - "${ANOR_PORT:-8787}:8787"
+    # Pass host env / --env-file .env (do not bake secrets into the image)
+    environment:
+      # Offline-safe default; set ANOR_MOCK_MEDIA=0 when LLM/IMAGE/TTS URLs are live
+      ANOR_MOCK_MEDIA: ${ANOR_MOCK_MEDIA:-1}
+      LLM_URL: ${LLM_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-local-model}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      IMAGE_URL: ${IMAGE_URL:-}
+      IMAGE_MODEL: ${IMAGE_MODEL:-local-image}
+      IMAGE_API_KEY: ${IMAGE_API_KEY:-}
+      IMAGE_BACKEND: ${IMAGE_BACKEND:-auto}
+      TTS_URL: ${TTS_URL:-}
+      TTS_MODEL: ${TTS_MODEL:-tts-1}
+      TTS_API_KEY: ${TTS_API_KEY:-}
+      TTS_BACKEND: ${TTS_BACKEND:-auto}
+      # Webapp knobs (optional)
+      ANOR_CORS_ORIGIN: ${ANOR_CORS_ORIGIN:-*}
+      ANOR_TRUST_PROXY: ${ANOR_TRUST_PROXY:-0}
+      ANOR_MEMBER_ENFORCE: ${ANOR_MEMBER_ENFORCE:-0}
+      ANOR_HEALTH_DETAIL: ${ANOR_HEALTH_DETAIL:-0}
+    volumes:
+      # Persist rendered explainers across container restarts
+      - anor_videos:/app/outputs/videos
+    # Reach Comfy/Ollama on the Docker host (Dawes). Linux needs host-gateway.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/health', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  anor_videos:

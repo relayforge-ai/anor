@@ -1476,3 +1476,32 @@ python3 -m unittest webapp.tests.test_scenario_payload_cache \
 
 ### RESULT
 Studio pack detail GETs reuse validated payloads until TTL or file fingerprint changes.
+
+---
+
+## Iteration 51 — 2026-07-19
+
+### OBSERVE
+Foundation is solid (security, queue, caches). Highest product gap on the priority menu: **no deploy path**. Zero Dockerfile/compose; site only runs via local `python -m webapp.server`. Dawes/Ganymede need an image with env-driven `LLM_URL` / `IMAGE_URL` / `TTS_URL` and mock fallback.
+
+### PLAN
+**One high-impact change:** portable Docker image + compose (ffmpeg, public packs only, mock media default, host.docker.internal for fleet URLs). Hygiene tests without requiring a Docker daemon.
+
+Expected outcome: `docker compose --env-file .env up --build` boots Forked History; secrets never baked in.
+
+### EXECUTE
+- `Dockerfile` (python:3.12-slim + ffmpeg, CMD webapp.server 0.0.0.0:8787)
+- `docker-compose.yml` (endpoint env vars, video volume, healthcheck)
+- `.dockerignore` (excludes `.env`, outputs, drafts)
+- `DEPLOY.md` + README pointer
+- Tests: `scripts/tests/test_deploy_config.py`
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_deploy_config webapp.tests.test_webapp \
+  pipeline.tests.test_pipeline -v
+→ Ran 23 tests — OK
+```
+
+### RESULT
+Forked History has a config-driven deploy path for Dawes now / Ganymede later; offline mock remains the safe default.
