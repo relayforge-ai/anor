@@ -1404,16 +1404,47 @@
   }
 
   /* ——— Router ——— */
+  let lastRouteKey = null;
+  let routeFocusReady = false; // skip focus steal on first paint after boot
+
+  function routeKey(page, a) {
+    return (page || "home") + "/" + (a || "");
+  }
+
+  function focusMainForRoute() {
+    // SPA pages don't remount document title focus — move keyboard focus into main
+    // so screen readers announce the new view after hash navigation.
+    if (!routeFocusReady) return;
+    if (document.body.classList.contains("boot-failed")) return;
+    if ($("#paywall")?.classList.contains("open")) return;
+    const main = $("#main-content");
+    if (!main) return;
+    if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
+    try {
+      main.focus({ preventScroll: true });
+    } catch (_) {
+      main.focus();
+    }
+  }
+
   async function route() {
     const { page, a } = parseHash();
+    const key = routeKey(page, a);
+    const changed = key !== lastRouteKey;
+    lastRouteKey = key;
     state.route = page;
     clearPreviewWatch();
     refreshChrome();
-    if (page === "library") return renderLibrary();
-    if (page === "watch") return renderWatch(a);
-    if (page === "studio") return renderStudio(a);
-    if (page === "pricing") return renderPricing();
-    return renderHome();
+    closeNav();
+    try {
+      if (page === "library") await renderLibrary();
+      else if (page === "watch") await renderWatch(a);
+      else if (page === "studio") await renderStudio(a);
+      else if (page === "pricing") await renderPricing();
+      else await renderHome();
+    } finally {
+      if (changed) focusMainForRoute();
+    }
   }
 
   /* ——— Conditional JSON GET (pairs with server ETag on catalog/scenarios) ——— */
@@ -1660,6 +1691,8 @@
     window.addEventListener("hashchange", route);
     window.addEventListener("fh:entitlements", refreshChrome);
     await route();
+    // After first successful paint, focus main on subsequent hash navigations
+    routeFocusReady = true;
   }
 
   boot().catch((e) => {

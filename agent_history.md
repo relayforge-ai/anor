@@ -1030,3 +1030,31 @@ python3 -m unittest webapp.tests.test_error_sanitize \
 
 ### RESULT
 JSON API errors match job-error path hygiene across the product surface.
+
+---
+
+## Iteration 35 — 2026-07-19
+
+### OBSERVE
+Hash-based SPA navigation never moved focus into the new view — keyboard and screen-reader users could stay on the previous control with no announcement that the page changed.
+
+### PLAN
+**One high-impact change:** after route renders complete, focus `#main-content` on navigation (skip first boot paint and open paywall).
+
+Expected outcome: hash changes focus main with `preventScroll`; first load does not steal focus.
+
+### EXECUTE
+- `focusMainForRoute` + `routeFocusReady` gate
+- `route()` awaits page render then focuses main when key changes
+- Close nav on navigate
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 5 tests — OK
+```
+- JS contains focusMainForRoute, routeFocusReady, preventScroll
+
+### RESULT
+SPA route changes are discoverable to assistive tech without disrupting initial load focus.
