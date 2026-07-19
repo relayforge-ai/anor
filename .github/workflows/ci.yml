@@ -58,6 +58,7 @@ jobs:
             pipeline.tests.test_retry \
             pipeline.tests.test_validate \
             pipeline.tests.test_safe_fetch \
+            pipeline.tests.test_image_client \
             webapp.tests.test_webapp \
             webapp.tests.test_security \
             webapp.tests.test_security_headers \
@@ -75,7 +76,12 @@ jobs:
             webapp.tests.test_health_privacy \
             webapp.tests.test_error_sanitize \
             webapp.tests.test_catalog_cache \
+            webapp.tests.test_scenarios_cache \
+            webapp.tests.test_scenario_payload_cache \
             webapp.tests.test_access_log \
+            scripts.tests.test_deploy_config \
+            scripts.tests.test_social_drafts \
+            scripts.tests.test_dep_audit \
             -v
 
       - name: Pipeline + webapp syntax check

@@ -265,9 +265,19 @@ class ImageClient:
             return self.cfg.image_backend
         # Heuristic: Comfy roots usually have no /v1 suffix
         u = self.cfg.image_url.rstrip("/")
-        if u.endswith("/v1"):
+        if u.endswith("/v1") or u.endswith("/images/generations"):
             return "openai_images"
         return "comfy"
+
+    @staticmethod
+    def mock_fallback_enabled() -> bool:
+        """When remote IMAGE_URL fails, write a placeholder so video can finish.
+
+        Default on so Dawes warm-up / brief Comfy outages do not kill a long
+        render. Set ANOR_IMAGE_FALLBACK_MOCK=0 for strict remote-only stills.
+        """
+        raw = (os.environ.get("ANOR_IMAGE_FALLBACK_MOCK") or "1").strip().lower()
+        return raw not in ("0", "false", "no", "off")
 
     def generate(self, prompt: str, out_path: Path, width: int = 1280, height: int = 720) -> Path:
         out_path = Path(out_path)
@@ -276,48 +286,65 @@ class ImageClient:
         backend = self._backend()
 
         if backend == "mock":
-            return self._write_placeholder(out_path, width, height, prompt)
+            return self._write_placeholder(out_path, width, height, full_prompt)
 
-        if backend == "openai_images":
-            base = self.cfg.image_url.rstrip("/")
-            url = base if base.endswith("/images/generations") else f"{base}/images/generations"
-            payload = {
-                "model": self.cfg.image_model,
-                "prompt": full_prompt,
-                "size": f"{width}x{height}",
-                "n": 1,
-                "response_format": "b64_json",
-            }
-            out = _request_json(url, payload, api_key=self.cfg.image_api_key, timeout=300)
+        try:
+            if backend == "openai_images":
+                return self._openai_images(full_prompt, out_path, width, height)
+            if backend == "comfy":
+                return self._comfy_txt2img(full_prompt, out_path, width, height)
+            raise PipelineError(f"Unknown IMAGE_BACKEND: {backend}")
+        except PipelineError as err:
+            # Never soft-fail SSRF/policy rejections; optional mock for outages only
+            if "rejected" in str(err).lower():
+                raise
+            if self.mock_fallback_enabled():
+                note = out_path.with_suffix(".fallback.txt")
+                note.write_text(
+                    f"image backend={backend} failed; wrote mock placeholder\n"
+                    f"error: {err}\n",
+                    encoding="utf-8",
+                )
+                return self._write_placeholder(out_path, width, height, full_prompt)
+            raise
+
+    def _openai_images(
+        self, full_prompt: str, out_path: Path, width: int, height: int
+    ) -> Path:
+        base = (self.cfg.image_url or "").rstrip("/")
+        url = base if base.endswith("/images/generations") else f"{base}/images/generations"
+        payload = {
+            "model": self.cfg.image_model,
+            "prompt": full_prompt,
+            "size": f"{width}x{height}",
+            "n": 1,
+            "response_format": "b64_json",
+        }
+        out = _request_json(url, payload, api_key=self.cfg.image_api_key, timeout=300)
+        try:
+            b64 = out["data"][0]["b64_json"]
+        except (KeyError, IndexError, TypeError) as e:
+            # Some servers return a download URL — treat as untrusted secondary fetch
             try:
-                b64 = out["data"][0]["b64_json"]
-            except (KeyError, IndexError, TypeError) as e:
-                # Some servers return a download URL — treat as untrusted secondary fetch
-                try:
-                    img_url = out["data"][0]["url"]
-                except (KeyError, IndexError, TypeError):
-                    raise PipelineError(f"Unexpected image response: {out!r}") from e
-                try:
-                    raw = safe_get_bytes(img_url, timeout=120.0)
-                except ValueError as ve:
-                    raise PipelineError(
-                        f"Rejected image download URL: {ve}",
-                        retryable=False,
-                    ) from ve
-                except Exception as fe:
-                    raise PipelineError(
-                        f"Failed to download image URL: {fe}",
-                        retryable=True,
-                    ) from fe
-                out_path.write_bytes(raw)
-                return out_path
-            out_path.write_bytes(base64.b64decode(b64))
+                img_url = out["data"][0]["url"]
+            except (KeyError, IndexError, TypeError):
+                raise PipelineError(f"Unexpected image response: {out!r}") from e
+            try:
+                raw = safe_get_bytes(img_url, timeout=120.0)
+            except ValueError as ve:
+                raise PipelineError(
+                    f"Rejected image download URL: {ve}",
+                    retryable=False,
+                ) from ve
+            except Exception as fe:
+                raise PipelineError(
+                    f"Failed to download image URL: {fe}",
+                    retryable=True,
+                ) from fe
+            out_path.write_bytes(raw)
             return out_path
-
-        if backend == "comfy":
-            return self._comfy_txt2img(full_prompt, out_path, width, height)
-
-        raise PipelineError(f"Unknown IMAGE_BACKEND: {backend}")
+        out_path.write_bytes(base64.b64decode(b64))
+        return out_path
 
     def _comfy_txt2img(self, prompt: str, out_path: Path, width: int, height: int) -> Path:
         """Minimal SD checkpoint workflow — works when Comfy has a default ckpt."""
@@ -550,10 +577,15 @@ class TTSClient:
 
 def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
     """Report which endpoints are configured (not secret values)."""
+    img = ImageClient(cfg)
+    tts = TTSClient(cfg)
     return {
         "config": cfg.describe(),
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
         "image": "ready" if (cfg.image_url and not cfg.mock_media) else "offline/mock",
+        "image_backend": img._backend(),
+        "image_fallback_mock": ImageClient.mock_fallback_enabled(),
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
+        "tts_backend": tts._backend(),
         "http_retry": http_retry_config(),
     }

@@ -1588,3 +1588,34 @@ python3 -m unittest scripts.tests.test_social_drafts \
 
 ### RESULT
 EXCOMM social creative is staged as drafts only, paired with batch-001 Arkhipov for a coherent Missile Crisis arc.
+
+---
+
+## Iteration 55 — 2026-07-19
+
+### OBSERVE
+`ImageClient` already supported Comfy + OpenAI-images + mock, but: (1) remote failures killed whole video renders; (2) little unit coverage of backend selection / b64 path; (3) healthcheck hid resolved backends; (4) CI omitted newer webapp/scripts tests.
+
+### PLAN
+**One high-impact change:** harden image path for real `IMAGE_URL` — optional mock fallback on outages (not SSRF rejects), health reports backends, dedicated tests, CI suite completeness.
+
+Expected outcome: with `IMAGE_URL` set, OpenAI/Comfy still preferred; on non-policy failure default fallback writes placeholder + sidecar; CI runs full unit surface.
+
+### EXECUTE
+- `ImageClient.generate`: extract `_openai_images`; `ANOR_IMAGE_FALLBACK_MOCK` (default on); SSRF still hard-fails
+- `healthcheck`: `image_backend`, `image_fallback_mock`, `tts_backend`
+- Tests: `pipeline/tests/test_image_client.py`
+- CI: add image/scenarios/deploy/social/dep_audit modules
+- `.env.example` documents fallback knob
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_image_client pipeline.tests.test_safe_fetch \
+  scripts.tests.test_deploy_config scripts.tests.test_social_drafts \
+  scripts.tests.test_dep_audit webapp.tests.test_scenarios_cache \
+  webapp.tests.test_scenario_payload_cache -v
+→ Ran 51 tests — OK
+```
+
+### RESULT
+Real image endpoints light up when configured; mock remains the safe offline path and optional outage safety net without weakening SSRF guards.
