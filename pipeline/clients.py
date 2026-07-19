@@ -4,18 +4,150 @@ from __future__ import annotations
 
 import base64
 import json
+import os
+import random
 import subprocess
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 from .config import PipelineConfig
 
+T = TypeVar("T")
+
+# Retry transient upstream failures (GPU warm-up, rate limits, brief outages).
+# Never retries 4xx auth/validation errors.
+_RETRYABLE_HTTP = frozenset({408, 425, 429, 500, 502, 503, 504})
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return default
+
+
+def http_retry_config() -> dict[str, Any]:
+    """Env-tunable retry policy (Dawes/Nauvoo without code changes)."""
+    return {
+        "max_retries": _env_int("ANOR_HTTP_RETRIES", 3),
+        "base_delay_s": _env_float("ANOR_HTTP_RETRY_BASE", 0.5),
+        "max_delay_s": _env_float("ANOR_HTTP_RETRY_MAX", 8.0),
+        "jitter": _env_float("ANOR_HTTP_RETRY_JITTER", 0.25),
+    }
+
 
 class PipelineError(RuntimeError):
-    pass
+    """Upstream or pipeline failure.
+
+    Attributes:
+        retryable: whether a caller/queue should try again
+        status_code: HTTP status when known
+        attempts: how many attempts were made
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool = False,
+        status_code: Optional[int] = None,
+        attempts: int = 1,
+    ):
+        super().__init__(message)
+        self.retryable = retryable
+        self.status_code = status_code
+        self.attempts = attempts
+
+
+def _is_retryable_http(code: int) -> bool:
+    return code in _RETRYABLE_HTTP
+
+
+def with_exponential_backoff(
+    fn: Callable[[], T],
+    *,
+    max_retries: Optional[int] = None,
+    base_delay_s: Optional[float] = None,
+    max_delay_s: Optional[float] = None,
+    jitter: Optional[float] = None,
+    sleep_fn: Callable[[float], None] = time.sleep,
+    label: str = "request",
+) -> T:
+    """Run ``fn`` with exponential backoff on retryable failures.
+
+    Retries: URLError / timeouts / HTTP 408,425,429,5xx.
+    Does not retry: other HTTPError (4xx validation/auth), PipelineError with retryable=False.
+    """
+    cfg = http_retry_config()
+    max_retries = cfg["max_retries"] if max_retries is None else max_retries
+    base_delay_s = cfg["base_delay_s"] if base_delay_s is None else base_delay_s
+    max_delay_s = cfg["max_delay_s"] if max_delay_s is None else max_delay_s
+    jitter = cfg["jitter"] if jitter is None else jitter
+
+    attempts = 0
+    last_err: Optional[BaseException] = None
+
+    while attempts <= max_retries:
+        attempts += 1
+        try:
+            return fn()
+        except PipelineError as e:
+            last_err = e
+            if not e.retryable or attempts > max_retries:
+                e.attempts = attempts
+                raise
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")[:500]
+            retryable = _is_retryable_http(e.code)
+            last_err = PipelineError(
+                f"HTTP {e.code} from {label}: {body}",
+                retryable=retryable,
+                status_code=e.code,
+                attempts=attempts,
+            )
+            if not retryable or attempts > max_retries:
+                raise last_err from e
+        except urllib.error.URLError as e:
+            last_err = PipelineError(
+                f"Cannot reach {label}: {e}",
+                retryable=True,
+                attempts=attempts,
+            )
+            if attempts > max_retries:
+                raise last_err from e
+        except TimeoutError as e:
+            last_err = PipelineError(
+                f"Timeout talking to {label}: {e}",
+                retryable=True,
+                attempts=attempts,
+            )
+            if attempts > max_retries:
+                raise last_err from e
+
+        # Backoff: base * 2^(attempt-1) + jitter, capped
+        delay = min(max_delay_s, base_delay_s * (2 ** (attempts - 1)))
+        if jitter:
+            delay += random.uniform(0, jitter * delay)
+        sleep_fn(delay)
+
+    assert last_err is not None
+    raise last_err
 
 
 def _request_json(
@@ -24,20 +156,17 @@ def _request_json(
     api_key: Optional[str] = None,
     timeout: float = 120.0,
 ) -> dict:
-    data = json.dumps(payload).encode("utf-8")
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
+    def once() -> dict:
+        data = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             body = resp.read().decode("utf-8")
             return json.loads(body) if body else {}
-    except urllib.error.HTTPError as e:
-        err = e.read().decode("utf-8", errors="replace")[:500]
-        raise PipelineError(f"HTTP {e.code} from {url}: {err}") from e
-    except urllib.error.URLError as e:
-        raise PipelineError(f"Cannot reach {url}: {e}") from e
+
+    return with_exponential_backoff(once, label=url)
 
 
 def _request_bytes(
@@ -47,21 +176,18 @@ def _request_bytes(
     timeout: float = 180.0,
     method: str = "POST",
 ) -> bytes:
-    data = None if payload is None else json.dumps(payload).encode("utf-8")
-    headers = {"Accept": "*/*"}
-    if payload is not None:
-        headers["Content-Type"] = "application/json"
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
+    def once() -> bytes:
+        data = None if payload is None else json.dumps(payload).encode("utf-8")
+        headers = {"Accept": "*/*"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read()
-    except urllib.error.HTTPError as e:
-        err = e.read().decode("utf-8", errors="replace")[:500]
-        raise PipelineError(f"HTTP {e.code} from {url}: {err}") from e
-    except urllib.error.URLError as e:
-        raise PipelineError(f"Cannot reach {url}: {e}") from e
+
+    return with_exponential_backoff(once, label=url)
 
 
 class LLMClient:
@@ -391,4 +517,5 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
         "image": "ready" if (cfg.image_url and not cfg.mock_media) else "offline/mock",
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
+        "http_retry": http_retry_config(),
     }
