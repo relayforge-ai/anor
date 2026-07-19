@@ -92,12 +92,41 @@
     }
   }
 
+  function formatDuration(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const r = s % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${String(r).padStart(2, "0")}s`;
+    return `${r}s`;
+  }
+
+  function jobTimeSuffix(st) {
+    /** Elapsed since start + remaining wall-clock budget (when running). */
+    if (!st || (st.status !== "running" && st.status !== "queued")) return "";
+    const now = Date.now() / 1000;
+    const parts = [];
+    if (st.started_at && st.status === "running") {
+      parts.push(`elapsed ${formatDuration(now - st.started_at)}`);
+    }
+    if (st.deadline_at && st.status === "running") {
+      const left = st.deadline_at - now;
+      if (left > 0) parts.push(`${formatDuration(left)} left`);
+      else parts.push("time budget exceeded");
+    } else if (st.status === "queued" && st.created_at) {
+      parts.push(`waiting ${formatDuration(now - st.created_at)}`);
+    }
+    return parts.length ? ` · ${parts.join(" · ")}` : "";
+  }
+
   function jobProgressLabel(st) {
     let msg = st.message || st.status || "Working…";
     if (st.status === "queued" && st.jobs_ahead != null) {
       if (st.jobs_ahead === 0) msg += " · next in line";
       else msg += ` · ${st.jobs_ahead} ahead`;
     }
+    msg += jobTimeSuffix(st);
     return msg;
   }
 

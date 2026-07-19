@@ -797,3 +797,30 @@ python3 -m unittest webapp.tests.test_render_lock \
 
 ### RESULT
 Same-path renders cannot corrupt each other's intermediates or final MP4.
+
+---
+
+## Iteration 27 — 2026-07-19
+
+### OBSERVE
+Video jobs already exposed `started_at` and `deadline_at`, but the studio progress label never showed elapsed time or remaining wall-clock budget — long renders (up to 600s) felt stuck.
+
+### PLAN
+**One high-impact change:** surface elapsed + remaining time in the studio progress label during queue/run.
+
+Expected outcome: running jobs show “elapsed Xm · Ys left”; queued jobs show wait age.
+
+### EXECUTE
+- `formatDuration` + `jobTimeSuffix` in app.js
+- `jobProgressLabel` appends time suffix
+- Static asset markers for helpers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 5 tests — OK
+```
+- JS contains formatDuration, jobTimeSuffix, deadline_at, elapsed
+
+### RESULT
+Scholars can see how long a render has run and how much wall-clock budget remains.

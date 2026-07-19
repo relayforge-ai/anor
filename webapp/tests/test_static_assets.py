@@ -50,6 +50,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "paywallFocusable",
             "paywallKeyHandler",
             "modal-open",
+            "formatDuration",
+            "jobTimeSuffix",
+            "deadline_at",
+            "elapsed",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
