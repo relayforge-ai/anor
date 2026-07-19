@@ -8,6 +8,7 @@ Serves:
   /api/scenarios    public packs list
   /api/scenario/:id pack detail
   /api/fork         decision fork (authored or LLM) — rate-limited + validated
+  /api/video/jobs   async video render queue (POST create, GET list/status)
   /media/videos/*   rendered explainers from outputs/videos
 
 Usage:
@@ -38,6 +39,7 @@ from pipeline.config import PipelineConfig  # noqa: E402
 from pipeline.fork_engine import list_scenarios, run_fork, scenario_payload  # noqa: E402
 from pipeline.clients import healthcheck  # noqa: E402
 from webapp import security as sec  # noqa: E402
+from webapp.jobs import QUEUE  # noqa: E402
 
 
 def _read_json(path: Path):
@@ -45,7 +47,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.1"
+    server_version = "ForkedHistory/1.2"
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write(f"[forked-history] {self.address_string()} {fmt % args}\n")
@@ -177,9 +179,12 @@ class Handler(BaseHTTPRequestHandler):
                         "fork_rate_limit": sec.FORK_LIMITER.limit,
                         "fork_rate_window_s": sec.FORK_LIMITER.window_s,
                         "llm_fork_rate_limit": sec.LLM_FORK_LIMITER.limit,
+                        "video_rate_limit": sec.VIDEO_JOB_LIMITER.limit,
+                        "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
                         "max_body_bytes": sec.MAX_BODY_BYTES,
                         "max_seed_chars": sec.MAX_SEED_CHARS,
                     },
+                    "video_queue": QUEUE.stats(),
                     "pipeline": healthcheck(cfg),
                     "videos_dir": str(VIDEOS),
                     "videos_present": sorted(
@@ -189,6 +194,19 @@ class Handler(BaseHTTPRequestHandler):
                     else [],
                 },
             )
+
+        if path == "/api/video/jobs":
+            jobs = [j.to_public() for j in QUEUE.list_recent(30)]
+            return self._json(200, {"jobs": jobs, "queue": QUEUE.stats()})
+
+        if path.startswith("/api/video/jobs/"):
+            jid = path[len("/api/video/jobs/") :].strip("/")
+            if not jid or "/" in jid or ".." in jid:
+                return self._json(400, {"error": "invalid job id", "code": "bad_job_id"})
+            job = QUEUE.get(jid)
+            if not job:
+                return self._json(404, {"error": "job not found", "code": "not_found"})
+            return self._json(200, job.to_public())
 
         if path.startswith("/api/scenario/"):
             sid = urllib.parse.unquote(path[len("/api/scenario/") :])
@@ -202,45 +220,50 @@ class Handler(BaseHTTPRequestHandler):
 
         return self._json(404, {"error": "not found", "path": path})
 
-    def do_POST(self) -> None:
-        parsed = urllib.parse.urlparse(self.path)
-        if parsed.path != "/api/fork":
-            return self._json(404, {"error": "not found"})
-
+    def _read_json_body(self) -> tuple[dict | None, sec.ValidationError | None]:
         body_err = sec.check_body_size(self.headers.get("Content-Length"))
         if body_err:
-            return self._validation_error(body_err)
-
+            return None, body_err
         length = int(self.headers.get("Content-Length") or "0")
-        # Cap read even if Content-Length lied
         raw = self.rfile.read(min(length, sec.MAX_BODY_BYTES + 1)) if length else b"{}"
         if len(raw) > sec.MAX_BODY_BYTES:
-            return self._validation_error(
-                sec.ValidationError(
-                    413,
-                    f"request body too large (max {sec.MAX_BODY_BYTES} bytes)",
-                    "body_too_large",
-                )
+            return None, sec.ValidationError(
+                413,
+                f"request body too large (max {sec.MAX_BODY_BYTES} bytes)",
+                "body_too_large",
             )
-
         try:
             data = json.loads(raw.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
-            return self._json(400, {"error": "invalid json", "code": "bad_json"})
-
+            return None, sec.ValidationError(400, "invalid json", "bad_json")
         if not isinstance(data, dict):
-            return self._json(400, {"error": "body must be a JSON object", "code": "bad_json"})
+            return None, sec.ValidationError(400, "body must be a JSON object", "bad_json")
+        return data, None
+
+    def do_POST(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/video/jobs":
+            return self._post_video_job()
+
+        if parsed.path != "/api/fork":
+            return self._json(404, {"error": "not found"})
+
+        data, err = self._read_json_body()
+        if err:
+            return self._validation_error(err)
+        assert data is not None
 
         scenario_id = data.get("scenario_id")
         choice_id = data.get("choice_id")
         use_llm = bool(data.get("use_llm"))
 
-        for err in (
+        for v_err in (
             sec.validate_scenario_id(scenario_id),
             sec.validate_choice_id(choice_id),
         ):
-            if err:
-                return self._validation_error(err)
+            if v_err:
+                return self._validation_error(v_err)
 
         seed, seed_err = sec.sanitize_custom_seed(data.get("custom_seed"))
         if seed_err:
@@ -277,8 +300,39 @@ class Handler(BaseHTTPRequestHandler):
         except KeyError as e:
             return self._json(400, {"error": str(e), "code": "bad_choice"})
         except Exception as e:
-            # Do not leak stack traces to clients
             return self._json(400, {"error": str(e)[:300], "code": "fork_failed"})
+
+    def _post_video_job(self) -> None:
+        data, err = self._read_json_body()
+        if err:
+            return self._validation_error(err)
+        assert data is not None
+
+        scenario_id = data.get("scenario_id")
+        choice_id = data.get("choice_id")
+        use_llm = bool(data.get("use_llm"))
+
+        for v_err in (
+            sec.validate_scenario_id(scenario_id),
+            sec.validate_choice_id(choice_id),
+        ):
+            if v_err:
+                return self._validation_error(v_err)
+
+        key = sec.client_key(self)
+        rate_err = sec.check_video_job_rate(key)
+        if rate_err:
+            return self._validation_error(rate_err)
+
+        try:
+            job = QUEUE.enqueue(scenario_id, choice_id, use_llm=use_llm)
+        except RuntimeError as e:
+            return self._json(503, {"error": str(e), "code": "queue_full"})
+        except Exception as e:
+            return self._json(400, {"error": str(e)[:300], "code": "enqueue_failed"})
+
+        # 202 Accepted — client polls GET /api/video/jobs/{id}
+        return self._json(202, job.to_public())
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8787) -> None:

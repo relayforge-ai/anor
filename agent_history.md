@@ -99,3 +99,37 @@ python3 -m unittest webapp.tests.test_static_assets pipeline.tests.test_retry \
 
 ### RESULT
 Studio now communicates work-in-progress for forks and pack loads; errors surface with codes. Next: async video job queue or dependency audit.
+
+---
+
+## Iteration 4 — 2026-07-18
+
+### OBSERVE
+Video renders are multi-second (TTS + stills + ffmpeg) and would block any synchronous HTTP handler. No queue existed — only CLI `pipeline.cli video`. Studio could not kick off a render without freezing the browser request.
+
+### PLAN
+**One high-impact change:** in-process async video job queue with progress polling.
+
+Expected outcome: `POST /api/video/jobs` returns 202 immediately; clients poll status/pct/stage; worker runs `render_video` with progress callbacks; rate-limited.
+
+### EXECUTE
+- `webapp/jobs.py` — ThreadPool queue, TTL purge, public job DTO
+- `render_video(..., on_progress=)` progress hooks
+- API: POST/GET `/api/video/jobs`, GET `/api/video/jobs/{id}`
+- Rate limit `ANOR_VIDEO_RATE_LIMIT` (default 3 / 5 min)
+- Studio: **Queue video render** (Scholar) with live progress + player on complete
+- Tests: `webapp/tests/test_video_jobs.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_video_jobs webapp.tests.test_static_assets \
+  pipeline.tests.test_retry pipeline.tests.test_pipeline \
+  webapp.tests.test_security webapp.tests.test_webapp -v
+→ 33 tests OK
+```
+- Enqueue returns 202; poll reaches completed with media_url
+- Bad scenario rejected; health exposes queue stats
+- Full regression green
+
+### RESULT
+Long video renders no longer block HTTP. Studio can queue + poll with real pipeline progress.

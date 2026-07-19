@@ -571,6 +571,121 @@
     }
   }
 
+  async function queueVideoRender() {
+    if (!state.scenarioId || !state.choiceId) {
+      toast("Select a scenario and a decision first.");
+      return;
+    }
+    if (!FHFreemium.isMember()) {
+      openPaywall(
+        "Video render is a Scholar control",
+        "Queue script → TTS → stills → ffmpeg on sovereign GPUs. Explorer can still run basic forks and watch the library."
+      );
+      return;
+    }
+
+    const btn = $("#btn-video");
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("busy");
+    }
+
+    const stages = [
+      { id: "queue", label: "Accepted by render queue" },
+      { id: "fork", label: "Decision narrative" },
+      { id: "script", label: "VO script & shot list" },
+      { id: "segment", label: "Stills · TTS · clips" },
+      { id: "concat", label: "Final MP4 assembly" },
+    ];
+
+    const stageIndex = (stage) => {
+      const map = { queued: 0, starting: 0, load: 1, fork: 1, script: 2, segment: 3, concat: 4, done: 4, error: 3 };
+      return map[stage] ?? 0;
+    };
+
+    try {
+      const r = await fetch("/api/video/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario_id: state.scenarioId,
+          choice_id: state.choiceId,
+          use_llm: false,
+        }),
+      });
+      const job = await r.json().catch(() => ({}));
+      if (!r.ok && r.status !== 202) {
+        throw Object.assign(new Error(job.error || "Enqueue failed"), { code: job.code });
+      }
+
+      const jobId = job.id;
+      toast("Video job queued");
+      let done = false;
+      while (!done) {
+        const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId));
+        const st = await pr.json();
+        if (!pr.ok) throw Object.assign(new Error(st.error || "Poll failed"), { code: st.code });
+
+        const idx = stageIndex(st.stage);
+        $("#fork-result").innerHTML = renderSimProgress({
+          stages,
+          activeIndex: st.status === "failed" ? idx : idx,
+          pct: st.pct || 0,
+          label: st.message || st.status,
+          indeterminate: st.status === "queued",
+        });
+
+        if (st.status === "completed") {
+          done = true;
+          const url = st.result?.media_url || "";
+          $("#fork-result").innerHTML =
+            renderSimProgress({
+              stages,
+              activeIndex: stages.length - 1,
+              pct: 100,
+              label: "Render complete",
+              indeterminate: false,
+            }) +
+            `<div style="margin-top:1rem">
+              <p class="note">Async job <code>${escapeHtml(jobId)}</code> finished.</p>
+              ${
+                url
+                  ? `<a class="btn btn-primary btn-sm" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open MP4</a>
+                     <video controls playsinline style="width:100%;margin-top:0.8rem;border-radius:12px;border:1px solid var(--line)" src="${escapeHtml(url)}"></video>`
+                  : ""
+              }
+            </div>`;
+          toast("Video ready");
+        } else if (st.status === "failed") {
+          done = true;
+          $("#fork-result").innerHTML =
+            renderSimProgress({
+              stages,
+              activeIndex: idx,
+              pct: st.pct || 0,
+              label: "Render failed",
+              indeterminate: false,
+            }) + renderForkError(st.error || "Render failed", "video_failed");
+          const active = $("#fork-result")?.querySelector(".sim-stages li.active");
+          if (active) {
+            active.classList.remove("active");
+            active.classList.add("error");
+          }
+        } else {
+          await new Promise((res) => setTimeout(res, 600));
+        }
+      }
+    } catch (e) {
+      $("#fork-result").innerHTML = renderForkError(e.message || String(e), e.code || "video_error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove("busy");
+      }
+      renderStudioControls();
+    }
+  }
+
   function compareBranches() {
     if (!FHFreemium.isMember()) {
       openPaywall("Compare branches", "Scholar unlocks side-by-side historical vs counterfactual.");
@@ -748,6 +863,7 @@
     });
     $("#btn-fork")?.addEventListener("click", () => runFork({ useLlm: false }));
     $("#btn-llm")?.addEventListener("click", () => runFork({ useLlm: true }));
+    $("#btn-video")?.addEventListener("click", () => queueVideoRender());
     $("#btn-compare")?.addEventListener("click", compareBranches);
     $("#btn-export")?.addEventListener("click", exportFork);
 

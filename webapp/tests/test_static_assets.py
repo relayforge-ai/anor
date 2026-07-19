@@ -28,7 +28,9 @@ class TestStaticProgressUI(unittest.TestCase):
             "renderSkeletonStudio",
             "renderForkError",
             "aria-busy",
-            "role=\"progressbar\"",
+            'role="progressbar"',
+            "queueVideoRender",
+            "/api/video/jobs",
         ):
             self.assertIn(needle, js, f"missing {needle}")
 

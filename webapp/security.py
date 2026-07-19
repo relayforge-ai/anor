@@ -83,6 +83,10 @@ LLM_FORK_LIMITER = RateLimiter(
     limit=_env_int("ANOR_FORK_LLM_RATE", 5),
     window_s=float(_env_int("ANOR_FORK_RATE_WINDOW", 60)),
 )
+VIDEO_JOB_LIMITER = RateLimiter(
+    limit=_env_int("ANOR_VIDEO_RATE_LIMIT", 3),
+    window_s=float(_env_int("ANOR_VIDEO_RATE_WINDOW", 300)),
+)
 
 MAX_BODY_BYTES = _env_int("ANOR_MAX_BODY_BYTES", 16_384)
 MAX_SEED_CHARS = _env_int("ANOR_MAX_SEED_CHARS", 500)
@@ -174,4 +178,15 @@ def check_fork_rate(key: str, use_llm: bool) -> Optional[ValidationError]:
                 f"LLM fork rate limit exceeded — retry in {retry_llm}s",
                 "llm_rate_limited",
             )
+    return None
+
+
+def check_video_job_rate(key: str) -> Optional[ValidationError]:
+    ok, _, retry = VIDEO_JOB_LIMITER.allow(f"video:{key}")
+    if not ok:
+        return ValidationError(
+            429,
+            f"video render rate limit exceeded — retry in {retry}s",
+            "video_rate_limited",
+        )
     return None

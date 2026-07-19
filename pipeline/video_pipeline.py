@@ -10,11 +10,13 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from .clients import ImageClient, TTSClient
 from .config import PipelineConfig
 from .fork_engine import load_scenario, run_fork
+
+ProgressCb = Callable[[str, float, str], None]  # stage, pct 0-100, message
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "outputs" / "videos"
@@ -171,9 +173,16 @@ def render_video(
     out_dir: Optional[Path] = None,
     cfg: Optional[PipelineConfig] = None,
     use_llm: bool = False,
+    on_progress: Optional[ProgressCb] = None,
 ) -> VideoBuildResult:
+    def progress(stage: str, pct: float, message: str) -> None:
+        if on_progress:
+            on_progress(stage, max(0.0, min(100.0, pct)), message)
+
     cfg = cfg or PipelineConfig.from_env()
+    progress("load", 5, "Loading scenario pack")
     scenario = load_scenario(scenario_id)
+    progress("fork", 12, "Building decision narrative")
     fork = run_fork(scenario_id, choice_id, cfg=cfg, use_llm=use_llm)
 
     out_dir = Path(out_dir or DEFAULT_OUT / f"{scenario_id}-{choice_id}")
@@ -181,6 +190,7 @@ def render_video(
     work = out_dir / "work"
     work.mkdir(exist_ok=True)
 
+    progress("script", 20, "Writing VO script and shot list")
     segments = build_script(scenario, choice_id, fork.narrative)
     # Attach fuller narrative as sidecar for long-form YouTube description drafts
     script_path = out_dir / "script.md"
@@ -204,14 +214,20 @@ def render_video(
     tts = TTSClient(cfg)
     clips: list[Path] = []
     seg_meta: list[dict] = []
+    n = max(1, len(segments))
 
     for i, seg in enumerate(segments):
+        # Segments occupy 25% → 85% of the bar
+        base = 25 + (i / n) * 60
+        progress("segment", base, f"Rendering segment {i + 1}/{n}: {seg['title']}")
         img_path = work / f"{i:02d}_{seg['id']}.png"
         audio_path = work / f"{i:02d}_{seg['id']}_vo"
         clip_path = work / f"{i:02d}_{seg['id']}.mp4"
 
         images.generate(seg["image_prompt"], img_path)
+        progress("segment", base + (60 / n) * 0.35, f"TTS for segment {i + 1}/{n}")
         audio_file = tts.synthesize(seg["text"], audio_path)
+        progress("segment", base + (60 / n) * 0.7, f"Muxing clip {i + 1}/{n}")
         dur = _ffprobe_duration(audio_file)
         _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
         clips.append(clip_path)
@@ -227,6 +243,7 @@ def render_video(
             }
         )
 
+    progress("concat", 90, "Concatenating final MP4")
     out_mp4 = out_dir / f"{scenario_id}-{choice_id}.mp4"
     _concat_clips(clips, out_mp4)
 
@@ -241,6 +258,7 @@ def render_video(
         "config": cfg.describe(),
     }
     (out_dir / "build.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    progress("done", 100, "Render complete")
 
     return VideoBuildResult(
         scenario_id=scenario_id,
