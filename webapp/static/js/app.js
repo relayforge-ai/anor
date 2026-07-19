@@ -998,7 +998,7 @@
     if (useLlm && !FHFreemium.isMember()) {
       openPaywall(
         "LLM re-render is a Scholar control",
-        "Explorer can still run basic authored forks. Upgrade for live simulation prose, compare, seeds, and export."
+        "Explorer can still run basic authored forks and free labeled compare. Upgrade for live simulation prose, seeds, and export."
       );
       return;
     }

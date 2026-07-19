@@ -71,8 +71,8 @@
     "full_videos_free": 1,
     "preview_fraction": 0.25,
     "free_forks_per_day": 3,
-    "free_controls": ["view_opening", "pick_choice", "authored_fork"],
-    "paid_controls": ["llm_rerender", "compare_branches", "custom_seed", "export", "multi_scenario_session"]
+    "free_controls": ["view_opening", "pick_choice", "authored_fork", "compare_branches", "copy_narrative"],
+    "paid_controls": ["llm_rerender", "custom_seed", "export", "multi_scenario_session"]
   },
   "videos": [
     {
