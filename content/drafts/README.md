@@ -59,6 +59,16 @@ See `batch-003/README.md` and `batch-003/postiz-drafts.json`.
 
 See `batch-004/README.md` and `batch-004/postiz-drafts.json`.
 
+## Batch 005 — July Crisis (ELO-005)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-005/ELO-005-historical.md` | blank cheque | historical | YT + TT |
+| `batch-005/ELO-005-restrain.md` | restrain Vienna | simulated | YT + TT |
+| `batch-005/ELO-005-localize_only.md` | localization gamble | dramatized | YT + TT |
+
+See `batch-005/README.md` and `batch-005/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -72,6 +82,8 @@ python -m pipeline.cli video --scenario ELO-009 --choice historical
 python -m pipeline.cli video --scenario ELO-009 --choice press_armor
 python -m pipeline.cli video --scenario ELO-004 --choice historical
 python -m pipeline.cli video --scenario ELO-004 --choice stand_down
+python -m pipeline.cli video --scenario ELO-005 --choice historical
+python -m pipeline.cli video --scenario ELO-005 --choice restrain
 ```
 
 ## Human gate checklist

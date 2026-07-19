@@ -1921,3 +1921,30 @@ python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
 
 ### RESULT
 Studio/library gain the July Crisis as a playable Great Power decision with speculation labels intact.
+
+---
+
+## Iteration 67 — 2026-07-19
+
+### OBSERVE
+ELO-005 July Crisis pack shipped; social drafts stopped at batch-004 (Rubicon). No Ryan-reviewable captions for blank-cheque / restrain / localize cuts.
+
+### PLAN
+**One high-impact change:** batch-005 DRAFTS for ELO-005 with human-gate Postiz payload and hygiene tests.
+
+Expected outcome: draft-only captions; 📗/🧪 labels; placeholder integrations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-005/*` (3 cut MDs, postiz-drafts.json, README)
+- Parent drafts README + PIPELINE batch table
+- Tests: batch-005 presence + pack reference + labels
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline_docs \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 29 tests — OK
+```
+
+### RESULT
+July Crisis social creative is staged as drafts only, aligned with the new public pack.

@@ -96,6 +96,7 @@ anor/
 | `content/drafts/batch-002/` | EXCOMM (ELO-007) | DRAFT |
 | `content/drafts/batch-003/` | Dunkirk (ELO-009) | DRAFT |
 | `content/drafts/batch-004/` | Rubicon (ELO-004) | DRAFT |
+| `content/drafts/batch-005/` | July Crisis blank cheque (ELO-005) | DRAFT |
 
 Each batch has markdown captions + `postiz-drafts.json` with `status: "draft"` and placeholder integration IDs. **Agents must not publish.**
 

@@ -49,6 +49,18 @@ class TestSocialDrafts(unittest.TestCase):
         ):
             self.assertTrue((b4 / name).is_file(), f"missing {name}")
 
+    def test_batch_005_present(self):
+        b5 = DRAFTS / "batch-005"
+        self.assertTrue(b5.is_dir())
+        for name in (
+            "ELO-005-historical.md",
+            "ELO-005-restrain.md",
+            "ELO-005-localize_only.md",
+            "postiz-drafts.json",
+            "README.md",
+        ):
+            self.assertTrue((b5 / name).is_file(), f"missing {name}")
+
     def test_postiz_payloads_are_draft_human_gate(self):
         for path in DRAFTS.glob("batch-*/postiz-drafts.json"):
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -105,6 +117,15 @@ class TestSocialDrafts(unittest.TestCase):
             self.assertNotIn("mandos", text.lower())
             self.assertNotIn("master source", text.lower())
 
+    def test_batch_005_references_public_pack_only(self):
+        pack = PUBLIC / "ELO-005.json"
+        self.assertTrue(pack.is_file())
+        for path in (DRAFTS / "batch-005").glob("ELO-005*.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("ELO-005", text)
+            self.assertNotIn("mandos", text.lower())
+            self.assertNotIn("master source", text.lower())
+
     def test_simulated_drafts_carry_label(self):
         labeled = [
             DRAFTS / "batch-002" / "ELO-007-surgical_strike.md",
@@ -113,6 +134,8 @@ class TestSocialDrafts(unittest.TestCase):
             DRAFTS / "batch-003" / "ELO-009-luftwaffe_only.md",
             DRAFTS / "batch-004" / "ELO-004-stand_down.md",
             DRAFTS / "batch-004" / "ELO-004-negotiate_delay.md",
+            DRAFTS / "batch-005" / "ELO-005-restrain.md",
+            DRAFTS / "batch-005" / "ELO-005-localize_only.md",
         ]
         for path in labeled:
             text = path.read_text(encoding="utf-8")

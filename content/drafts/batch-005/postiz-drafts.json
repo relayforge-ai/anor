@@ -1,0 +1,89 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-005",
+  "created": "2026-07-19",
+  "theme": "July Crisis 1914 blank cheque (ELO-005)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review restrain and localize cuts for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-005-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "July 1914. After Sarajevo.\nUnderwrite Vienna — or restrain?\n📗 Documented: the blank cheque. The cascade follows.\n#history #ww1 #1914 #fyp",
+      "media_local": "outputs/videos/ELO-005-historical/ELO-005-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-005-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "July 1914: Germany's blank cheque to Austria-Hungary",
+      "caption": "Sarajevo has already happened. The choice in Berlin is whether to underwrite Vienna's hard hand.\n\n📗 Documented baseline: strong support — the blank cheque — and a cascade into general war.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#ww1 #julycrisis #1914 #history",
+      "media_local": "outputs/videos/ELO-005-historical/ELO-005-historical.mp4",
+      "settings": {
+        "title": "July 1914: Germany's blank cheque to Austria-Hungary",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "ww1", "label": "ww1"},
+          {"value": "1914", "label": "1914"}
+        ]
+      }
+    },
+    {
+      "id": "elo-005-restrain-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if Berlin says not yet — diplomacy first?\nWe label this 🧪 SIMULATED. History records the blank cheque.\nTempo ≠ guaranteed peace.\n#althistory #historytok #ww1",
+      "media_local": "outputs/videos/ELO-005-restrain/ELO-005-restrain.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-005-restrain-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Berlin restrained Vienna in July 1914?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: the blank cheque is documented.\n🧪 Restrain path is labeled simulation: conditionality and tempo, not a guaranteed peace.\n\n#althistory #ww1 #speculationlabeled",
+      "media_local": "outputs/videos/ELO-005-restrain/ELO-005-restrain.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Berlin restrained Vienna in July 1914?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "ww1", "label": "ww1"}
+        ]
+      }
+    },
+    {
+      "id": "elo-005-localize-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if July 1914 stayed a local Balkan war?",
+      "caption": "⚠️ Dramatized process — not secret history.\n\n📗 Baseline remains the blank cheque and general war cascade.\nThis cut studies the localization gamble — labeled so clips cannot lie.\n\n#althistory #ww1 #julycrisis",
+      "media_local": "outputs/videos/ELO-005-localize_only/ELO-005-localize_only.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if July 1914 stayed a local Balkan war?",
+        "type": "public"
+      }
+    }
+  ]
+}
