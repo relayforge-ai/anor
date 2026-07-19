@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sys
 import threading
+import urllib.error
 import urllib.request
 from pathlib import Path
 import unittest
@@ -50,18 +51,46 @@ class TestWebapp(unittest.TestCase):
         self.assertIn(b"Forked History", body)
 
     def test_catalog(self):
-        status, body, _ = self.get("/api/catalog")
+        status, body, headers = self.get("/api/catalog")
         self.assertEqual(status, 200)
         data = json.loads(body)
         self.assertIn("pricing", data)
         self.assertGreaterEqual(len(data.get("videos", [])), 1)
         self.assertEqual(data["freemium"]["full_videos_free"], 1)
         self.assertEqual(data["freemium"]["preview_fraction"], 0.25)
+        etag = headers.get("ETag")
+        self.assertTrue(etag)
+        self.assertIn("max-age", (headers.get("Cache-Control") or "").lower())
+
+    def test_catalog_etag_304(self):
+        status, body, headers = self.get("/api/catalog")
+        self.assertEqual(status, 200)
+        etag = headers.get("ETag")
+        self.assertTrue(etag)
+        req = urllib.request.Request(
+            self.base + "/api/catalog",
+            headers={"If-None-Match": etag},
+        )
+        try:
+            urllib.request.urlopen(req, timeout=5)
+            self.fail("expected 304")
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 304)
+            self.assertEqual(e.headers.get("ETag"), etag)
 
     def test_scenarios(self):
-        status, body, _ = self.get("/api/scenarios")
+        status, body, headers = self.get("/api/scenarios")
         data = json.loads(body)
         self.assertTrue(any(s["scenario_id"] == "ELO-003" for s in data))
+        self.assertTrue(headers.get("ETag"))
+
+    def test_server_header_hides_python_version(self):
+        status, _, headers = self.get("/api/health")
+        self.assertEqual(status, 200)
+        server = headers.get("Server") or ""
+        self.assertIn("ForkedHistory", server)
+        self.assertNotIn("Python", server)
+        self.assertNotIn("CPython", server)
 
     def test_fork(self):
         req = urllib.request.Request(

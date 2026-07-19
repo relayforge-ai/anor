@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import hmac
 import json
 import mimetypes
@@ -57,7 +58,13 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.16"
+    server_version = "ForkedHistory/1.17"
+    # Do not advertise Python version (default is "BaseHTTP/x.y Python/a.b")
+    sys_version = ""
+
+    def version_string(self) -> str:
+        """Product token only — no CPython version fingerprint."""
+        return self.server_version
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -90,17 +97,46 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        # Allow callers to override Cache-Control via extra (e.g. short-lived catalog)
+        if not (extra and "Cache-Control" in extra):
+            self.send_header("Cache-Control", "no-store")
         self._security_headers()
         if extra:
             for k, v in extra.items():
                 self.send_header(k, v)
         self.end_headers()
+        if self.command == "HEAD" or not body:
+            return
         self.wfile.write(body)
 
     def _json(self, code: int, obj, extra: dict | None = None) -> None:
         raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self._send(code, raw, "application/json; charset=utf-8", extra=extra)
+
+    def _json_revalidatable(self, obj, *, max_age: int = 30) -> None:
+        """JSON with weak ETag + short public cache for semi-static catalog/scenarios.
+
+        Conditional GET returns 304 when the body hash is unchanged — cuts bandwidth
+        and eases the global API rate ceiling for SPA reloads.
+        """
+        raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        etag = 'W/"' + hashlib.sha256(raw).hexdigest()[:20] + '"'
+        cache = f"public, max-age={max(0, int(max_age))}, must-revalidate"
+        inm = self.headers.get("If-None-Match")
+        if inm and etag in [t.strip() for t in inm.split(",")]:
+            self._ensure_request_id()
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", cache)
+            self._security_headers()
+            self.end_headers()
+            return
+        self._send(
+            200,
+            raw,
+            "application/json; charset=utf-8",
+            extra={"ETag": etag, "Cache-Control": cache},
+        )
 
     def _validation_error(self, err: sec.ValidationError) -> None:
         headers = {}
@@ -317,10 +353,10 @@ class Handler(BaseHTTPRequestHandler):
                 safe_videos.append(entry)
             cat = dict(cat)
             cat["videos"] = safe_videos
-            return self._json(200, cat)
+            return self._json_revalidatable(cat, max_age=30)
 
         if path == "/api/scenarios":
-            return self._json(200, list_scenarios())
+            return self._json_revalidatable(list_scenarios(), max_age=60)
 
         if path == "/api/health":
             return self._json(200, self._health_payload())

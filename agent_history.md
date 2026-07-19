@@ -914,3 +914,31 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Users see a clear recovery path when the site API is unreachable instead of a blank shell and a fleeting toast.
+
+---
+
+## Iteration 31 — 2026-07-19
+
+### OBSERVE
+Catalog and scenarios always returned full JSON with `no-store`, so SPA reloads re-downloaded unchanged bodies and burned global API rate budget. `Server` also advertised the CPython version.
+
+### PLAN
+**One high-impact change:** weak ETag + short public cache for catalog/scenarios; hide Python version in Server header.
+
+Expected outcome: conditional GET → 304; Server is product token only.
+
+### EXECUTE
+- `_json_revalidatable()` for catalog (30s) and scenarios (60s)
+- `version_string()` / empty `sys_version` — no Python fingerprint
+- Tests: ETag, 304, Server header
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_webapp -v
+→ Ran 6 tests — OK
+```
+- Catalog ETag present; If-None-Match → 304
+- Server contains ForkedHistory, not Python
+
+### RESULT
+Repeat catalog/scenario loads can revalidate cheaply; HTTP Server header no longer fingerprints the runtime.
