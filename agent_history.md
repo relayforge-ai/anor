@@ -617,3 +617,34 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_security \
 
 ### RESULT
 Explorers keep fork results across refresh; rate limits are actionable instead of dead-end errors.
+
+---
+
+## Iteration 21 — 2026-07-19
+
+### OBSERVE
+Expensive POSTs (fork/video/demo) were rate-limited, but all other `/api/*` GETs (catalog, scenarios, job polls) were unlimited — a single client could scrape or flood cheaply. Health probes needed to stay unrestricted.
+
+### PLAN
+**One high-impact change:** global per-client API rate limit for `/api/*` with `/api/health` exempt.
+
+Expected outcome: excess API traffic returns 429 `api_rate_limited` + Retry-After; health always 200; defaults 180 req / 60s.
+
+### EXECUTE
+- `API_LIMITER` + `check_api_rate` / `api_rate_exempt` in `security.py`
+- `_enforce_api_rate` on GET/POST/DELETE for `/api/*`
+- Health exposes `api_rate_limit` / `api_rate_window_s`
+- Env: `ANOR_API_RATE_LIMIT` / `ANOR_API_RATE_WINDOW`
+- Tests: catalog flood, health exempt, unit helpers; video jobs use generous limiter
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_security webapp.tests.test_video_jobs -v
+→ Ran 21 tests — OK
+```
+- Catalog trips 429 with `api_rate_limited` + Retry-After
+- Health still 200 after API budget exhausted
+- Job poll suite not poisoned by global ceiling
+
+### RESULT
+Scrape/flood of catalog and poll endpoints is capped without breaking operator health checks.

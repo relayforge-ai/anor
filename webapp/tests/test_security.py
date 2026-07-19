@@ -138,6 +138,9 @@ class TestForkEndpointSecurity(unittest.TestCase):
         tight = security.RateLimiter(3, 60)
         server_mod.sec.FORK_LIMITER = tight
         security.FORK_LIMITER = tight
+        # Keep global API ceiling high so fork-specific limit is what trips
+        server_mod.sec.API_LIMITER = security.RateLimiter(1000, 60)
+        security.API_LIMITER = server_mod.sec.API_LIMITER
         try:
             codes = []
             for _ in range(5):
@@ -153,8 +156,85 @@ class TestForkEndpointSecurity(unittest.TestCase):
             restored = security.RateLimiter(1000, 60)
             server_mod.sec.FORK_LIMITER = restored
             security.FORK_LIMITER = restored
+            server_mod.sec.API_LIMITER = restored
+            security.API_LIMITER = restored
             server_mod.sec.LLM_FORK_LIMITER.reset()
             security.LLM_FORK_LIMITER.reset()
+
+    def test_global_api_rate_limit_on_catalog(self):
+        import webapp.server as server_mod
+
+        tight = security.RateLimiter(3, 60)
+        server_mod.sec.API_LIMITER = tight
+        security.API_LIMITER = tight
+        try:
+            codes = []
+            for _ in range(6):
+                req = urllib.request.Request(self.base + "/api/catalog")
+                try:
+                    with urllib.request.urlopen(req, timeout=5) as r:
+                        codes.append(r.status)
+                except urllib.error.HTTPError as e:
+                    codes.append(e.code)
+                    if e.code == 429:
+                        body = json.loads(e.read().decode() or "{}")
+                        self.assertEqual(body.get("code"), "api_rate_limited")
+                        self.assertTrue(e.headers.get("Retry-After"))
+            self.assertTrue(any(c == 200 for c in codes), codes)
+            self.assertTrue(any(c == 429 for c in codes), codes)
+        finally:
+            restored = security.RateLimiter(1000, 60)
+            server_mod.sec.API_LIMITER = restored
+            security.API_LIMITER = restored
+
+    def test_health_exempt_from_global_api_limit(self):
+        import webapp.server as server_mod
+
+        # Exhaust API budget
+        tight = security.RateLimiter(1, 60)
+        server_mod.sec.API_LIMITER = tight
+        security.API_LIMITER = tight
+        try:
+            # Burn the single token on catalog
+            urllib.request.urlopen(self.base + "/api/catalog", timeout=5).read()
+            # Second catalog should 429
+            try:
+                urllib.request.urlopen(self.base + "/api/catalog", timeout=5)
+                self.fail("expected 429 on catalog")
+            except urllib.error.HTTPError as e:
+                self.assertEqual(e.code, 429)
+            # Health remains available for probes
+            with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:
+                self.assertEqual(r.status, 200)
+                data = json.loads(r.read())
+                self.assertEqual(data.get("site"), "ok")
+                self.assertIn("api_rate_limit", data.get("security") or {})
+        finally:
+            restored = security.RateLimiter(1000, 60)
+            server_mod.sec.API_LIMITER = restored
+            security.API_LIMITER = restored
+
+
+class TestApiRateHelpers(unittest.TestCase):
+    def test_api_rate_exempt_health(self):
+        self.assertTrue(security.api_rate_exempt("/api/health"))
+        self.assertTrue(security.api_rate_exempt("/api/health/"))
+        self.assertFalse(security.api_rate_exempt("/api/catalog"))
+        self.assertFalse(security.api_rate_exempt("/api/fork"))
+
+    def test_check_api_rate_unit(self):
+        prev = security.API_LIMITER
+        security.API_LIMITER = security.RateLimiter(2, 60)
+        try:
+            self.assertIsNone(security.check_api_rate("t1", "/api/catalog"))
+            self.assertIsNone(security.check_api_rate("t1", "/api/scenarios"))
+            err = security.check_api_rate("t1", "/api/catalog")
+            self.assertIsNotNone(err)
+            self.assertEqual(err.code, "api_rate_limited")
+            # Health never consumes / never blocks
+            self.assertIsNone(security.check_api_rate("t1", "/api/health"))
+        finally:
+            security.API_LIMITER = prev
 
 
 if __name__ == "__main__":

@@ -37,6 +37,9 @@ class TestVideoJobsAPI(unittest.TestCase):
         QUEUE.timeout_s = max(getattr(QUEUE, "timeout_s", 600), 600)
         sec.VIDEO_JOB_LIMITER = sec.RateLimiter(100, 60)
         sec.VIDEO_JOB_LIMITER.reset()
+        # Poll-heavy suite — keep global API ceiling out of the way
+        sec.API_LIMITER = sec.RateLimiter(5000, 60)
+        sec.API_LIMITER.reset()
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         cls.port = cls.httpd.server_address[1]
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)

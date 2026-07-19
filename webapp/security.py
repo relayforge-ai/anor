@@ -7,6 +7,8 @@ Tune via env without code changes:
   ANOR_FORK_RATE_LIMIT   max fork requests per window (default 20)
   ANOR_FORK_RATE_WINDOW  window seconds (default 60)
   ANOR_FORK_LLM_RATE     max use_llm=true forks per window (default 5)
+  ANOR_API_RATE_LIMIT    max /api/* requests per window (default 180; health exempt)
+  ANOR_API_RATE_WINDOW   global API window seconds (default 60)
   ANOR_MAX_BODY_BYTES    max POST body size (default 16384)
   ANOR_MAX_SEED_CHARS    max custom_seed length (default 500)
   ANOR_CORS_ORIGIN       CORS allow-origin (default * for local dev)
@@ -97,6 +99,15 @@ DEMO_TOKEN_LIMITER = RateLimiter(
     limit=_env_int("ANOR_DEMO_TOKEN_RATE_LIMIT", 10),
     window_s=float(_env_int("ANOR_DEMO_TOKEN_RATE_WINDOW", 3600)),
 )
+# Global ceiling for all /api/* traffic (scrape / poll flood protection).
+# /api/health is exempt so operator probes never starve.
+API_LIMITER = RateLimiter(
+    limit=_env_int("ANOR_API_RATE_LIMIT", 180),
+    window_s=float(_env_int("ANOR_API_RATE_WINDOW", 60)),
+)
+
+# Paths under /api that skip the global API limiter
+_API_RATE_EXEMPT = frozenset({"/api/health"})
 
 MAX_BODY_BYTES = _env_int("ANOR_MAX_BODY_BYTES", 16_384)
 MAX_SEED_CHARS = _env_int("ANOR_MAX_SEED_CHARS", 500)
@@ -217,6 +228,38 @@ def check_demo_token_rate(key: str) -> Optional[ValidationError]:
             429,
             f"demo token rate limit exceeded — retry in {retry}s",
             "demo_rate_limited",
+        )
+    return None
+
+
+def api_rate_exempt(path: str) -> bool:
+    """True when path should not consume the global API budget."""
+    if not path:
+        return True
+    # Strip query string if present
+    bare = path.split("?", 1)[0].rstrip("/") or path
+    if bare in _API_RATE_EXEMPT or path in _API_RATE_EXEMPT:
+        return True
+    if bare == "/api/health" or path.startswith("/api/health"):
+        return True
+    return False
+
+
+def check_api_rate(key: str, path: str = "") -> Optional[ValidationError]:
+    """Global per-client ceiling for /api/* (except health probes).
+
+    Complements endpoint-specific limiters (fork/video/demo). Cheap GETs
+    like catalog/scenarios/job polls are otherwise unlimited and can be
+    used for scrape or connection floods.
+    """
+    if path and api_rate_exempt(path):
+        return None
+    ok, _, retry = API_LIMITER.allow(f"api:{key}")
+    if not ok:
+        return ValidationError(
+            429,
+            f"API rate limit exceeded — retry in {retry}s",
+            "api_rate_limited",
         )
     return None
 

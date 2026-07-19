@@ -55,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.11"
+    server_version = "ForkedHistory/1.12"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -116,6 +116,16 @@ class Handler(BaseHTTPRequestHandler):
             {"error": err.error, "code": err.code},
             extra=headers or None,
         )
+
+    def _enforce_api_rate(self, path: str) -> bool:
+        """Apply global /api/* rate limit. True if response already sent (blocked)."""
+        if not path.startswith("/api/"):
+            return False
+        err = sec.check_api_rate(sec.client_key(self), path)
+        if err:
+            self._validation_error(err)
+            return True
+        return False
 
     def _etag_for(self, path: Path, size: int, mtime_ns: int) -> str:
         # Weak ETag from size+mtime — good enough for local static/media revalidation
@@ -263,6 +273,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(403, {"error": "forbidden", "code": "bad_path"})
             return self._media_file(target)
 
+        # Global API ceiling (health exempt) before any catalog/scenario work
+        if path.startswith("/api/") and self._enforce_api_rate(path):
+            return
+
         if path == "/api/catalog":
             cat = _read_json(CATALOG)
             safe_videos = []
@@ -298,6 +312,8 @@ class Handler(BaseHTTPRequestHandler):
                         "llm_fork_rate_limit": sec.LLM_FORK_LIMITER.limit,
                         "video_rate_limit": sec.VIDEO_JOB_LIMITER.limit,
                         "video_rate_window_s": sec.VIDEO_JOB_LIMITER.window_s,
+                        "api_rate_limit": sec.API_LIMITER.limit,
+                        "api_rate_window_s": sec.API_LIMITER.window_s,
                         "max_body_bytes": sec.MAX_BODY_BYTES,
                         "max_seed_chars": sec.MAX_SEED_CHARS,
                         "member_enforcement": mem.enforcement_enabled(),
@@ -389,6 +405,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self) -> None:
         self._ensure_request_id()
         parsed = urllib.parse.urlparse(self.path)
+        if self._enforce_api_rate(parsed.path):
+            return
         if not parsed.path.startswith("/api/video/jobs/"):
             return self._json(404, {"error": "not found"})
         jid = parsed.path[len("/api/video/jobs/") :].strip("/")
@@ -424,6 +442,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         self._ensure_request_id()
         parsed = urllib.parse.urlparse(self.path)
+        if self._enforce_api_rate(parsed.path):
+            return
 
         if parsed.path == "/api/member/demo":
             return self._post_member_demo()
