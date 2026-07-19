@@ -65,6 +65,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "focusMainForRoute",
             "routeFocusReady",
             "preventScroll",
+            "updateDocumentTitle",
+            "document.title",
+            "Library —",
+            "Membership —",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")

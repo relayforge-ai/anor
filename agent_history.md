@@ -1058,3 +1058,30 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 SPA route changes are discoverable to assistive tech without disrupting initial load focus.
+
+---
+
+## Iteration 36 — 2026-07-19
+
+### OBSERVE
+`document.title` was set once at boot and never updated on hash routes — browser tabs, history, and AT all showed the same home tagline for Library / Studio / Watch / Pricing.
+
+### PLAN
+**One high-impact change:** update `document.title` per route (episode title on watch, scenario id on studio).
+
+Expected outcome: titles like `Library — Forked History`, `{episode} — Forked History`, `Studio · ELO-003 — Forked History`.
+
+### EXECUTE
+- `updateDocumentTitle(page, param)` after each route render
+- Watch uses catalog episode title when available
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 5 tests — OK
+```
+- JS contains updateDocumentTitle, Library —, Membership —
+
+### RESULT
+Browser chrome and assistive tech reflect the current SPA view.

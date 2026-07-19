@@ -1427,6 +1427,32 @@
     }
   }
 
+  function updateDocumentTitle(page, param) {
+    const brand = (state.catalog && state.catalog.brand && state.catalog.brand.name) || "Forked History";
+    const tagline =
+      (state.catalog && state.catalog.brand && state.catalog.brand.tagline) || "";
+    let title = brand;
+    if (page === "home") {
+      title = tagline ? `${brand} — ${tagline}` : brand;
+    } else if (page === "library") {
+      title = `Library — ${brand}`;
+    } else if (page === "watch") {
+      const v =
+        (state.catalog &&
+          state.catalog.videos &&
+          state.catalog.videos.find((x) => x.id === param || x.file === param)) ||
+        null;
+      const label = (v && (v.title || v.id)) || param || "Episode";
+      title = `${label} — ${brand}`;
+    } else if (page === "studio") {
+      const sid = param || state.scenarioId || "";
+      title = sid ? `Studio · ${sid} — ${brand}` : `Studio — ${brand}`;
+    } else if (page === "pricing") {
+      title = `Membership — ${brand}`;
+    }
+    document.title = title;
+  }
+
   async function route() {
     const { page, a } = parseHash();
     const key = routeKey(page, a);
@@ -1443,6 +1469,7 @@
       else if (page === "pricing") await renderPricing();
       else await renderHome();
     } finally {
+      updateDocumentTitle(page, a);
       if (changed) focusMainForRoute();
     }
   }
