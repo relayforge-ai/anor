@@ -1866,3 +1866,30 @@ python3 -m unittest pipeline.tests.test_tts_client pipeline.tests.test_image_cli
 
 ### RESULT
 TTS lights up when `TTS_URL` is set; mock silent path remains the offline/outage safety net for video renders.
+
+---
+
+## Iteration 65 — 2026-07-19
+
+### OBSERVE
+`PIPELINE.md` still described a pre-product layout (no webapp/Docker/pack inventory/draft batches). Ops docs lagged six public packs and human-gate social batches.
+
+### PLAN
+**One high-impact change:** refresh PIPELINE.md to current architecture + pack/draft tables + fuller test entrypoint; hygiene test that every on-disk pack ID appears in the doc.
+
+Expected outcome: single operator map stays honest; CI fails if a new pack ships without doc mention.
+
+### EXECUTE
+- Rewrite `PIPELINE.md` (packs, webapp, DEPLOY, drafts, fallbacks, tests)
+- `scripts/tests/test_pipeline_docs.py`
+- CI includes docs hygiene
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_pipeline_docs scripts.tests.test_deploy_config \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 21 tests — OK
+```
+
+### RESULT
+Pipeline documentation matches the live product surface; pack list cannot drift silently.

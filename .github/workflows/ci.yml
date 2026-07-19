@@ -82,6 +82,7 @@ jobs:
             webapp.tests.test_access_log \
             scripts.tests.test_deploy_config \
             scripts.tests.test_social_drafts \
+            scripts.tests.test_pipeline_docs \
             scripts.tests.test_dep_audit \
             -v
 
