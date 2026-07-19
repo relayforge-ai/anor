@@ -14,6 +14,44 @@
     lastFork: null,
   };
 
+  /** sessionStorage key — resume in-flight video poll after refresh */
+  const ACTIVE_VIDEO_KEY = "fh:activeVideoJob";
+  /** Prevent double-polling the same job (button + auto-resume) */
+  let videoPollActiveId = null;
+
+  function saveActiveVideoJob(rec) {
+    try {
+      sessionStorage.setItem(ACTIVE_VIDEO_KEY, JSON.stringify(rec));
+    } catch (_) {}
+  }
+
+  function loadActiveVideoJob() {
+    try {
+      const raw = sessionStorage.getItem(ACTIVE_VIDEO_KEY);
+      if (!raw) return null;
+      const rec = JSON.parse(raw);
+      if (!rec || !rec.jobId) return null;
+      return rec;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearActiveVideoJob() {
+    try {
+      sessionStorage.removeItem(ACTIVE_VIDEO_KEY);
+    } catch (_) {}
+  }
+
+  function jobProgressLabel(st) {
+    let msg = st.message || st.status || "Working…";
+    if (st.status === "queued" && st.jobs_ahead != null) {
+      if (st.jobs_ahead === 0) msg += " · next in line";
+      else msg += ` · ${st.jobs_ahead} ahead`;
+    }
+    return msg;
+  }
+
   function toast(msg) {
     const el = $("#toast");
     el.textContent = msg;
@@ -509,10 +547,32 @@
     }
 
     renderStudioControls();
-    $("#fork-result").innerHTML =
-      state.lastFork && state.lastFork.scenario_id === scenarioId
-        ? renderForkHtml(state.lastFork)
-        : `<div class="note">Pick a decision and run a fork. Documented baselines stay honest; speculation is labeled.</div>`;
+    const activeJob = loadActiveVideoJob();
+    const resumeSame =
+      activeJob &&
+      activeJob.jobId &&
+      (!activeJob.scenarioId || activeJob.scenarioId === scenarioId);
+    if (resumeSame) {
+      if (activeJob.choiceId) {
+        state.choiceId = activeJob.choiceId;
+        const el = [...choiceBtns].find((b) => b.dataset.choice === activeJob.choiceId);
+        if (el) selectChoice(el, choiceBtns);
+      }
+      $("#fork-result").innerHTML = renderSimProgress({
+        stages: VIDEO_STAGES,
+        activeIndex: 0,
+        pct: 0,
+        label: "Reconnecting to render job…",
+        indeterminate: true,
+      });
+      // Fire-and-forget resume so studio paints choices first
+      tryResumeVideoJob();
+    } else {
+      $("#fork-result").innerHTML =
+        state.lastFork && state.lastFork.scenario_id === scenarioId
+          ? renderForkHtml(state.lastFork)
+          : `<div class="note">Pick a decision and run a fork. Documented baselines stay honest; speculation is labeled.</div>`;
+    }
   }
 
   function selectChoice(btn, allBtns) {
@@ -689,18 +749,35 @@
     }
   }
 
-  async function queueVideoRender() {
-    if (!state.scenarioId || !state.choiceId) {
-      toast("Select a scenario and a decision first.");
-      return;
+  const VIDEO_STAGES = [
+    { id: "queue", label: "Accepted by render queue" },
+    { id: "fork", label: "Decision narrative" },
+    { id: "script", label: "VO script & shot list" },
+    { id: "segment", label: "Stills · TTS · clips" },
+    { id: "concat", label: "Final MP4 assembly" },
+  ];
+
+  function videoStageIndex(stage) {
+    const map = {
+      queued: 0,
+      starting: 0,
+      load: 1,
+      fork: 1,
+      script: 2,
+      segment: 3,
+      concat: 4,
+      done: 4,
+      timeout: 3,
+      error: 3,
+    };
+    return map[stage] ?? 0;
+  }
+
+  async function pollVideoJob(jobId, { resumed = false } = {}) {
+    if (videoPollActiveId && videoPollActiveId === jobId) {
+      return; // already polling this job
     }
-    if (!FHFreemium.isMember()) {
-      openPaywall(
-        "Video render is a Scholar control",
-        "Queue script → TTS → stills → ffmpeg on sovereign GPUs. Explorer can still run basic forks and watch the library."
-      );
-      return;
-    }
+    videoPollActiveId = jobId;
 
     const btn = $("#btn-video");
     if (btn) {
@@ -708,68 +785,48 @@
       btn.classList.add("busy");
     }
 
-    const stages = [
-      { id: "queue", label: "Accepted by render queue" },
-      { id: "fork", label: "Decision narrative" },
-      { id: "script", label: "VO script & shot list" },
-      { id: "segment", label: "Stills · TTS · clips" },
-      { id: "concat", label: "Final MP4 assembly" },
-    ];
+    const stages = VIDEO_STAGES;
+    let done = false;
+    let pollMs = resumed ? 400 : 500;
+    const pollMax = 4000;
 
-    const stageIndex = (stage) => {
-      const map = { queued: 0, starting: 0, load: 1, fork: 1, script: 2, segment: 3, concat: 4, done: 4, error: 3 };
-      return map[stage] ?? 0;
+    const bindCancel = () => {
+      const cbtn = $("#btn-cancel-job");
+      if (!cbtn) return;
+      cbtn.onclick = async () => {
+        cbtn.disabled = true;
+        try {
+          const cr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId), {
+            method: "DELETE",
+            headers: FHFreemium.authHeaders(),
+          });
+          const cd = await cr.json().catch(() => ({}));
+          if (!cr.ok && cr.status !== 409) {
+            toast(cd.error || "Cancel failed");
+            cbtn.disabled = false;
+            return;
+          }
+          toast("Cancel requested");
+        } catch (e) {
+          toast("Cancel failed");
+          cbtn.disabled = false;
+        }
+      };
     };
 
     try {
-      const r = await fetch("/api/video/jobs", {
-        method: "POST",
-        headers: FHFreemium.authHeaders(),
-        body: JSON.stringify({
-          scenario_id: state.scenarioId,
-          choice_id: state.choiceId,
-          use_llm: false,
-        }),
-      });
-      const job = await r.json().catch(() => ({}));
-      if (!r.ok && r.status !== 202) {
-        throw Object.assign(new Error(job.error || "Enqueue failed"), { code: job.code });
-      }
-
-      const jobId = job.id;
-      toast("Video job queued");
-      let done = false;
-      let pollMs = 500;
-      const pollMax = 4000;
-      const bindCancel = () => {
-        const cbtn = $("#btn-cancel-job");
-        if (!cbtn) return;
-        cbtn.onclick = async () => {
-          cbtn.disabled = true;
-          try {
-            const cr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId), {
-              method: "DELETE",
-              headers: FHFreemium.authHeaders(),
-            });
-            const cd = await cr.json().catch(() => ({}));
-            if (!cr.ok && cr.status !== 409) {
-              toast(cd.error || "Cancel failed");
-              cbtn.disabled = false;
-              return;
-            }
-            toast("Cancel requested");
-          } catch (e) {
-            toast("Cancel failed");
-            cbtn.disabled = false;
-          }
-        };
-      };
       while (!done) {
         const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId));
+        if (pr.status === 404) {
+          clearActiveVideoJob();
+          throw Object.assign(new Error("Job no longer on server (TTL expired)"), {
+            code: "not_found",
+          });
+        }
         const st = await pr.json();
         if (!pr.ok) throw Object.assign(new Error(st.error || "Poll failed"), { code: st.code });
 
-        const idx = stageIndex(st.stage);
+        const idx = videoStageIndex(st.stage);
         const cancelBar =
           st.status === "queued" || st.status === "running"
             ? `<div class="row" style="margin-top:0.8rem"><button type="button" class="btn btn-ghost btn-sm" id="btn-cancel-job">Cancel render</button></div>`
@@ -777,15 +834,16 @@
         $("#fork-result").innerHTML =
           renderSimProgress({
             stages,
-            activeIndex: st.status === "failed" ? idx : idx,
+            activeIndex: idx,
             pct: st.pct || 0,
-            label: st.message || st.status,
+            label: jobProgressLabel(st),
             indeterminate: st.status === "queued",
           }) + cancelBar;
         bindCancel();
 
         if (st.status === "completed") {
           done = true;
+          clearActiveVideoJob();
           const url = st.result?.media_url || "";
           $("#fork-result").innerHTML =
             renderSimProgress({
@@ -805,14 +863,14 @@
                   : ""
               }
             </div>`;
-          toast("Video ready");
-          // Refresh catalog so library marks the new file available
+          toast(resumed ? "Render finished while you were away" : "Video ready");
           try {
             const cr = await fetch("/api/catalog");
             if (cr.ok) state.catalog = await cr.json();
           } catch (_) {}
         } else if (st.status === "cancelled") {
           done = true;
+          clearActiveVideoJob();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -820,10 +878,12 @@
               pct: st.pct || 0,
               label: "Cancelled",
               indeterminate: false,
-            }) + `<p class="note" style="margin-top:0.8rem">Job <code>${escapeHtml(jobId)}</code> was cancelled.</p>`;
+            }) +
+            `<p class="note" style="margin-top:0.8rem">Job <code>${escapeHtml(jobId)}</code> was cancelled.</p>`;
           toast("Render cancelled");
         } else if (st.status === "timed_out") {
           done = true;
+          clearActiveVideoJob();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -839,6 +899,7 @@
           toast("Render timed out");
         } else if (st.status === "failed") {
           done = true;
+          clearActiveVideoJob();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -853,7 +914,6 @@
             active.classList.add("error");
           }
         } else {
-          // Exponential backoff polling — less load while queued/running long renders
           await new Promise((res) => setTimeout(res, pollMs));
           pollMs = Math.min(pollMax, Math.round(pollMs * 1.35));
         }
@@ -861,6 +921,98 @@
     } catch (e) {
       $("#fork-result").innerHTML = renderForkError(e.message || String(e), e.code || "video_error");
     } finally {
+      if (videoPollActiveId === jobId) videoPollActiveId = null;
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove("busy");
+      }
+      renderStudioControls();
+    }
+  }
+
+  async function tryResumeVideoJob() {
+    const rec = loadActiveVideoJob();
+    if (!rec?.jobId) return;
+    // Only auto-resume when viewing the same scenario (or no scenario locked)
+    if (rec.scenarioId && state.scenarioId && rec.scenarioId !== state.scenarioId) {
+      return;
+    }
+    if (videoPollActiveId === rec.jobId) return;
+
+    try {
+      const pr = await fetch("/api/video/jobs/" + encodeURIComponent(rec.jobId));
+      if (pr.status === 404) {
+        clearActiveVideoJob();
+        return;
+      }
+      const st = await pr.json().catch(() => ({}));
+      if (!pr.ok) return;
+
+      if (rec.choiceId && !state.choiceId) {
+        state.choiceId = rec.choiceId;
+      }
+      if (["completed", "failed", "cancelled", "timed_out"].includes(st.status)) {
+        // Paint terminal once without forcing a long poll loop start flicker
+        toast("Restoring finished render…");
+      } else {
+        toast("Resuming render status…");
+      }
+      await pollVideoJob(rec.jobId, { resumed: true });
+    } catch (_) {
+      // Keep session record — user can re-enter studio later while job TTL holds
+    }
+  }
+
+  async function queueVideoRender() {
+    if (!state.scenarioId || !state.choiceId) {
+      toast("Select a scenario and a decision first.");
+      return;
+    }
+    if (!FHFreemium.isMember()) {
+      openPaywall(
+        "Video render is a Scholar control",
+        "Queue script → TTS → stills → ffmpeg on sovereign GPUs. Explorer can still run basic forks and watch the library."
+      );
+      return;
+    }
+
+    if (videoPollActiveId) {
+      toast("A render is already being tracked — watch progress below.");
+      return;
+    }
+
+    const btn = $("#btn-video");
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("busy");
+    }
+
+    try {
+      const r = await fetch("/api/video/jobs", {
+        method: "POST",
+        headers: FHFreemium.authHeaders(),
+        body: JSON.stringify({
+          scenario_id: state.scenarioId,
+          choice_id: state.choiceId,
+          use_llm: false,
+        }),
+      });
+      const job = await r.json().catch(() => ({}));
+      if (!r.ok && r.status !== 202) {
+        throw Object.assign(new Error(job.error || "Enqueue failed"), { code: job.code });
+      }
+
+      const jobId = job.id;
+      saveActiveVideoJob({
+        jobId,
+        scenarioId: state.scenarioId,
+        choiceId: state.choiceId,
+        startedAt: Date.now(),
+      });
+      toast(job.deduped ? "Joined existing render job" : "Video job queued");
+      await pollVideoJob(jobId, { resumed: false });
+    } catch (e) {
+      $("#fork-result").innerHTML = renderForkError(e.message || String(e), e.code || "video_error");
       if (btn) {
         btn.disabled = false;
         btn.classList.remove("busy");

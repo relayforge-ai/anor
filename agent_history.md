@@ -432,3 +432,34 @@ python3 -m unittest webapp.tests.test_job_timeout webapp.tests.test_job_dedupe \
 
 ### RESULT
 Hung renders free the single worker after `ANOR_VIDEO_JOB_TIMEOUT_S` (default 600s). Studio surfaces timeout; library catalog refreshes after successful render.
+
+---
+
+## Iteration 15 — 2026-07-19
+
+### OBSERVE
+Long video renders survive page refresh on the server, but the studio UI lost poll state — users returned to a blank ledger with no progress. Queued jobs also showed no place-in-line, so with `max_concurrent=1` wait time was opaque.
+
+### PLAN
+**One high-impact change:** resume in-flight video job polling after refresh (sessionStorage) + expose `queue_position` / `jobs_ahead` on job APIs for studio feedback.
+
+Expected outcome: refresh mid-render reconnects to the same job; progress label shows “next in line” or “N ahead”.
+
+### EXECUTE
+- `VideoJobQueue.to_public_enriched()` adds queue meta
+- All job JSON responses (GET/list/POST/DELETE) use enriched payload
+- Studio: `fh:activeVideoJob` sessionStorage, `pollVideoJob` / `tryResumeVideoJob`, queue-aware labels
+- Tests: `test_queue_position.py`; static asset markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_queue_position webapp.tests.test_job_timeout \
+  webapp.tests.test_job_dedupe webapp.tests.test_video_jobs webapp.tests.test_static_assets -v
+→ Ran 18 tests — OK
+```
+- Running job: queue_position=0; second queued: position=1, jobs_ahead=0; third: ahead=1
+- Terminal jobs: position null
+- JS markers for resume + jobs_ahead present
+
+### RESULT
+Scholars can leave and return during a render without losing status; queue wait is visible instead of indeterminate silence.

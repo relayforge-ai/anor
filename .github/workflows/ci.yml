@@ -67,6 +67,7 @@ jobs:
             webapp.tests.test_job_dedupe \
             webapp.tests.test_render_deps \
             webapp.tests.test_job_timeout \
+            webapp.tests.test_queue_position \
             -v
 
       - name: Pipeline + webapp syntax check

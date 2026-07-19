@@ -54,7 +54,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.8"
+    server_version = "ForkedHistory/1.9"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -315,7 +315,7 @@ class Handler(BaseHTTPRequestHandler):
             )
 
         if path == "/api/video/jobs":
-            jobs = [j.to_public() for j in QUEUE.list_recent(30)]
+            jobs = [QUEUE.to_public_enriched(j) for j in QUEUE.list_recent(30)]
             return self._json(200, {"jobs": jobs, "queue": QUEUE.stats()})
 
         if path.startswith("/api/video/jobs/"):
@@ -326,7 +326,7 @@ class Handler(BaseHTTPRequestHandler):
             job = QUEUE.get(jid)
             if not job:
                 return self._json(404, {"error": "job not found", "code": "not_found"})
-            return self._json(200, job.to_public())
+            return self._json(200, QUEUE.to_public_enriched(job))
 
         if path.startswith("/api/scenario/"):
             sid = urllib.parse.unquote(path[len("/api/scenario/") :])
@@ -406,7 +406,7 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "error": "job already finished",
                     "code": "already_terminal",
-                    "job": job.to_public() if job else None,
+                    "job": QUEUE.to_public_enriched(job) if job else None,
                 },
             )
         return self._json(
@@ -414,7 +414,7 @@ class Handler(BaseHTTPRequestHandler):
             {
                 "ok": True,
                 "reason": reason,
-                "job": job.to_public() if job else None,
+                "job": QUEUE.to_public_enriched(job) if job else None,
             },
         )
 
@@ -539,7 +539,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # 202 Accepted — client polls GET /api/video/jobs/{id}
         # Deduped responses reuse the active job (no second GPU worker)
-        payload = job.to_public()
+        payload = QUEUE.to_public_enriched(job)
         payload["deduped"] = deduped
         extra = {"X-Job-Deduped": "1" if deduped else "0"}
         return self._json(202, payload, extra=extra)

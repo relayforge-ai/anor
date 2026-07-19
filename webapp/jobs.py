@@ -213,6 +213,38 @@ class VideoJobQueue:
             self._purge_locked()
             return self._jobs.get(job_id)
 
+    def to_public_enriched(self, job: VideoJob) -> dict[str, Any]:
+        """Public job dict plus queue_position / jobs_ahead for studio feedback.
+
+        - running: queue_position=0, jobs_ahead=0
+        - queued: 1-based position among queued (oldest first); jobs_ahead = position-1
+        - terminal: both null
+        """
+        d = job.to_public()
+        with self._lock:
+            live = self._jobs.get(job.id) or job
+            status = live.status
+            if status == "running":
+                d["queue_position"] = 0
+                d["jobs_ahead"] = 0
+            elif status == "queued":
+                queued = sorted(
+                    (j for j in self._jobs.values() if j.status == "queued"),
+                    key=lambda j: j.created_at,
+                )
+                for i, j in enumerate(queued):
+                    if j.id == live.id:
+                        d["queue_position"] = i + 1
+                        d["jobs_ahead"] = i
+                        break
+                else:
+                    d["queue_position"] = None
+                    d["jobs_ahead"] = None
+            else:
+                d["queue_position"] = None
+                d["jobs_ahead"] = None
+        return d
+
     def list_recent(self, limit: int = 20) -> list[VideoJob]:
         with self._lock:
             self._purge_locked()

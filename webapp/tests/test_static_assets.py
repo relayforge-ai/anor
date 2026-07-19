@@ -35,6 +35,11 @@ class TestStaticProgressUI(unittest.TestCase):
             "pollMs",
             "libraryEmptyHtml",
             "video-card-unavailable",
+            "fh:activeVideoJob",
+            "tryResumeVideoJob",
+            "jobProgressLabel",
+            "jobs_ahead",
+            "pollVideoJob",
         ):
             self.assertIn(needle, js, f"missing {needle}")
 
