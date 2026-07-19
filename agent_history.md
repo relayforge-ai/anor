@@ -1701,3 +1701,30 @@ python3 -m unittest scripts.tests.test_deploy_config -v
 
 ### RESULT
 Forked History container drops root by default; env-driven endpoints unchanged.
+
+---
+
+## Iteration 59 — 2026-07-19
+
+### OBSERVE
+Explorer users could run forks but only Scholar could leave the page with a file (`Export .md`). No free clipboard path; labels risked being stripped in ad-hoc copy-paste from the DOM.
+
+### PLAN
+**One high-impact change:** free **Copy narrative** for everyone, shared `formatForkMarkdown` that always embeds 📗/🧪 labels; Export stays Scholar and reuses the same formatter.
+
+Expected outcome: one click copies labeled markdown; inline + toolbar buttons; export paywall still points free users to copy.
+
+### EXECUTE
+- `formatForkMarkdown` / `copyForkNarrative` / `copyTextToClipboard` / `bindForkCopyButtons`
+- `#btn-copy` + inline `#btn-copy-inline` after fork/resume
+- Control tile “Copy narrative” free
+- Static asset tests for markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 14 tests — OK
+```
+
+### RESULT
+Studio clipboard path is free and label-preserving; download export remains a Scholar control.

@@ -87,6 +87,15 @@ class TestStaticProgressUI(unittest.TestCase):
             "setMetaContent",
             'meta[property="og:title"]',
             "twitter:title",
+            "formatForkMarkdown",
+            "copyForkNarrative",
+            "copyTextToClipboard",
+            "bindForkCopyButtons",
+            "btn-copy",
+            "btn-copy-inline",
+            "labeled speculation",
+            "Documented baseline",
+            "formatForkMarkdown",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -105,6 +114,9 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn('id="fork-result"', html)
         self.assertIn("aria-live", html)
         self.assertIn('role="status"', html)
+        self.assertIn('id="btn-copy"', html)
+        self.assertIn("Copy narrative", html)
+        self.assertIn('id="btn-export"', html)
 
     def test_index_noscript_guidance(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

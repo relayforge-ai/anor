@@ -754,6 +754,9 @@
         state.lastFork && state.lastFork.scenario_id === scenarioId
           ? renderForkHtml(state.lastFork)
           : `<div class="note">Pick a decision and run a fork. Documented baselines stay honest; speculation is labeled.</div>`;
+      if (state.lastFork && state.lastFork.scenario_id === scenarioId) {
+        bindForkCopyButtons();
+      }
     }
     renderStudioControls();
   }
@@ -782,6 +785,7 @@
     const tiles = $("#control-tiles");
     const controls = [
       { id: "authored_fork", label: "Authored fork", free: true, desc: "Canon branch text, always labeled" },
+      { id: "copy_narrative", label: "Copy narrative", free: true, desc: "Clipboard with speculation labels" },
       { id: "llm_rerender", label: "LLM re-render", free: false, desc: "Live simulation prose via LLM_URL" },
       { id: "compare_branches", label: "Compare branches", free: false, desc: "Side-by-side historical vs fork" },
       { id: "custom_seed", label: "Custom pressure seed", free: false, desc: "Inject your own divergence seed" },
@@ -802,6 +806,8 @@
     $("#seed-wrap").style.display = member ? "block" : "none";
     $("#btn-llm").disabled = !member;
     $("#btn-compare").disabled = !member;
+    // Copy is free for everyone; export stays Scholar
+    if ($("#btn-copy")) $("#btn-copy").disabled = !state.lastFork;
     $("#btn-export").disabled = !member || !state.lastFork;
   }
 
@@ -817,7 +823,68 @@
       </div>
       <div class="result-title">${escapeHtml(fork.label)}</div>
       <div class="fork-result-body">${escapeHtml(fork.narrative)}</div>
-      <p class="ribbon" style="margin-top:1rem">${escapeHtml((fork.provenance_ribbon || []).join(" · "))}</p>`;
+      <p class="ribbon" style="margin-top:1rem">${escapeHtml((fork.provenance_ribbon || []).join(" · "))}</p>
+      <div class="row fork-result-actions" style="margin-top:0.85rem">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-copy-inline">Copy narrative</button>
+      </div>`;
+  }
+
+  function bindForkCopyButtons() {
+    $("#btn-copy-inline")?.addEventListener("click", copyForkNarrative);
+  }
+
+  function formatForkMarkdown(f) {
+    /** Labeled narrative for clipboard / export — speculation never stripped. */
+    const level = f.speculation_level || "unknown";
+    const hist = f.is_historical ? "historical baseline" : "counterfactual fork";
+    const warn =
+      level === "documented"
+        ? "📗 Documented baseline — not a simulation."
+        : `🧪 ${level.toUpperCase()} — labeled speculation, not established fact.`;
+    return (
+      `# ${f.scenario_id} — ${f.label}\n\n` +
+      `${warn}\n` +
+      `Path: ${hist}\n` +
+      `Speculation level: ${level}\n` +
+      `Source: ${f.source || "unknown"}\n\n` +
+      `${f.narrative || ""}\n\n` +
+      `Provenance ribbon: ${(f.provenance_ribbon || []).join(" · ")}\n` +
+      `\n— Forked History / ANOR · ELOSTIRION discipline\n`
+    );
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    // Fallback for older browsers / insecure contexts
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      if (!document.execCommand("copy")) throw new Error("execCommand failed");
+    } finally {
+      document.body.removeChild(ta);
+    }
+  }
+
+  async function copyForkNarrative() {
+    if (!state.lastFork) {
+      toast("Run a fork first");
+      return;
+    }
+    const md = formatForkMarkdown(state.lastFork);
+    try {
+      await copyTextToClipboard(md);
+      toast("Narrative copied (labels included)");
+    } catch (_) {
+      toast("Could not access clipboard");
+    }
   }
 
   /** Prevent double-click / concurrent fork POSTs (burns freemium quota). */
@@ -848,7 +915,7 @@
     let tickTimer = null;
 
     const setBusy = (on) => {
-      [btn, other, $("#btn-compare"), $("#btn-export")].forEach((el) => {
+      [btn, other, $("#btn-compare"), $("#btn-copy"), $("#btn-export")].forEach((el) => {
         if (!el) return;
         el.disabled = on;
       });
@@ -914,6 +981,7 @@
       saveLastFork(data);
       FHFreemium.recordFork();
       $("#fork-result").innerHTML = renderForkHtml(data);
+      bindForkCopyButtons();
       renderStudioControls();
       refreshChrome();
       toast(useLlm ? "LLM fork ready" : "Fork ready");
@@ -1303,7 +1371,7 @@
 
   function exportFork() {
     if (!FHFreemium.isMember()) {
-      openPaywall("Export", "Scholar can download fork narratives as markdown.");
+      openPaywall("Export", "Scholar can download fork narratives as markdown. Explorer can still Copy narrative.");
       return;
     }
     if (!state.lastFork) {
@@ -1311,16 +1379,14 @@
       return;
     }
     const f = state.lastFork;
-    const md = `# ${f.scenario_id} — ${f.label}\n\n` +
-      `Speculation: ${f.speculation_level}\nSource: ${f.source}\n\n` +
-      f.narrative +
-      `\n\nRibbon: ${(f.provenance_ribbon || []).join(" · ")}\n`;
+    const md = formatForkMarkdown(f);
     const blob = new Blob([md], { type: "text/markdown" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${f.scenario_id}-${f.choice_id}.md`;
+    a.download = `${f.scenario_id}-${f.choice_id || "fork"}.md`;
     a.click();
     URL.revokeObjectURL(a.href);
+    toast("Markdown downloaded (labels included)");
   }
 
   /* ——— Pricing ——— */
@@ -1804,6 +1870,7 @@
     $("#btn-llm")?.addEventListener("click", () => runFork({ useLlm: true }));
     $("#btn-video")?.addEventListener("click", () => queueVideoRender());
     $("#btn-compare")?.addEventListener("click", compareBranches);
+    $("#btn-copy")?.addEventListener("click", copyForkNarrative);
     $("#btn-export")?.addEventListener("click", exportFork);
 
     // player gate buttons
