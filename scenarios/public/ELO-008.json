@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-008",
+  "title": "Overlord — go, delay, or hold?",
+  "era": "1944",
+  "location": "Supreme Headquarters Allied Expeditionary Force, southern England",
+  "datetime": "4–5 June 1944, final weather windows before the Normandy landings",
+  "domain": "WW2 coalition command / weather-bound amphibious operations",
+  "known_outcome": "After a brief delay caused by weather, Eisenhower orders the invasion for 6 June 1944. Allied forces land in Normandy; the campaign opens the long-awaited Western front in France. Costs are severe; the lodgement holds.",
+  "decision_question": "With the armada loaded and the Channel weather marginal, does the Supreme Commander give the final go for the invasion now, delay another day, or postpone into a later tidal window?",
+  "opening": {
+    "cold_open": "Thousands of ships and aircraft are wound tight. Forecasts disagree in the details and agree on the danger. A wrong call wastes surprise, lives, and months of preparation. A timid call may miss the only usable gap for weeks.",
+    "what_they_knew": "They knew tides, moon, and beaches constrained the calendar. They knew German coastal defenses were real. They had imperfect weather science and imperfect intelligence on enemy dispositions. They did not know whether the next window would be better — or closed.",
+    "pressure": "Coalition politics, operational security, seasick troops already embarked, and the knowledge that delay itself is a form of risk."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Go — accept the narrow weather gap for 6 June",
+      "is_historical": true,
+      "summary": "Documented path: after a short weather postponement, the invasion is ordered for 6 June. Landings proceed under difficult but usable conditions.",
+      "immediate": "Orders cascade. Aircraft and ships commit. Some units face worse seas and cloud than hoped; the assault still goes in.",
+      "near_term": "Beachheads form under fire. Logistics and follow-on forces become the next crisis. The lodgement is contested but not thrown back into the sea.",
+      "longer_arc": "Normandy becomes the opening of the Western Allied campaign in France. The decision is remembered as a command bet under incomplete weather certainty.",
+      "speculation_level": "documented",
+      "image_prompt": "1944 Allied headquarters map room, Channel weather charts, officers under harsh lamps, documentary historical painting, no text",
+      "vo_script": "June 1944. The armada is ready. The weather is a gamble. History records the go for the sixth — a narrow window taken after a short delay. The beaches are not a clean plan on paper. They are a decision made with incomplete forecasts and no spare months."
+    },
+    {
+      "id": "delay_longer",
+      "label": "Delay further — wait for a cleaner weather window",
+      "is_historical": false,
+      "summary": "SPECULATION: Hold the force longer for better seas and sky, accepting security bleed, fatigue, and a later tidal calendar.",
+      "immediate": "Troops remain embarked or return to assembly. Rumor and German detection risk rise with every day of mass.",
+      "near_term": "A better forecast may arrive — or the next window may be worse. Surprise may erode. Logistics of a loaded force become their own enemy.",
+      "longer_arc": "Simulated. We do not invent a guaranteed easier landing or a catastrophe. The honest claim is the trade between weather quality and operational secrecy/tempo.",
+      "speculation_level": "simulated",
+      "image_prompt": "1944 ships riding at anchor in rough Channel weather, tense waiting, documentary still, no text",
+      "vo_script": "What if they wait longer for perfect weather? This is speculation. Patience can save boats. Patience can also burn the surprise that made the plan possible. We label the branch simulated because the only honest detail is the trade."
+    },
+    {
+      "id": "postpone_month",
+      "label": "Postpone to the next major tidal cycle",
+      "is_historical": false,
+      "summary": "SPECULATION: Slip the operation by weeks into the next suitable moon/tide period — a dramatized emphasis on calendar reset under coalition strain.",
+      "immediate": "Political and military machines must be rewound. Security becomes a long fight. German dispositions may change.",
+      "near_term": "A later landing might face different weather and different defenses. Opportunity costs on other fronts accumulate.",
+      "longer_arc": "Dramatized process, not a secret history. Explores the price of a full calendar slip when an alliance has already pointed its entire weight at one shore.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1944 calendar and tide tables on a staff desk, maps of Normandy beaches, documentary historical painting, no text",
+      "vo_script": "What if the answer is not tomorrow but next month? A full slip rewrites the coalition clock. This branch is dramatized process — a study of calendar risk — not a claim of an easy second chance."
+    }
+  ],
+  "sources": [
+    "Established operational histories of Operation Overlord and the D-Day decision process",
+    "Published accounts of Allied weather forecasting and SHAEF command decisions in early June 1944",
+    "ELOSTIRION ELO-008 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-day command sequence into a playable go/delay choice. Counterfactual delay/postpone branches are labeled simulated or dramatized.",
+    "corpus": "ELOSTIRION ELO-008 public pack"
+  },
+  "style_lock": "June 1944 SHAEF interiors, Channel maps, weather charts, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "WW2", "D-Day", "Overlord", "1944", "decision-point"]
+}

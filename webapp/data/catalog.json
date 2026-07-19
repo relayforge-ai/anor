@@ -284,6 +284,36 @@
       "speculation": "simulated",
       "featured": false,
       "blurb": "Counterfactual branch: reopen the roads under arms — escalation risk vs logistics patience, labeled 🧪."
+    },
+    {
+      "id": "ELO-008-historical",
+      "scenario_id": "ELO-008",
+      "choice_id": "historical",
+      "title": "Overlord: the go for 6 June",
+      "subtitle": "Weather gamble after a short delay",
+      "era": "1944",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-008-historical/ELO-008-historical.mp4",
+      "poster_gradient": ["#121820", "#0f1115"],
+      "tags": ["WW2", "D-Day", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: after a brief weather hold, Eisenhower orders the Normandy invasion for 6 June 1944."
+    },
+    {
+      "id": "ELO-008-delay_longer",
+      "scenario_id": "ELO-008",
+      "choice_id": "delay_longer",
+      "title": "SPECULATION: Wait for cleaner weather",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1944",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-008-delay_longer/ELO-008-delay_longer.mp4",
+      "poster_gradient": ["#182028", "#121018"],
+      "tags": ["WW2", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: hold the loaded force longer — weather quality vs secrecy and fatigue, labeled 🧪."
     }
   ]
 }

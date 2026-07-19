@@ -34,6 +34,7 @@ class TestPublicPacks(unittest.TestCase):
                 "ELO-005",
                 "ELO-006",
                 "ELO-007",
+                "ELO-008",
                 "ELO-009",
                 "ELO-013",
             }.issubset(ids),
@@ -115,6 +116,18 @@ class TestPublicPacks(unittest.TestCase):
 
     def test_elo_006_force_corridors_is_simulated(self):
         r = run_fork("ELO-006", "force_corridors", use_llm=False)
+        self.assertFalse(r.is_historical)
+        self.assertEqual(r.speculation_level, "simulated")
+
+    def test_elo_008_go_is_documented_historical(self):
+        r = run_fork("ELO-008", "historical", use_llm=False)
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        blob = (r.narrative + r.label).lower()
+        self.assertTrue("june" in blob or "go" in blob or "normandy" in blob or "overlord" in blob)
+
+    def test_elo_008_delay_longer_is_simulated(self):
+        r = run_fork("ELO-008", "delay_longer", use_llm=False)
         self.assertFalse(r.is_historical)
         self.assertEqual(r.speculation_level, "simulated")
 

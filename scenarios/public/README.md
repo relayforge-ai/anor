@@ -24,6 +24,7 @@ See `schema/fork_scenario.schema.json`.
 | ELO-005 | July Crisis — the blank cheque | 1914 | Underwrite Vienna or restrain? |
 | ELO-009 | Dunkirk — the halt that bought a fleet | 1940 | Press armor or halt? |
 | ELO-001 | Stalin's dacha, Barbarossa | 1941 | Accept the invasion reports? |
+| ELO-008 | Overlord — go, delay, or hold? | 1944 | D-Day weather go/no-go? |
 | ELO-006 | Berlin Blockade — airlift or force? | 1948 | Airlift vs force corridors? |
 | ELO-007 | EXCOMM — quarantine or strike? | 1962 | Naval quarantine vs airstrike/invasion? |
 | ELO-013 | Arkhipov on B-59 | 1962 | Authorize nuclear torpedo? |

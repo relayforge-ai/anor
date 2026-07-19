@@ -2111,3 +2111,31 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Studio primary and Scholar LLM forks are reachable by keyboard without sacrificing paywall or editable-field safety.
+
+---
+
+## Iteration 74 — 2026-07-19
+
+### OBSERVE
+Nine-pack arc still lacked a Normandy D-Day weather/go decision between Barbarossa (1941) and Berlin (1948) — a flagship Allied command crisis.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-008** (Overlord go / delay / postpone) with documented 6 June go and labeled counterfactuals; catalog + docs + tests.
+
+Expected outcome: nine public packs; historical = documented go; delay_longer = simulated.
+
+### EXECUTE
+- `scenarios/public/ELO-008.json`
+- Catalog: ELO-008-historical + ELO-008-delay_longer
+- README + PIPELINE pack tables
+- Fork label tests
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  scripts.tests.test_pipeline_docs webapp.tests.test_webapp webapp.tests.test_catalog_cache -v
+→ Ran 50 tests — OK
+```
+
+### RESULT
+Studio/library gain Overlord’s weather-bound go decision with speculation labels intact.
