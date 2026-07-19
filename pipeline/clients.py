@@ -7,6 +7,7 @@ import json
 import os
 import random
 import subprocess
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -22,6 +23,16 @@ T = TypeVar("T")
 # Retry transient upstream failures (GPU warm-up, rate limits, brief outages).
 # Never retries 4xx auth/validation errors.
 _RETRYABLE_HTTP = frozenset({408, 425, 429, 500, 502, 503, 504})
+
+# ComfyUI shares VRAM with Ollama on --lowvram fleets (Dawes). Serialize image
+# jobs so concurrent video segments do not thrash the GPU.
+_COMFY_LOCK = threading.Lock()
+
+# Default negative for archival / documentary stills (no text overlays).
+_DEFAULT_COMFY_NEGATIVE = (
+    "text, watermark, logo, signature, low quality, blurry, deformed, "
+    "modern clothing, anachronism, cartoon, anime, oversaturated"
+)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -279,20 +290,42 @@ class ImageClient:
         raw = (os.environ.get("ANOR_IMAGE_FALLBACK_MOCK") or "1").strip().lower()
         return raw not in ("0", "false", "no", "off")
 
-    def generate(self, prompt: str, out_path: Path, width: int = 1280, height: int = 720) -> Path:
+    @staticmethod
+    def still_size(width: Optional[int] = None, height: Optional[int] = None) -> tuple[int, int]:
+        """Native still resolution before optional Comfy upscale.
+
+        Defaults favor SDXL landscape (1024×576) so Real-ESRGAN 4× yields
+        ~4K sources — larger than 1080p frames for Ken Burns zoom headroom.
+        Override with ANOR_STILL_WIDTH / ANOR_STILL_HEIGHT.
+        """
+        w = width if width is not None else _env_int("ANOR_STILL_WIDTH", 1024)
+        h = height if height is not None else _env_int("ANOR_STILL_HEIGHT", 576)
+        # Comfy latents need multiples of 8
+        w = max(64, (int(w) // 8) * 8)
+        h = max(64, (int(h) // 8) * 8)
+        return w, h
+
+    def generate(
+        self,
+        prompt: str,
+        out_path: Path,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> Path:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        w, h = self.still_size(width, height)
         full_prompt = f"{self.cfg.style_prefix}{prompt}"
         backend = self._backend()
 
         if backend == "mock":
-            return self._write_placeholder(out_path, width, height, full_prompt)
+            return self._write_placeholder(out_path, w, h, full_prompt)
 
         try:
             if backend == "openai_images":
-                return self._openai_images(full_prompt, out_path, width, height)
+                return self._openai_images(full_prompt, out_path, w, h)
             if backend == "comfy":
-                return self._comfy_txt2img(full_prompt, out_path, width, height)
+                return self._comfy_txt2img(full_prompt, out_path, w, h)
             raise PipelineError(f"Unknown IMAGE_BACKEND: {backend}")
         except PipelineError as err:
             # Never soft-fail SSRF/policy rejections; optional mock for outages only
@@ -305,7 +338,7 @@ class ImageClient:
                     f"error: {err}\n",
                     encoding="utf-8",
                 )
-                return self._write_placeholder(out_path, width, height, full_prompt)
+                return self._write_placeholder(out_path, w, h, full_prompt)
             raise
 
     def _openai_images(
@@ -346,18 +379,77 @@ class ImageClient:
         out_path.write_bytes(base64.b64decode(b64))
         return out_path
 
-    def _comfy_txt2img(self, prompt: str, out_path: Path, width: int, height: int) -> Path:
-        """Minimal SD checkpoint workflow — works when Comfy has a default ckpt."""
-        root = self.cfg.image_url.rstrip("/")
-        ckpt = self.cfg.image_model if self.cfg.image_model != "local-image" else "v1-5-pruned-emaonly.safetensors"
-        workflow = {
-            "1": {"inputs": {"ckpt_name": ckpt}, "class_type": "CheckpointLoaderSimple"},
-            "2": {"inputs": {"text": prompt, "clip": ["1", 1]}, "class_type": "CLIPTextEncode"},
+    @staticmethod
+    def comfy_upscale_enabled() -> bool:
+        """Real-ESRGAN (or other) ImageUpscaleWithModel after VAE decode.
+
+        Default on so Ken Burns has pixel headroom. Disable with
+        ANOR_COMFY_UPSCALE=0 when VRAM is tight.
+        """
+        raw = (os.environ.get("ANOR_COMFY_UPSCALE") or "1").strip().lower()
+        return raw not in ("0", "false", "no", "off")
+
+    @staticmethod
+    def comfy_upscale_model() -> str:
+        return (
+            os.environ.get("ANOR_COMFY_UPSCALE_MODEL") or "RealESRGAN_x4plus.pth"
+        ).strip()
+
+    @staticmethod
+    def resolve_comfy_ckpt(image_model: str) -> str:
+        """Map config model id to a Comfy checkpoint filename.
+
+        Prefers SDXL base (OpenRAIL, commercial-ok). Never defaults to Flux.1-dev.
+        """
+        if not image_model or image_model in ("local-image", "auto"):
+            return "sd_xl_base_1.0.safetensors"
+        # Reject non-commercial Flux.1-dev on the monetized path
+        low = image_model.lower()
+        if "flux" in low and "dev" in low and "schnell" not in low:
+            raise PipelineError(
+                "IMAGE_MODEL appears to be Flux.1-dev (non-commercial). "
+                "Use sd_xl_base_1.0.safetensors (OpenRAIL) or Flux.1-schnell (Apache).",
+                retryable=False,
+            )
+        return image_model
+
+    @staticmethod
+    def build_comfy_workflow(
+        prompt: str,
+        *,
+        ckpt: str,
+        width: int,
+        height: int,
+        seed: Optional[int] = None,
+        steps: Optional[int] = None,
+        cfg: Optional[float] = None,
+        negative: Optional[str] = None,
+        upscale: bool = True,
+        upscale_model: str = "RealESRGAN_x4plus.pth",
+        filename_prefix: str = "anor",
+    ) -> dict[str, Any]:
+        """SDXL/SD checkpoint → optional Real-ESRGAN → SaveImage graph."""
+        steps = steps if steps is not None else _env_int("ANOR_COMFY_STEPS", 25)
+        cfg_scale = cfg if cfg is not None else _env_float("ANOR_COMFY_CFG", 7.0)
+        seed_v = seed if seed is not None else int(time.time() * 1000) % 2_147_483_647
+        neg = negative if negative is not None else (
+            os.environ.get("ANOR_COMFY_NEGATIVE") or _DEFAULT_COMFY_NEGATIVE
+        )
+        # SDXL likes slightly longer schedules; euler_ancestral is stable on lowvram
+        sampler = (os.environ.get("ANOR_COMFY_SAMPLER") or "euler").strip()
+        scheduler = (os.environ.get("ANOR_COMFY_SCHEDULER") or "normal").strip()
+
+        workflow: dict[str, Any] = {
+            "1": {
+                "inputs": {"ckpt_name": ckpt},
+                "class_type": "CheckpointLoaderSimple",
+            },
+            "2": {
+                "inputs": {"text": prompt, "clip": ["1", 1]},
+                "class_type": "CLIPTextEncode",
+            },
             "3": {
-                "inputs": {
-                    "text": "text, watermark, logo, low quality, blurry, deformed",
-                    "clip": ["1", 1],
-                },
+                "inputs": {"text": neg, "clip": ["1", 1]},
                 "class_type": "CLIPTextEncode",
             },
             "4": {
@@ -370,11 +462,11 @@ class ImageClient:
             },
             "5": {
                 "inputs": {
-                    "seed": int(time.time()) % 2_147_483_647,
-                    "steps": 20,
-                    "cfg": 7.0,
-                    "sampler_name": "euler",
-                    "scheduler": "normal",
+                    "seed": seed_v,
+                    "steps": max(1, int(steps)),
+                    "cfg": float(cfg_scale),
+                    "sampler_name": sampler,
+                    "scheduler": scheduler,
                     "denoise": 1.0,
                     "model": ["1", 0],
                     "positive": ["2", 0],
@@ -387,45 +479,109 @@ class ImageClient:
                 "inputs": {"samples": ["5", 0], "vae": ["1", 2]},
                 "class_type": "VAEDecode",
             },
-            "7": {
-                "inputs": {"filename_prefix": "anor", "images": ["6", 0]},
-                "class_type": "SaveImage",
-            },
         }
-        queued = _request_json(f"{root}/prompt", {"prompt": workflow}, api_key=self.cfg.image_api_key)
-        prompt_id = queued.get("prompt_id")
-        if not prompt_id:
-            raise PipelineError(f"ComfyUI did not return prompt_id: {queued!r}")
+        if upscale and upscale_model:
+            workflow["8"] = {
+                "inputs": {"model_name": upscale_model},
+                "class_type": "UpscaleModelLoader",
+            }
+            workflow["9"] = {
+                "inputs": {
+                    "upscale_model": ["8", 0],
+                    "image": ["6", 0],
+                },
+                "class_type": "ImageUpscaleWithModel",
+            }
+            image_src: list[Any] = ["9", 0]
+        else:
+            image_src = ["6", 0]
+        workflow["7"] = {
+            "inputs": {
+                "filename_prefix": filename_prefix,
+                "images": image_src,
+            },
+            "class_type": "SaveImage",
+        }
+        return workflow
 
-        deadline = time.time() + 600
-        while time.time() < deadline:
-            hist = json.loads(
-                _request_bytes(f"{root}/history/{prompt_id}", method="GET").decode("utf-8")
+    def _comfy_txt2img(self, prompt: str, out_path: Path, width: int, height: int) -> Path:
+        """SDXL (or other ckpt) txt2img + optional Real-ESRGAN, serialized."""
+        root = (self.cfg.image_url or "").rstrip("/")
+        if not root:
+            raise PipelineError("IMAGE_URL unset for comfy backend", retryable=False)
+        ckpt = self.resolve_comfy_ckpt(self.cfg.image_model)
+        upscale = self.comfy_upscale_enabled()
+        upscale_model = self.comfy_upscale_model()
+        workflow = self.build_comfy_workflow(
+            prompt,
+            ckpt=ckpt,
+            width=width,
+            height=height,
+            upscale=upscale,
+            upscale_model=upscale_model,
+        )
+
+        # One-at-a-time: shared GPU with Ollama on Dawes
+        with _COMFY_LOCK:
+            queued = _request_json(
+                f"{root}/prompt",
+                {"prompt": workflow},
+                api_key=self.cfg.image_api_key,
+                timeout=120,
             )
-            if prompt_id in hist:
-                outputs = hist[prompt_id].get("outputs", {})
-                for node_out in outputs.values():
-                    if not isinstance(node_out, dict):
-                        continue
-                    for img in node_out.get("images", []) or []:
-                        fname = img.get("filename")
-                        if not fname:
+            prompt_id = queued.get("prompt_id")
+            if not prompt_id:
+                raise PipelineError(f"ComfyUI did not return prompt_id: {queued!r}")
+
+            deadline = time.time() + _env_int("ANOR_COMFY_TIMEOUT_S", 600)
+            while time.time() < deadline:
+                hist = json.loads(
+                    _request_bytes(
+                        f"{root}/history/{prompt_id}", method="GET"
+                    ).decode("utf-8")
+                )
+                if prompt_id in hist:
+                    entry = hist[prompt_id]
+                    # Surface Comfy node errors instead of spinning until timeout
+                    status = entry.get("status") or {}
+                    if status.get("status_str") == "error" or status.get(
+                        "completed"
+                    ) is False:
+                        msgs = status.get("messages") or []
+                        raise PipelineError(
+                            f"ComfyUI prompt failed: {msgs!r}",
+                            retryable=True,
+                        )
+                    outputs = entry.get("outputs", {})
+                    for node_out in outputs.values():
+                        if not isinstance(node_out, dict):
                             continue
-                        sub = img.get("subfolder") or ""
-                        typ = img.get("type") or "output"
-                        view = f"{root}/view?filename={urllib.parse.quote(str(fname))}&subfolder={urllib.parse.quote(str(sub))}&type={urllib.parse.quote(str(typ))}"
-                        # Secondary fetch from Comfy view — size-capped, no open redirect
-                        try:
-                            raw = safe_get_bytes(view, timeout=120.0)
-                        except ValueError as ve:
-                            raise PipelineError(
-                                f"Rejected Comfy view URL: {ve}",
-                                retryable=False,
-                            ) from ve
-                        out_path.write_bytes(raw)
-                        return out_path
-            time.sleep(0.8)
-        raise PipelineError(f"ComfyUI timed out for prompt_id={prompt_id}")
+                        for img in node_out.get("images", []) or []:
+                            fname = img.get("filename")
+                            if not fname:
+                                continue
+                            sub = img.get("subfolder") or ""
+                            typ = img.get("type") or "output"
+                            view = (
+                                f"{root}/view?filename={urllib.parse.quote(str(fname))}"
+                                f"&subfolder={urllib.parse.quote(str(sub))}"
+                                f"&type={urllib.parse.quote(str(typ))}"
+                            )
+                            try:
+                                raw = safe_get_bytes(view, timeout=120.0)
+                            except ValueError as ve:
+                                raise PipelineError(
+                                    f"Rejected Comfy view URL: {ve}",
+                                    retryable=False,
+                                ) from ve
+                            out_path.write_bytes(raw)
+                            # Sidecar prompt for human review / social drafts
+                            out_path.with_suffix(".prompt.txt").write_text(
+                                prompt, encoding="utf-8"
+                            )
+                            return out_path
+                time.sleep(0.8)
+            raise PipelineError(f"ComfyUI timed out for prompt_id={prompt_id}")
 
     def _write_placeholder(self, out_path: Path, width: int, height: int, prompt: str) -> Path:
         """Minimal valid PNG without external deps (1x1 scaled via ffmpeg if present)."""

@@ -82,17 +82,63 @@ def _ffprobe_duration(path: Path) -> float:
         return 5.0
 
 
-def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -> Path:
-    """Slow zoom pan over a still, muxed with narration audio."""
-    # Ensure duration at least audio length
-    dur = max(duration, _ffprobe_duration(audio))
-    # zoompan: gentle Ken Burns
+def _env_int(name: str, default: int) -> int:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return default
+
+
+def video_frame_size() -> tuple[int, int]:
+    """Output frame size for Ken Burns clips (default 1080p)."""
+    w = _env_int("ANOR_VIDEO_WIDTH", 1920)
+    h = _env_int("ANOR_VIDEO_HEIGHT", 1080)
+    # libx264 wants even dims
+    return w - (w % 2), h - (h % 2)
+
+
+def ken_burns_filter(
+    duration_s: float,
+    *,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+    fps: int = 30,
+) -> str:
+    """Build zoompan vf: slow zoom+pan into ``width``×``height``.
+
+    Source stills should be *larger* than the frame (Comfy SDXL + Real-ESRGAN)
+    so zoom has real pixel headroom. We avoid the old path that downscaled to
+    frame size before zoompan (which destroyed headroom). Small mock stills are
+    scaled up to ≥2× frame first so zoompan is not pure soft upscale.
+    """
+    w, h = video_frame_size() if width is None or height is None else (width, height)
+    w, h = w - (w % 2), h - (h % 2)
+    frames = max(int(duration_s * fps) + 1, fps)
+    # Reach ~1.15× zoom over the clip under -loop 1 + d=1
+    z_step = 0.15 / max(frames, 1)
+    min_w, min_h = w * 2, h * 2
     vf = (
-        f"scale=1280:720:force_original_aspect_ratio=increase,"
-        f"crop=1280:720,"
-        f"zoompan=z='min(zoom+0.0008,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=30,"
+        f"scale='if(lt(iw\\,{min_w})\\,{min_w}\\,iw)':"
+        f"'if(lt(ih\\,{min_h})\\,{min_h}\\,ih)':"
+        f"force_original_aspect_ratio=increase,"
+        f"zoompan="
+        f"z='min(zoom+{z_step:.6f},1.15)':"
+        f"x='iw/2-(iw/zoom/2)':"
+        f"y='ih/2-(ih/zoom/2)':"
+        f"d=1:s={w}x{h}:fps={fps},"
         f"format=yuv420p"
     )
+    return vf
+
+
+def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -> Path:
+    """Slow zoom pan over a still, muxed with narration audio (1080p default)."""
+    dur = max(duration, _ffprobe_duration(audio))
+    w, h = video_frame_size()
+    vf = ken_burns_filter(dur, width=w, height=h)
     cmd = [
         "ffmpeg",
         "-y",

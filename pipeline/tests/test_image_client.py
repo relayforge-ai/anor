@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 import sys
 import tempfile
@@ -31,7 +32,7 @@ def _cfg(**kwargs) -> PipelineConfig:
         image_api_key=None,
         tts_api_key=None,
         llm_model="m",
-        image_model="local-image",
+        image_model="sd_xl_base_1.0.safetensors",
         tts_model="m",
         image_backend="auto",
         tts_backend="auto",
@@ -165,6 +166,225 @@ class TestHealthImageBackend(unittest.TestCase):
         # No secrets
         blob = str(h)
         self.assertNotIn("sk-", blob)
+
+
+class TestComfyWorkflow(unittest.TestCase):
+    def test_workflow_includes_sdxl_ckpt_and_realesrgan(self):
+        wf = ImageClient.build_comfy_workflow(
+            "sepia battlefield, film grain",
+            ckpt="sd_xl_base_1.0.safetensors",
+            width=1024,
+            height=576,
+            seed=42,
+            steps=20,
+            upscale=True,
+            upscale_model="RealESRGAN_x4plus.pth",
+        )
+        self.assertEqual(wf["1"]["inputs"]["ckpt_name"], "sd_xl_base_1.0.safetensors")
+        self.assertEqual(wf["4"]["inputs"]["width"], 1024)
+        self.assertEqual(wf["4"]["inputs"]["height"], 576)
+        self.assertEqual(wf["8"]["class_type"], "UpscaleModelLoader")
+        self.assertEqual(wf["8"]["inputs"]["model_name"], "RealESRGAN_x4plus.pth")
+        self.assertEqual(wf["9"]["class_type"], "ImageUpscaleWithModel")
+        # SaveImage reads upscaled node, not raw VAE
+        self.assertEqual(wf["7"]["inputs"]["images"], ["9", 0])
+
+    def test_workflow_can_skip_upscale(self):
+        wf = ImageClient.build_comfy_workflow(
+            "x",
+            ckpt="sd_xl_base_1.0.safetensors",
+            width=512,
+            height=512,
+            upscale=False,
+        )
+        self.assertNotIn("8", wf)
+        self.assertNotIn("9", wf)
+        self.assertEqual(wf["7"]["inputs"]["images"], ["6", 0])
+
+    def test_resolve_ckpt_defaults_to_sdxl(self):
+        self.assertEqual(
+            ImageClient.resolve_comfy_ckpt("local-image"),
+            "sd_xl_base_1.0.safetensors",
+        )
+
+    def test_reject_flux_dev(self):
+        with self.assertRaises(PipelineError) as ctx:
+            ImageClient.resolve_comfy_ckpt("flux1-dev.safetensors")
+        self.assertIn("non-commercial", str(ctx.exception).lower())
+
+    def test_still_size_multiples_of_eight(self):
+        prev_w = os.environ.get("ANOR_STILL_WIDTH")
+        prev_h = os.environ.get("ANOR_STILL_HEIGHT")
+        os.environ["ANOR_STILL_WIDTH"] = "1000"
+        os.environ["ANOR_STILL_HEIGHT"] = "575"
+        try:
+            w, h = ImageClient.still_size()
+            self.assertEqual(w % 8, 0)
+            self.assertEqual(h % 8, 0)
+            self.assertEqual((w, h), (1000 // 8 * 8, 575 // 8 * 8))
+        finally:
+            if prev_w is None:
+                os.environ.pop("ANOR_STILL_WIDTH", None)
+            else:
+                os.environ["ANOR_STILL_WIDTH"] = prev_w
+            if prev_h is None:
+                os.environ.pop("ANOR_STILL_HEIGHT", None)
+            else:
+                os.environ["ANOR_STILL_HEIGHT"] = prev_h
+
+    def test_comfy_path_uses_serialized_lock_and_polls(self):
+        """Comfy generate posts workflow once and fetches view (no live GPU)."""
+        cfg = _cfg(image_url="http://127.0.0.1:8188", image_backend="comfy")
+        client = ImageClient(cfg)
+        prev = os.environ.get("ANOR_IMAGE_FALLBACK_MOCK")
+        os.environ["ANOR_IMAGE_FALLBACK_MOCK"] = "0"
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                out = Path(td) / "comfy.png"
+                with patch("pipeline.clients._request_json") as rj, patch(
+                    "pipeline.clients._request_bytes"
+                ) as rb, patch(
+                    "pipeline.clients.safe_get_bytes", return_value=_TINY_PNG
+                ) as sg:
+                    rj.return_value = {"prompt_id": "pid-1"}
+                    rb.return_value = json.dumps(
+                        {
+                            "pid-1": {
+                                "status": {"status_str": "success", "completed": True},
+                                "outputs": {
+                                    "7": {
+                                        "images": [
+                                            {
+                                                "filename": "anor_00001_.png",
+                                                "subfolder": "",
+                                                "type": "output",
+                                            }
+                                        ]
+                                    }
+                                },
+                            }
+                        }
+                    ).encode("utf-8")
+                    path = client.generate("battlefield archival", out, width=64, height=64)
+                self.assertEqual(path.read_bytes(), _TINY_PNG)
+                # Workflow posted to /prompt
+                self.assertTrue(rj.called)
+                posted = rj.call_args[0][1]["prompt"]
+                self.assertEqual(
+                    posted["1"]["inputs"]["ckpt_name"],
+                    "sd_xl_base_1.0.safetensors",
+                )
+                self.assertIn("8", posted)  # upscale loader
+                self.assertTrue(sg.called)
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_IMAGE_FALLBACK_MOCK", None)
+            else:
+                os.environ["ANOR_IMAGE_FALLBACK_MOCK"] = prev
+
+
+class TestKenBurns(unittest.TestCase):
+    def test_filter_targets_1080p_and_preserves_headroom_hint(self):
+        from pipeline.video_pipeline import ken_burns_filter, video_frame_size
+
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_VIDEO_WIDTH", "ANOR_VIDEO_HEIGHT")
+        }
+        os.environ.pop("ANOR_VIDEO_WIDTH", None)
+        os.environ.pop("ANOR_VIDEO_HEIGHT", None)
+        try:
+            self.assertEqual(video_frame_size(), (1920, 1080))
+            vf = ken_burns_filter(5.0)
+            self.assertIn("1920x1080", vf)
+            self.assertIn("zoompan", vf)
+            # Must not pre-crop to frame size (old 720p path)
+            self.assertNotIn("crop=1280:720", vf)
+            self.assertNotIn("s=1280x720", vf)
+        finally:
+            for k, v in prev.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def test_ken_burns_clip_writes_1080p(self):
+        """End-to-end ffmpeg Ken Burns on a mock still (offline)."""
+        import subprocess
+        import tempfile
+
+        from pipeline.video_pipeline import _ken_burns_clip
+
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            still = td_path / "still.png"
+            audio = td_path / "vo.wav"
+            clip = td_path / "out.mp4"
+            # Larger-than-frame solid so zoom has pixels
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=0x3a2a1a:s=2048x1152:d=1",
+                    "-frames:v",
+                    "1",
+                    str(still),
+                ],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "anullsrc=r=44100:cl=mono",
+                    "-t",
+                    "1.0",
+                    str(audio),
+                ],
+                check=True,
+                capture_output=True,
+            )
+            prev = {
+                k: os.environ.get(k)
+                for k in ("ANOR_VIDEO_WIDTH", "ANOR_VIDEO_HEIGHT")
+            }
+            os.environ["ANOR_VIDEO_WIDTH"] = "640"
+            os.environ["ANOR_VIDEO_HEIGHT"] = "360"
+            try:
+                _ken_burns_clip(still, audio, clip, duration=1.0)
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+            self.assertTrue(clip.is_file())
+            self.assertGreater(clip.stat().st_size, 500)
+            probe = subprocess.run(
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-select_streams",
+                    "v:0",
+                    "-show_entries",
+                    "stream=width,height",
+                    "-of",
+                    "csv=p=0",
+                    str(clip),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(probe.stdout.strip(), "640,360")
 
 
 if __name__ == "__main__":

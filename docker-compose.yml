@@ -18,7 +18,7 @@ services:
       LLM_MODEL: ${LLM_MODEL:-local-model}
       LLM_API_KEY: ${LLM_API_KEY:-}
       IMAGE_URL: ${IMAGE_URL:-}
-      IMAGE_MODEL: ${IMAGE_MODEL:-local-image}
+      IMAGE_MODEL: ${IMAGE_MODEL:-sd_xl_base_1.0.safetensors}
       IMAGE_API_KEY: ${IMAGE_API_KEY:-}
       IMAGE_BACKEND: ${IMAGE_BACKEND:-auto}
       TTS_URL: ${TTS_URL:-}

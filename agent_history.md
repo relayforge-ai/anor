@@ -2193,3 +2193,35 @@ python3 -m unittest webapp.tests.test_request_timeout webapp.tests.test_webapp \
 
 ### RESULT
 Product HTTP surface bounds hung clients without changing happy-path fork/catalog behavior.
+
+---
+
+## Iteration 77 — 2026-07-19
+
+### OBSERVE
+Main was green after pytest pin (`5cd696e`). Image path had Comfy txt2img but: (1) SD 1.5-era defaults, not SDXL+Real-ESRGAN on Dawes; (2) no process-level serialize for shared VRAM with Ollama; (3) Ken Burns forced 720p and downscaled stills before zoompan (no headroom); (4) sample path unvalidated against live Comfy.
+
+Live probe `http://dawes:8188`: ckpt `sd_xl_base_1.0.safetensors`, upscale `RealESRGAN_x4plus.pth`.
+
+### PLAN
+**One high-impact change:** end-to-end archival still pipeline — SDXL Comfy graph + Real-ESRGAN 4×, serialized Comfy jobs, 1080p Ken Burns with zoom headroom, mock fallback preserved, Flux.1-dev rejected.
+
+### EXECUTE
+- `ImageClient`: `_COMFY_LOCK`, `build_comfy_workflow` (SDXL + UpscaleModelLoader/ImageUpscaleWithModel), still size 1024×576, Flux.1-dev hard reject
+- `video_pipeline.ken_burns_filter` / `_ken_burns_clip` → default 1920×1080, no pre-crop to frame
+- Style prefix archival sepia/chiaroscuro/grain; defaults in `.env.example`, `PIPELINE.md`, compose
+- Tests: workflow structure, comfy mock path, Ken Burns dims, flux reject
+
+### TEST
+```
+ANOR_MOCK_MEDIA=1 PYTHONPATH=. python -m unittest <full CI module list> -v
+→ Ran 241 tests — OK
+python -m compileall -q sim pipeline webapp scripts
+PYTHONPATH=sim python -m pytest -q sim/tests → 3 passed
+python scripts/dep_audit.py --pip-audit --require-pip-audit → clean
+
+Live (not CI): IMAGE_URL=http://dawes:8188 → 2 stills 4096×2304 + Ken Burns 1920×1080
+```
+
+### RESULT
+Monetizable image path is live-validated on Dawes SDXL+ESRGAN; CI/offline mock path unchanged. Sample assets under outputs/samples (gitignored).

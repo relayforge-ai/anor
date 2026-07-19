@@ -54,14 +54,18 @@ class PipelineConfig:
             image_api_key=_env("IMAGE_API_KEY") or _env("LLM_API_KEY"),
             tts_api_key=_env("TTS_API_KEY") or _env("LLM_API_KEY"),
             llm_model=_env("LLM_MODEL", "local-model") or "local-model",
-            image_model=_env("IMAGE_MODEL", "local-image") or "local-image",
+            # Prefer SDXL base (OpenRAIL) on Comfy fleets; never default to Flux.1-dev
+            image_model=_env("IMAGE_MODEL", "sd_xl_base_1.0.safetensors")
+            or "sd_xl_base_1.0.safetensors",
             tts_model=_env("TTS_MODEL", "tts-1") or "tts-1",
             image_backend=_env("IMAGE_BACKEND", "auto") or "auto",
             tts_backend=_env("TTS_BACKEND", "auto") or "auto",
             mock_media=mock,
             style_prefix=_env(
                 "ANOR_STYLE_PREFIX",
-                "painterly historical documentary still, cinematic composition, no text, no watermark, ",
+                "archival documentary still photograph, sepia and warm chiaroscuro, "
+                "subtle film grain, period-accurate, cinematic composition, "
+                "no text, no watermark, no logo, ",
             )
             or "",
         )

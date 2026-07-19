@@ -52,10 +52,13 @@ Authoritative table: [`scenarios/public/README.md`](scenarios/public/README.md).
 export LLM_URL=http://<fleet-host>:11434/v1
 export LLM_MODEL=qwen2.5:32b
 
-# ComfyUI on GPU box
-export IMAGE_URL=http://<fleet-host>:8188
-export IMAGE_MODEL=v1-5-pruned-emaonly.safetensors
+# ComfyUI on GPU box (Dawes: SDXL base + Real-ESRGAN 4×, serialized)
+export IMAGE_URL=http://dawes:8188   # or http://192.168.4.27:8188
+export IMAGE_MODEL=sd_xl_base_1.0.safetensors   # OpenRAIL — not Flux.1-dev
 export IMAGE_BACKEND=comfy
+# ANOR_COMFY_UPSCALE=1 ANOR_COMFY_UPSCALE_MODEL=RealESRGAN_x4plus.pth
+# ANOR_STILL_WIDTH=1024 ANOR_STILL_HEIGHT=576
+# ANOR_VIDEO_WIDTH=1920 ANOR_VIDEO_HEIGHT=1080
 
 # Local TTS bridge (OpenAI-compatible speech)
 export TTS_URL=http://<fleet-host>:8880/v1
