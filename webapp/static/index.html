@@ -235,14 +235,22 @@
     </footer>
   </div>
 
-  <div class="modal-backdrop" id="paywall" role="dialog" aria-modal="true">
-    <div class="modal">
+  <div
+    class="modal-backdrop"
+    id="paywall"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pay-title"
+    aria-describedby="pay-copy"
+    hidden
+  >
+    <div class="modal" role="document">
       <h3 id="pay-title">Unlock Scholar</h3>
       <p id="pay-copy">Full library, unlimited studio controls, LLM re-renders.</p>
       <div class="modal-actions">
-        <button class="btn btn-primary" id="pay-confirm">Continue · demo checkout</button>
-        <button class="btn btn-ghost" id="pay-demo">Demo unlock Scholar</button>
-        <button class="btn btn-ghost" id="pay-close">Not now</button>
+        <button type="button" class="btn btn-primary" id="pay-confirm">Continue · demo checkout</button>
+        <button type="button" class="btn btn-ghost" id="pay-demo">Demo unlock Scholar</button>
+        <button type="button" class="btn btn-ghost" id="pay-close">Not now</button>
       </div>
       <p class="note" style="margin-top:0.9rem;text-align:center">No charge in this build. Stripe hook ready for production.</p>
     </div>

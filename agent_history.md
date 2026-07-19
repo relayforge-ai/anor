@@ -675,3 +675,33 @@ python3 -m unittest pipeline.tests.test_pipeline.TestVideoPipeline -v
 
 ### RESULT
 Failed renders no longer accumulate multi-MB debris under `outputs/videos/`.
+
+---
+
+## Iteration 23 — 2026-07-19
+
+### OBSERVE
+Scholar paywall dialog was a visual overlay only: no focus trap, Escape closed the nav instead of the modal, no `aria-labelledby`/`describedby`, focus was not restored, and background could still scroll — poor accessibility for freemium upgrade flows.
+
+### PLAN
+**One high-impact change:** accessible paywall dialog (focus trap, Escape, labels, restore focus, body scroll lock).
+
+Expected outcome: keyboard users stay inside the modal until dismiss; screen readers get dialog labels; focus returns to the opener.
+
+### EXECUTE
+- `openPaywall` / `closePaywall` with focus trap, Escape (capture), restore focus
+- `hidden` + `aria-labelledby` / `aria-describedby` on dialog
+- `body.modal-open` overflow lock; backdrop click to dismiss
+- Static asset tests for paywall a11y markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 9 tests — OK
+```
+- HTML dialog attributes present
+- JS focus trap / Escape / restore markers present
+- Index/catalog still green
+
+### RESULT
+Paywall upgrade flow is keyboard- and screen-reader-usable without trapping background interaction.

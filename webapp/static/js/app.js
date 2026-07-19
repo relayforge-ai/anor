@@ -1295,14 +1295,81 @@
       .join("");
   }
 
-  /* ——— Paywall modal ——— */
+  /* ——— Paywall modal (focus trap + Escape + restore) ——— */
+  let paywallPrevFocus = null;
+  let paywallKeyHandler = null;
+
+  function paywallFocusable() {
+    const root = $("#paywall");
+    if (!root) return [];
+    return [
+      ...root.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ),
+    ].filter((el) => el.offsetParent !== null || el === document.activeElement);
+  }
+
   function openPaywall(title, copy) {
+    const wall = $("#paywall");
+    if (!wall) return;
+    closeNav();
+    paywallPrevFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     $("#pay-title").textContent = title;
     $("#pay-copy").textContent = copy;
-    $("#paywall").classList.add("open");
+    wall.hidden = false;
+    wall.classList.add("open");
+    document.body.classList.add("modal-open");
+    // Move focus into dialog after paint
+    requestAnimationFrame(() => {
+      const first = paywallFocusable()[0] || $("#pay-close");
+      first?.focus();
+    });
+    if (paywallKeyHandler) {
+      document.removeEventListener("keydown", paywallKeyHandler, true);
+    }
+    paywallKeyHandler = (e) => {
+      if (!wall.classList.contains("open")) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closePaywall();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const nodes = paywallFocusable();
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !wall.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", paywallKeyHandler, true);
   }
+
   function closePaywall() {
-    $("#paywall").classList.remove("open");
+    const wall = $("#paywall");
+    if (!wall) return;
+    wall.classList.remove("open");
+    wall.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (paywallKeyHandler) {
+      document.removeEventListener("keydown", paywallKeyHandler, true);
+      paywallKeyHandler = null;
+    }
+    const prev = paywallPrevFocus;
+    paywallPrevFocus = null;
+    // Restore focus to the control that opened the dialog
+    if (prev && typeof prev.focus === "function" && document.contains(prev)) {
+      prev.focus();
+    }
   }
 
   /* ——— Router ——— */
@@ -1350,11 +1417,21 @@
     });
     $("#nav-backdrop")?.addEventListener("click", closeNav);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeNav();
+      // Paywall trap handles Escape first (capture). Nav only when modal closed.
+      if (e.key === "Escape" && !$("#paywall")?.classList.contains("open")) {
+        closeNav();
+      }
     });
     window.addEventListener("resize", () => {
       if (window.innerWidth > 900) closeNav();
     });
+
+    // Backdrop click (outside .modal panel) dismisses paywall
+    $("#paywall")?.addEventListener("click", (e) => {
+      if (e.target === $("#paywall")) closePaywall();
+    });
+    // Prevent clicks inside panel from bubbling to backdrop
+    $("#paywall .modal")?.addEventListener("click", (e) => e.stopPropagation());
 
     // studio buttons
     $("#studio-scenario")?.addEventListener("change", (e) => {

@@ -45,11 +45,17 @@ class TestStaticProgressUI(unittest.TestCase):
             "parseRetryAfter",
             "bindRateLimitRetry",
             "is-rate-limit",
+            "openPaywall",
+            "closePaywall",
+            "paywallFocusable",
+            "paywallKeyHandler",
+            "modal-open",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
         self.assertIn(".fork-error.is-rate-limit", css)
         self.assertIn(".rate-wait", css)
+        self.assertIn("body.modal-open", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")
@@ -76,6 +82,21 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("ArrowDown", js)
         html_idx = (STATIC / "index.html").read_text(encoding="utf-8")
         self.assertIn('id="player-loading"', html_idx)
+
+    def test_paywall_dialog_a11y(self):
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="paywall"', html)
+        self.assertIn('role="dialog"', html)
+        self.assertIn('aria-modal="true"', html)
+        self.assertIn('aria-labelledby="pay-title"', html)
+        self.assertIn('aria-describedby="pay-copy"', html)
+        self.assertIn("hidden", html)
+        js = (STATIC / "js" / "app.js").read_text(encoding="utf-8")
+        # Focus trap + Escape + restore
+        self.assertIn('e.key === "Escape"', js)
+        self.assertIn('e.key !== "Tab"', js)
+        self.assertIn("paywallPrevFocus", js)
+        self.assertIn("document.contains(prev)", js)
 
 
 if __name__ == "__main__":
