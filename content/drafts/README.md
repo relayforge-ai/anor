@@ -79,6 +79,16 @@ See `batch-005/README.md` and `batch-005/postiz-drafts.json`.
 
 See `batch-006/README.md` and `batch-006/postiz-drafts.json`.
 
+## Batch 007 — Overlord / D-Day (ELO-008)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-007/ELO-008-historical.md` | go for 6 June | historical | YT + TT |
+| `batch-007/ELO-008-delay_longer.md` | longer weather delay | simulated | YT + TT |
+| `batch-007/ELO-008-postpone_month.md` | full tidal-cycle slip | dramatized | YT + TT |
+
+See `batch-007/README.md` and `batch-007/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -96,6 +106,8 @@ python -m pipeline.cli video --scenario ELO-005 --choice historical
 python -m pipeline.cli video --scenario ELO-005 --choice restrain
 python -m pipeline.cli video --scenario ELO-006 --choice historical
 python -m pipeline.cli video --scenario ELO-006 --choice force_corridors
+python -m pipeline.cli video --scenario ELO-008 --choice historical
+python -m pipeline.cli video --scenario ELO-008 --choice delay_longer
 ```
 
 ## Human gate checklist

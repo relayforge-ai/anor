@@ -1,0 +1,89 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-007",
+  "created": "2026-07-19",
+  "theme": "Overlord D-Day go/no-go June 1944 (ELO-008)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review delay and postpone cuts for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-008-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "June 1944. Armada ready. Weather marginal.\nGo now — or wait?\n📗 Documented: the go for the sixth.\n#history #ww2 #dday #fyp",
+      "media_local": "outputs/videos/ELO-008-historical/ELO-008-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-008-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "June 1944: Eisenhower gives the go for D-Day",
+      "caption": "Forecasts disagree in the details and agree on the danger.\n\n📗 Documented baseline: after a short weather hold, the invasion is ordered for 6 June 1944.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#dday #overlord #ww2 #1944",
+      "media_local": "outputs/videos/ELO-008-historical/ELO-008-historical.mp4",
+      "settings": {
+        "title": "June 1944: Eisenhower gives the go for D-Day",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "ww2", "label": "ww2"},
+          {"value": "dday", "label": "dday"}
+        ]
+      }
+    },
+    {
+      "id": "elo-008-delay-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they wait longer for perfect weather?\nWe label this 🧪 SIMULATED. History took the narrow window.\nPatience can save boats — or burn surprise.\n#althistory #historytok #ww2",
+      "media_local": "outputs/videos/ELO-008-delay_longer/ELO-008-delay_longer.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-008-delay-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Overlord waited longer for perfect weather?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: the go for 6 June is documented.\n🧪 Longer delay is labeled simulation: weather quality vs secrecy and fatigue.\n\n#althistory #dday #speculationlabeled",
+      "media_local": "outputs/videos/ELO-008-delay_longer/ELO-008-delay_longer.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Overlord waited longer for perfect weather?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "ww2", "label": "ww2"}
+        ]
+      }
+    },
+    {
+      "id": "elo-008-postpone-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if D-Day slipped a full tidal cycle?",
+      "caption": "⚠️ Dramatized process — not secret history.\n\n📗 Baseline remains the 6 June go.\nThis cut studies a full calendar slip — labeled so clips cannot lie.\n\n#althistory #dday #overlord",
+      "media_local": "outputs/videos/ELO-008-postpone_month/ELO-008-postpone_month.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if D-Day slipped a full tidal cycle?",
+        "type": "public"
+      }
+    }
+  ]
+}

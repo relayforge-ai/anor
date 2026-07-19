@@ -2139,3 +2139,30 @@ python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
 
 ### RESULT
 Studio/library gain Overlord’s weather-bound go decision with speculation labels intact.
+
+---
+
+## Iteration 75 — 2026-07-19
+
+### OBSERVE
+ELO-008 Overlord pack shipped; social drafts stopped at batch-006. No Ryan-reviewable captions for go / delay / postpone cuts.
+
+### PLAN
+**One high-impact change:** batch-007 DRAFTS for ELO-008 with human-gate Postiz payload and hygiene tests.
+
+Expected outcome: draft-only captions; 📗/🧪 labels; placeholder integrations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-007/*` (3 cut MDs, postiz-drafts.json, README)
+- Parent drafts README + PIPELINE batch table
+- Tests: batch-007 presence + pack reference + labels
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline_docs \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 37 tests — OK
+```
+
+### RESULT
+Overlord / D-Day social creative is staged as drafts only, aligned with the new public pack.
