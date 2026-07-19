@@ -1035,6 +1035,37 @@
   /** Prevent double-click / concurrent fork POSTs (burns freemium quota). */
   let forkInFlight = false;
 
+  function isEditableTarget(el) {
+    if (!el || !(el instanceof Element)) return false;
+    const tag = el.tagName;
+    if (tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (tag === "INPUT") {
+      const type = (el.getAttribute("type") || "text").toLowerCase();
+      return !["button", "submit", "checkbox", "radio", "reset", "file"].includes(type);
+    }
+    return el.isContentEditable;
+  }
+
+  function bindStudioKeyboardShortcuts() {
+    /** Ctrl/⌘+Enter basic fork; Ctrl/⌘+Shift+Enter LLM (Scholar). */
+    if (document.documentElement.dataset.studioKbd === "1") return;
+    document.documentElement.dataset.studioKbd = "1";
+    document.addEventListener("keydown", (e) => {
+      if (state.route !== "studio") return;
+      if ($("#paywall")?.classList.contains("open")) return;
+      if (document.body.classList.contains("boot-failed")) return;
+      if (!(e.ctrlKey || e.metaKey) || e.key !== "Enter") return;
+      // Allow from seed textarea; block bare text fields that aren't our studio seed
+      if (isEditableTarget(e.target) && e.target.id !== "custom-seed") return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        runFork({ useLlm: true });
+      } else {
+        runFork({ useLlm: false });
+      }
+    });
+  }
+
   async function runFork({ useLlm }) {
     if (!state.scenarioId || !state.choiceId) {
       toast("Select a scenario and a decision first.");
@@ -2051,6 +2082,7 @@
     $("#btn-compare")?.addEventListener("click", compareBranches);
     $("#btn-copy")?.addEventListener("click", copyForkNarrative);
     $("#btn-export")?.addEventListener("click", exportFork);
+    bindStudioKeyboardShortcuts();
 
     // player gate buttons
     $("#gate-upgrade")?.addEventListener("click", () => navigate("pricing"));

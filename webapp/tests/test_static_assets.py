@@ -114,6 +114,13 @@ class TestStaticProgressUI(unittest.TestCase):
             "studio-sources-body",
             "no MANDOS master sources",
             "Public sources",
+            "bindStudioKeyboardShortcuts",
+            "isEditableTarget",
+            "e.ctrlKey || e.metaKey",
+            'e.key !== "Enter"',
+            "studioKbd",
+            "runFork({ useLlm: false })",
+            "runFork({ useLlm: true })",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -128,6 +135,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("pulseCta", css)
         self.assertIn(".library-filters", css)
         self.assertIn(".library-filter.active", css)
+        self.assertIn(".studio-kbd-hint", css)
+        self.assertIn("studio-kbd-hint kbd", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")
@@ -144,6 +153,9 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn('id="studio-sources"', html)
         self.assertIn("Sources", html)
         self.assertIn('id="studio-sources-body"', html)
+        self.assertIn("studio-kbd-hint", html)
+        self.assertIn("aria-keyshortcuts", html)
+        self.assertIn("<kbd>", html)
 
     def test_index_noscript_guidance(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

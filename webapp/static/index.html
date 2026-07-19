@@ -264,8 +264,22 @@
               <textarea id="custom-seed" placeholder="e.g. A rider reports the Capuan senate will defect only if cavalry leaves within 24 hours…"></textarea>
             </div>
             <div class="stack-sm" style="margin-top:0.8rem">
-              <button class="btn btn-primary" id="btn-fork">Run basic fork</button>
-              <button class="btn btn-ghost" id="btn-llm">LLM re-render</button>
+              <button
+                class="btn btn-primary"
+                id="btn-fork"
+                aria-keyshortcuts="Control+Enter Meta+Enter"
+                title="Run basic authored fork (Ctrl/⌘+Enter)"
+              >
+                Run basic fork
+              </button>
+              <button
+                class="btn btn-ghost"
+                id="btn-llm"
+                aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
+                title="LLM re-render (Ctrl/⌘+Shift+Enter · Scholar)"
+              >
+                LLM re-render
+              </button>
               <button class="btn btn-ghost" id="btn-video" title="Queue async video render (script → TTS → stills → ffmpeg)">Queue video render</button>
               <div class="row">
                 <button class="btn btn-ghost btn-sm" id="btn-compare">Compare branches</button>
@@ -276,6 +290,10 @@
                   Export .md
                 </button>
               </div>
+              <p class="note studio-kbd-hint" id="studio-kbd-hint">
+                Keyboard: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> basic fork ·
+                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> LLM (Scholar)
+              </p>
             </div>
             <div class="control-grid" id="control-tiles"></div>
           </div>

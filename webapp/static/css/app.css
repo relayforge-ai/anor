@@ -1343,6 +1343,21 @@ body.boot-failed .member-strip {
   outline-offset: 2px;
 }
 
+/* Studio keyboard hint */
+.studio-kbd-hint {
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+.studio-kbd-hint kbd {
+  font-family: var(--font-ui), ui-monospace, monospace;
+  font-size: 0.72em;
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-dim);
+}
+
 /* Studio sources / provenance */
 .studio-sources {
   border: 1px solid rgba(255, 255, 255, 0.08);

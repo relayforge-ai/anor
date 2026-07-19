@@ -2084,3 +2084,30 @@ python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline
 
 ### RESULT
 Berlin Airlift social creative is staged as drafts only, aligned with the new public pack.
+
+---
+
+## Iteration 73 — 2026-07-19
+
+### OBSERVE
+Studio fork actions required mouse clicks; no keyboard accelerator for the primary path after choosing a decision — weaker power-user and a11y flow once a pack is open.
+
+### PLAN
+**One high-impact change:** Ctrl/⌘+Enter runs basic fork; Ctrl/⌘+Shift+Enter runs LLM (Scholar); on-screen kbd hint + `aria-keyshortcuts`.
+
+Expected outcome: from studio (including seed field), modifiers+Enter trigger the correct fork without leaving the keyboard.
+
+### EXECUTE
+- `bindStudioKeyboardShortcuts` / `isEditableTarget`
+- Hint under studio buttons; titles on fork/LLM buttons
+- CSS for `<kbd>` chips
+- Static asset tests
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 7 tests — OK
+```
+
+### RESULT
+Studio primary and Scholar LLM forks are reachable by keyboard without sacrificing paywall or editable-field safety.
