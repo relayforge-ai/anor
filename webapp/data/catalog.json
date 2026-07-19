@@ -254,6 +254,36 @@
       "speculation": "simulated",
       "featured": false,
       "blurb": "Counterfactual branch: condition support on diplomacy first — tempo risk, not a guaranteed peace, labeled 🧪."
+    },
+    {
+      "id": "ELO-006-historical",
+      "scenario_id": "ELO-006",
+      "choice_id": "historical",
+      "title": "Berlin 1948: the airlift",
+      "subtitle": "Supply the city without forcing the roads",
+      "era": "1948",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-006-historical/ELO-006-historical.mp4",
+      "poster_gradient": ["#141a22", "#0f1115"],
+      "tags": ["Cold War", "Berlin", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: sustain West Berlin by air rather than drive armored corridors through a Soviet blockade."
+    },
+    {
+      "id": "ELO-006-force_corridors",
+      "scenario_id": "ELO-006",
+      "choice_id": "force_corridors",
+      "title": "SPECULATION: Force the land corridors",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1948",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-006-force_corridors/ELO-006-force_corridors.mp4",
+      "poster_gradient": ["#1c1820", "#121018"],
+      "tags": ["Cold War", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: reopen the roads under arms — escalation risk vs logistics patience, labeled 🧪."
     }
   ]
 }

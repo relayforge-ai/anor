@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-006",
+  "title": "Berlin Blockade — airlift or force the corridors?",
+  "era": "1948",
+  "location": "Western Allied capitals / Berlin occupation zones",
+  "datetime": "June–July 1948, opening of the Soviet land blockade of West Berlin",
+  "domain": "Early Cold War / occupation crisis / logistics under coercion",
+  "known_outcome": "The Western Allies mount a sustained airlift of food and fuel into West Berlin rather than forcing land corridors with armored columns. The blockade eventually ends in 1949; West Berlin remains linked to the West. The crisis hardens the division of Germany and accelerates NATO politics.",
+  "decision_question": "When land access to West Berlin is cut, do the Western Allies supply the city by air at enormous cost — or attempt to reopen the land corridors under threat of direct clash with Soviet forces?",
+  "opening": {
+    "cold_open": "Roads and rails into the western sectors of Berlin go dark. Two million people need coal and bread. In Washington, London, and Paris the map is small and the risk is not: any armored probe toward the city could become a shooting war between former allies who now hold nuclear weapons in the background of their strategies.",
+    "what_they_knew": "They knew the air corridors were still open and that aircraft could move tonnage — at a price. They knew a land force-through might work or might detonate a larger war. They did not know how long Stalin would hold the blockade, or whether public opinion in the West would sustain a months-long aerial bridge.",
+    "pressure": "Starvation and freeze risk in Berlin. Alliance credibility. Domestic politics. The thin line between firmness and general war in 1948."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Airlift — supply West Berlin without forcing the ground",
+      "is_historical": true,
+      "summary": "Documented path: sustained air supply (the Berlin Airlift). Ground corridors stay closed until the blockade is lifted politically/logistically.",
+      "immediate": "Aircraft schedules multiply. Coal and flour become the language of resolve. Soviet fighters watch the corridors; collisions and near-misses remain a constant risk.",
+      "near_term": "The city survives the winter of politics and weather. Cost in aircraft, fuel, and crew lives is real. Propaganda and alliance cohesion both intensify.",
+      "longer_arc": "The airlift becomes a founding legend of the Western Cold War stance in Europe. Germany’s division hardens; the crisis feeds the security architecture that follows.",
+      "speculation_level": "documented",
+      "image_prompt": "1948 cargo aircraft over a divided Berlin skyline, winter light, documentary historical painting, no text, no modern jets",
+      "vo_script": "June 1948. The roads are closed. The question is whether to fly or to force. History records the airlift — an enormous, stubborn logistics campaign that kept West Berlin fed without driving tanks up a corridor that could have started a larger war."
+    },
+    {
+      "id": "force_corridors",
+      "label": "Force the land corridors with armed convoy",
+      "is_historical": false,
+      "summary": "SPECULATION: Western forces attempt to reopen road/rail access under arms, accepting the risk of direct fire with Soviet units.",
+      "immediate": "Convoys move. Checkpoints become flashpoints. A single shot can rewrite the calendar.",
+      "near_term": "Either corridors reopen under threat — or the crisis jumps from blockade to battle. Outcomes are not a scoreboard.",
+      "longer_arc": "Simulated. We do not invent a clean armored success or a guaranteed nuclear exchange. The honest claim is escalation risk versus logistics patience.",
+      "speculation_level": "simulated",
+      "image_prompt": "1948 military convoy on a German road toward Berlin, tense checkpoint atmosphere, restrained documentary still, no gore, no text",
+      "vo_script": "What if the answer is force the roads? This is speculation. Armor on a corridor is a faster story than aircraft schedules — and a thinner fuse. We label the branch simulated because the only honest detail is the scale of the bet."
+    },
+    {
+      "id": "negotiate_withdraw",
+      "label": "Negotiate under pressure — trade rights for relief",
+      "is_historical": false,
+      "summary": "SPECULATION: Seek a quicker political bargain that may concede occupation practices or currency arrangements to restore land access sooner — a dramatized emphasis on deal-making under coercion.",
+      "immediate": "Talks intensify while stocks fall. Every concession is read as precedent for the next crisis.",
+      "near_term": "A bargain might reopen roads faster — or teach that blockades pay. Berliners still need coal while diplomats draft.",
+      "longer_arc": "Dramatized process, not a secret history. Explores the trade between speed of relief and the long-term price of bargaining under siege.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1948 conference table with maps of Berlin sectors, exhausted diplomats, documentary historical painting, no text",
+      "vo_script": "What if the first tool is a bargain under blockade? Relief might come sooner. Precedent might come dearer. This branch is dramatized process — a way to study the price of speed — not a claim of a clean diplomatic shortcut."
+    }
+  ],
+  "sources": [
+    "Established histories of the Berlin Blockade and Airlift (1948–49)",
+    "Published Western and secondary literature on early Cold War occupation policy in Germany",
+    "ELOSTIRION ELO-006 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-capital crisis into a playable Allied choice. Counterfactual force/negotiate branches are labeled simulated or dramatized.",
+    "corpus": "ELOSTIRION ELO-006 public pack"
+  },
+  "style_lock": "1948 Berlin and Allied staff rooms, propeller transports, occupation maps, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "Cold War", "Berlin", "1948", "airlift", "decision-point"]
+}

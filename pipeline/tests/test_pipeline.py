@@ -32,6 +32,7 @@ class TestPublicPacks(unittest.TestCase):
                 "ELO-003",
                 "ELO-004",
                 "ELO-005",
+                "ELO-006",
                 "ELO-007",
                 "ELO-009",
                 "ELO-013",
@@ -102,6 +103,18 @@ class TestPublicPacks(unittest.TestCase):
 
     def test_elo_005_restrain_is_simulated(self):
         r = run_fork("ELO-005", "restrain", use_llm=False)
+        self.assertFalse(r.is_historical)
+        self.assertEqual(r.speculation_level, "simulated")
+
+    def test_elo_006_airlift_is_documented_historical(self):
+        r = run_fork("ELO-006", "historical", use_llm=False)
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        blob = (r.narrative + r.label).lower()
+        self.assertTrue("airlift" in blob or "air" in blob or "berlin" in blob)
+
+    def test_elo_006_force_corridors_is_simulated(self):
+        r = run_fork("ELO-006", "force_corridors", use_llm=False)
         self.assertFalse(r.is_historical)
         self.assertEqual(r.speculation_level, "simulated")
 

@@ -2029,3 +2029,31 @@ python3 -m unittest webapp.tests.test_webapp webapp.tests.test_paths_and_media \
 
 ### RESULT
 Text and JSON responses compress when beneficial; reverse proxies and browsers can cut library boot cost without code changes on the SPA.
+
+---
+
+## Iteration 71 — 2026-07-19
+
+### OBSERVE
+Seven public packs jumped from Barbarossa (1941) to EXCOMM/Arkhipov (1962) with no early Cold War occupation crisis — the Berlin Blockade/Airlift is a canonical decision point still missing.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-006** (airlift vs force corridors vs bargain) with documented airlift path and labeled counterfactuals; catalog + docs + tests.
+
+Expected outcome: eight public packs; historical = documented airlift; force_corridors = simulated.
+
+### EXECUTE
+- `scenarios/public/ELO-006.json`
+- Catalog: ELO-006-historical + ELO-006-force_corridors
+- README + PIPELINE pack tables
+- Fork label tests
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  scripts.tests.test_pipeline_docs webapp.tests.test_webapp webapp.tests.test_catalog_cache -v
+→ Ran 48 tests — OK
+```
+
+### RESULT
+Studio/library gain the Berlin Airlift as a playable early Cold War logistics decision with speculation labels intact.
