@@ -45,6 +45,7 @@ from webapp import security as sec  # noqa: E402
 from webapp import membership as mem  # noqa: E402
 from webapp.jobs import QUEUE  # noqa: E402
 from webapp.paths import safe_join  # noqa: E402
+from webapp.http_range import parse_byte_range  # noqa: E402
 
 _CHUNK = 64 * 1024  # 64 KiB streaming chunks for media
 
@@ -54,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.9"
+    server_version = "ForkedHistory/1.10"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -165,24 +166,26 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         range_h = self.headers.get("Range") if support_range else None
-        start, end = 0, size - 1
-        status = 200
+        br = parse_byte_range(range_h, size)
+        status, start, end = br.status, br.start, br.end
+        length = br.length if size > 0 else 0
 
-        if range_h and range_h.startswith("bytes=") and size > 0:
-            try:
-                _, rng = range_h.split("=", 1)
-                start_s, end_s = (rng.split("-", 1) + [""])[:2]
-                start = int(start_s) if start_s else 0
-                end = int(end_s) if end_s else size - 1
-                end = min(end, size - 1)
-                if start < 0 or start > end:
-                    raise ValueError("bad range")
-                status = 206
-            except Exception:
-                start, end = 0, size - 1
-                status = 200
+        # 416 Range Not Satisfiable — no body; advertise total size
+        if status == 416:
+            self.send_response(416)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", "0")
+            self.send_header("Content-Range", f"bytes */{size}")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("ETag", etag)
+            if cache_mode == "media":
+                self.send_header("Cache-Control", "public, max-age=300")
+            else:
+                self.send_header("Cache-Control", "no-store")
+            self._security_headers()
+            self.end_headers()
+            return
 
-        length = end - start + 1 if size > 0 else 0
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(length))

@@ -463,3 +463,32 @@ python3 -m unittest webapp.tests.test_queue_position webapp.tests.test_job_timeo
 
 ### RESULT
 Scholars can leave and return during a render without losing status; queue wait is visible instead of indeterminate silence.
+
+---
+
+## Iteration 16 — 2026-07-19
+
+### OBSERVE
+Media Range parsing treated suffix ranges (`bytes=-N`) as start=0/end=N (wrong slice) and fell back to full-file 200 on unsatisfiable/malformed ranges instead of 416 — bad for HTML5 video seeking and bandwidth.
+
+### PLAN
+**One high-impact change:** RFC 7233-correct single-range parsing with 416 + Content-Range `bytes */size`.
+
+Expected outcome: closed/open/suffix ranges return 206 with correct bytes; past-EOF ranges return 416.
+
+### EXECUTE
+- `webapp/http_range.py` — `parse_byte_range()` (closed, open-ended, suffix, multi takes first)
+- `_stream_file` uses parser; 416 path with no body
+- Tests: `test_http_range.py` unit + integration
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_http_range webapp.tests.test_paths_and_media -v
+→ Ran 21 tests — OK
+```
+- `bytes=-8` returns last 8 bytes (206)
+- `bytes=999999999-` → 416 with `Content-Range: bytes */size`
+- Existing range/ETag/HEAD media tests still green
+
+### RESULT
+Video players can seek reliably; unsatisfiable ranges fail closed without dumping the full MP4.
