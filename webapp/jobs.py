@@ -12,6 +12,8 @@ Env:
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 import threading
 import time
 import uuid
@@ -31,6 +33,22 @@ def _env_int(name: str, default: int) -> int:
         return max(1, int(raw))
     except ValueError:
         return default
+
+
+def check_render_dependencies() -> tuple[bool, str]:
+    """Fail fast if the host cannot run the video pipeline."""
+    if not shutil.which("ffmpeg"):
+        return False, "ffmpeg not found on PATH — install ffmpeg to render videos"
+    try:
+        subprocess.run(
+            ["ffmpeg", "-version"],
+            check=True,
+            capture_output=True,
+            timeout=5,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        return False, f"ffmpeg not runnable: {e}"
+    return True, "ok"
 
 
 class JobCancelled(Exception):
@@ -107,12 +125,15 @@ class VideoJobQueue:
             statuses = {}
             for j in self._jobs.values():
                 statuses[j.status] = statuses.get(j.status, 0) + 1
+            ok, msg = check_render_dependencies()
             return {
                 "max_concurrent": self.max_concurrent,
                 "max_queued": self.max_queued,
                 "ttl_s": self.ttl_s,
                 "jobs": len(self._jobs),
                 "by_status": statuses,
+                "ffmpeg_ok": ok,
+                "ffmpeg_detail": msg if not ok else "ok",
             }
 
     def find_active(
@@ -276,6 +297,11 @@ class VideoJobQueue:
             self._update(job_id, stage=stage, pct=pct, message=message, status="running")
 
         try:
+            # Fail fast before burning LLM/image cycles
+            ok, dep_msg = check_render_dependencies()
+            if not ok:
+                raise RuntimeError(dep_msg)
+
             # Import here so module import stays light for unit tests
             from pipeline.config import PipelineConfig
             from pipeline.video_pipeline import render_video

@@ -28,6 +28,10 @@ from webapp import security as sec  # noqa: E402
 class TestVideoJobsAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Generous limits so multi-job tests don't trip 429
+        os.environ["ANOR_VIDEO_RATE_LIMIT"] = "100"
+        os.environ["ANOR_VIDEO_RATE_WINDOW"] = "60"
+        sec.VIDEO_JOB_LIMITER = sec.RateLimiter(100, 60)
         sec.VIDEO_JOB_LIMITER.reset()
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         cls.port = cls.httpd.server_address[1]
@@ -38,6 +42,9 @@ class TestVideoJobsAPI(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.httpd.shutdown()
+
+    def setUp(self):
+        sec.VIDEO_JOB_LIMITER.reset()
 
     def post_job(self, payload: dict):
         req = urllib.request.Request(

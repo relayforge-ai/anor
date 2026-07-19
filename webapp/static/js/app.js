@@ -161,8 +161,10 @@
 
   function videoCardHtml(v) {
     const access = FHFreemium.videoAccess(v.id, state.catalog);
-    const gatePill =
-      access.mode === "full" || access.mode === "claimable_full"
+    const unavailable = v.available === false;
+    const gatePill = unavailable
+      ? `<span class="pill pill-warn">not on host</span>`
+      : access.mode === "full" || access.mode === "claimable_full"
         ? `<span class="pill pill-doc">${access.mode === "claimable_full" ? "Free full" : "Unlocked"}</span>`
         : `<span class="pill pill-warn">${Math.round(access.previewFraction * 100)}% preview</span>`;
     const spec =
@@ -170,15 +172,21 @@
         ? `<span class="pill pill-doc">documented</span>`
         : `<span class="pill pill-sim">${escapeHtml(v.speculation)}</span>`;
     return `
-      <article class="card video-card" data-video="${escapeHtml(v.id)}">
+      <article class="card video-card ${unavailable ? "video-card-unavailable" : ""}" data-video="${escapeHtml(
+        v.id
+      )}" data-available="${unavailable ? "0" : "1"}">
         <div class="video-card-art" style="background:linear-gradient(145deg,${v.poster_gradient[0]},${v.poster_gradient[1]})">
-          <div class="video-card-play">▶</div>
+          <div class="video-card-play">${unavailable ? "·" : "▶"}</div>
         </div>
         <div class="video-card-body">
           <div class="video-card-meta">${spec}${gatePill}<span class="pill">${escapeHtml(v.era)}</span></div>
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
-          <div class="note">${escapeHtml(v.runtime_label || "")}</div>
+          <div class="note">${
+            unavailable
+              ? "Media missing — open Studio and queue a render"
+              : escapeHtml(v.runtime_label || "")
+          }</div>
         </div>
       </article>`;
   }
@@ -189,12 +197,41 @@
     });
   }
 
+  function libraryEmptyHtml(reason) {
+    return `
+      <div class="card side-panel library-empty" style="grid-column:1/-1">
+        <p class="eyebrow">Library</p>
+        <h3 class="h3" style="margin-top:0">No playable episodes on this host</h3>
+        <p class="lede-sm">${escapeHtml(
+          reason ||
+            "Render explainers from Studio (Queue video render) or copy MP4s into outputs/videos/."
+        )}</p>
+        <div class="row" style="margin-top:1rem">
+          <a class="btn btn-primary" href="#/studio">Open Studio</a>
+          <a class="btn btn-ghost" href="#/">Home</a>
+        </div>
+      </div>`;
+  }
+
   /* ——— Library ——— */
   function renderLibrary() {
     showPage("library");
     setActiveNav("library");
-    $("#library-grid").innerHTML = state.catalog.videos.map(videoCardHtml).join("");
-    bindVideoCards($("#library-grid"));
+    const videos = state.catalog.videos || [];
+    const grid = $("#library-grid");
+    if (!videos.length) {
+      grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");
+      return;
+    }
+    const anyAvailable = videos.some((v) => v.available !== false);
+    grid.innerHTML =
+      videos.map(videoCardHtml).join("") +
+      (anyAvailable
+        ? ""
+        : libraryEmptyHtml(
+            "Episodes are listed but media files are not present. Queue a render in Studio (requires ffmpeg)."
+          ));
+    bindVideoCards(grid);
   }
 
   /* ——— Player ——— */

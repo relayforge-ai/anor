@@ -33,6 +33,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "/api/video/jobs",
             "setPlayerLoading",
             "pollMs",
+            "libraryEmptyHtml",
+            "video-card-unavailable",
         ):
             self.assertIn(needle, js, f"missing {needle}")
 

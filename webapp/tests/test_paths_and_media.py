@@ -104,6 +104,21 @@ class TestMediaStreaming(unittest.TestCase):
         except urllib.error.HTTPError as e:
             self.assertEqual(e.code, 304)
 
+    def test_head_static_and_media(self):
+        req = urllib.request.Request(self.base + "/static/css/app.css", method="HEAD")
+        with urllib.request.urlopen(req, timeout=10) as r:
+            self.assertEqual(r.status, 200)
+            self.assertTrue(int(r.headers.get("Content-Length") or "0") > 0)
+            self.assertEqual(r.read(), b"")
+        if self.sample_rel:
+            mreq = urllib.request.Request(
+                self.base + "/media/videos/" + self.sample_rel, method="HEAD"
+            )
+            with urllib.request.urlopen(mreq, timeout=10) as r:
+                self.assertEqual(r.status, 200)
+                self.assertEqual(r.headers.get("Accept-Ranges"), "bytes")
+                self.assertEqual(r.read(), b"")
+
     def test_catalog_available_flags(self):
         with urllib.request.urlopen(self.base + "/api/catalog", timeout=5) as r:
             import json

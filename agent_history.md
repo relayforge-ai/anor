@@ -372,3 +372,31 @@ python3 -m unittest webapp.tests.test_job_dedupe webapp.tests.test_video_jobs \
 
 ### RESULT
 Duplicate render clicks no longer double-spend GPU; POST bodies must be JSON.
+
+---
+
+## Iteration 13 — 2026-07-19
+
+### OBSERVE
+HEAD requests returned 501 (default). Video jobs could enqueue when ffmpeg was missing, only failing mid-pipeline. Library showed playable-looking cards for unavailable media with no empty-state guidance.
+
+### PLAN
+**One high-impact change:** HEAD support + ffmpeg preflight + library empty/unavailable UX.
+
+Expected outcome: HEAD returns headers without body; enqueue fails 503 if ffmpeg missing; library explains missing media and points to Studio.
+
+### EXECUTE
+- `do_HEAD` reuses GET routing (body skipped)
+- `check_render_dependencies()` at enqueue + worker start; health `ffmpeg_ok`
+- Library empty state + unavailable card styling/copy
+- Tests: HEAD, render deps
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_render_deps webapp.tests.test_paths_and_media \
+  webapp.tests.test_static_assets webapp.tests.test_video_jobs ... → OK
+```
+- HEAD returns empty body; ffmpeg_ok in queue stats; library empty helpers present
+
+### RESULT
+Render fails closed without ffmpeg; browsers can HEAD media; library guides users when files are missing.

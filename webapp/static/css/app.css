@@ -656,6 +656,17 @@ textarea {
   gap: 0.35rem;
   margin-top: 0.35rem;
 }
+.video-card-unavailable {
+  opacity: 0.78;
+}
+.video-card-unavailable .video-card-play {
+  font-size: 1.4rem;
+  opacity: 0.7;
+}
+.library-empty {
+  text-align: left;
+  border-style: dashed;
+}
 
 /* ——— Player ——— */
 .player-layout {

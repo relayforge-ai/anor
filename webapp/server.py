@@ -54,7 +54,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.7"
+    server_version = "ForkedHistory/1.8"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -232,6 +232,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204)
         self._security_headers()
         self.end_headers()
+
+    def do_HEAD(self) -> None:
+        """HEAD for static/media — headers only (body skipped in _stream_file)."""
+        self.command = "HEAD"
+        return self.do_GET()
 
     def do_GET(self) -> None:
         self._ensure_request_id()
@@ -514,6 +519,16 @@ class Handler(BaseHTTPRequestHandler):
         rate_err = sec.check_video_job_rate(key)
         if rate_err:
             return self._validation_error(rate_err)
+
+        # Fail closed before queueing if host cannot render (ffmpeg missing)
+        from webapp.jobs import check_render_dependencies
+
+        ok, dep_msg = check_render_dependencies()
+        if not ok:
+            return self._json(
+                503,
+                {"error": dep_msg, "code": "render_deps_missing"},
+            )
 
         try:
             job, deduped = QUEUE.enqueue(scenario_id, choice_id, use_llm=use_llm)
