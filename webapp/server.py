@@ -46,7 +46,7 @@ from pipeline.clients import healthcheck  # noqa: E402
 from pipeline.validate import ScenarioValidationError  # noqa: E402
 from webapp import security as sec  # noqa: E402
 from webapp import membership as mem  # noqa: E402
-from webapp.jobs import QUEUE  # noqa: E402
+from webapp.jobs import QUEUE, sanitize_public_error  # noqa: E402
 from webapp.paths import safe_join  # noqa: E402
 from webapp.http_range import parse_byte_range  # noqa: E402
 
@@ -58,7 +58,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.17"
+    server_version = "ForkedHistory/1.18"
     # Do not advertise Python version (default is "BaseHTTP/x.y Python/a.b")
     sys_version = ""
 
@@ -112,6 +112,24 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, code: int, obj, extra: dict | None = None) -> None:
         raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self._send(code, raw, "application/json; charset=utf-8", extra=extra)
+
+    def _client_error(
+        self,
+        status: int,
+        exc: object,
+        code: str,
+        *,
+        log: bool = False,
+    ) -> None:
+        """JSON error with path-redacted message for client delivery."""
+        if log:
+            sys.stderr.write(
+                f"[forked-history] rid={self._ensure_request_id()} {code}: {exc!s}\n"
+            )
+        self._json(
+            status,
+            {"error": sanitize_public_error(exc, limit=300), "code": code},
+        )
 
     def _json_revalidatable(self, obj, *, max_age: int = 30) -> None:
         """JSON with weak ETag + short public cache for semi-static catalog/scenarios.
@@ -399,10 +417,7 @@ class Handler(BaseHTTPRequestHandler):
             except FileNotFoundError:
                 return self._json(404, {"error": "scenario not found", "code": "not_found"})
             except ScenarioValidationError as e:
-                return self._json(
-                    422,
-                    {"error": str(e)[:300], "code": "invalid_scenario"},
-                )
+                return self._client_error(422, e, "invalid_scenario")
 
         return self._json(404, {"error": "not found", "path": path})
 
@@ -630,11 +645,11 @@ class Handler(BaseHTTPRequestHandler):
         except FileNotFoundError:
             return self._json(404, {"error": "scenario not found", "code": "not_found"})
         except ScenarioValidationError as e:
-            return self._json(422, {"error": str(e)[:300], "code": "invalid_scenario"})
+            return self._client_error(422, e, "invalid_scenario")
         except KeyError as e:
-            return self._json(400, {"error": str(e), "code": "bad_choice"})
+            return self._client_error(400, e, "bad_choice")
         except Exception as e:
-            return self._json(400, {"error": str(e)[:300], "code": "fork_failed"})
+            return self._client_error(400, e, "fork_failed", log=True)
 
     def _post_video_job(self) -> None:
         data, err = self._read_json_body()
@@ -686,9 +701,9 @@ class Handler(BaseHTTPRequestHandler):
                 owner_key=key,
             )
         except RuntimeError as e:
-            return self._json(503, {"error": str(e), "code": "queue_full"})
+            return self._client_error(503, e, "queue_full")
         except Exception as e:
-            return self._json(400, {"error": str(e)[:300], "code": "enqueue_failed"})
+            return self._client_error(400, e, "enqueue_failed", log=True)
 
         # 202 Accepted — client polls GET /api/video/jobs/{id}
         # Deduped responses reuse the active job (no second GPU worker)

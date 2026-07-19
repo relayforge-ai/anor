@@ -42,6 +42,53 @@ class TestSanitizePublicError(unittest.TestCase):
         self.assertLessEqual(len(out), 50)
         self.assertTrue(out.endswith("…"))
 
+    def test_server_client_error_redacts_paths(self):
+        """HTTP error helper must not echo absolute host paths."""
+        import json
+        import threading
+        import urllib.error
+        import urllib.request
+        from http.server import ThreadingHTTPServer
+        from unittest.mock import patch
+
+        from webapp.server import Handler
+
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        port = httpd.server_address[1]
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://{httpd.server_address[0]}:{port}"
+        try:
+            boom = RuntimeError(
+                f"failed reading {JOBS_ROOT}/outputs/videos/ELO-003-historical/x.mp4"
+            )
+            with patch("webapp.server.run_fork", side_effect=boom):
+                req = urllib.request.Request(
+                    base + "/api/fork",
+                    data=json.dumps(
+                        {
+                            "scenario_id": "ELO-003",
+                            "choice_id": "historical",
+                            "use_llm": False,
+                        }
+                    ).encode(),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                try:
+                    urllib.request.urlopen(req, timeout=10)
+                    self.fail("expected error")
+                except urllib.error.HTTPError as e:
+                    self.assertEqual(e.code, 400)
+                    body = json.loads(e.read().decode() or "{}")
+                    self.assertEqual(body.get("code"), "fork_failed")
+                    err = body.get("error") or ""
+                    self.assertNotIn(str(JOBS_ROOT), err)
+                    self.assertNotIn("/Users/", err)
+                    self.assertIn("<anor>", err)
+        finally:
+            httpd.shutdown()
+
     def test_worker_failed_job_error_has_no_host_path(self):
         q = VideoJobQueue()
         boom = RuntimeError(

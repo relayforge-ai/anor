@@ -1000,3 +1000,33 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 SPA reloads can revalidate catalog/scenarios instead of always downloading full JSON.
+
+---
+
+## Iteration 34 — 2026-07-19
+
+### OBSERVE
+Job errors were path-sanitized (iter 32), but HTTP API exceptions for fork/enqueue/scenario validation still returned raw `str(e)` — absolute paths could leak via 400/422/503 JSON.
+
+### PLAN
+**One high-impact change:** route client-facing API exceptions through `sanitize_public_error` (+ optional server log).
+
+Expected outcome: fork_failed / enqueue_failed / invalid_scenario messages are path-redacted.
+
+### EXECUTE
+- `Handler._client_error()` using `sanitize_public_error`
+- Fork, scenario GET validation, enqueue error paths
+- Log full exception for fork_failed / enqueue_failed
+- API test with mocked run_fork boom
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_error_sanitize \
+  webapp.tests.test_security.TestForkEndpointSecurity.test_bad_scenario_id \
+  webapp.tests.test_webapp.TestWebapp.test_fork -v
+→ Ran 7 tests — OK
+```
+- Mocked fork failure response has `<anor>`, no `/Users/`
+
+### RESULT
+JSON API errors match job-error path hygiene across the product surface.
