@@ -54,12 +54,17 @@ class TestStaticProgressUI(unittest.TestCase):
             "jobTimeSuffix",
             "deadline_at",
             "elapsed",
+            "showBootError",
+            "btn-boot-retry",
+            "boot-failed",
+            "Unable to open the ledger",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
         self.assertIn(".fork-error.is-rate-limit", css)
         self.assertIn(".rate-wait", css)
         self.assertIn("body.modal-open", css)
+        self.assertIn(".boot-error", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

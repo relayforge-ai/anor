@@ -885,3 +885,32 @@ python3 -m unittest webapp.tests.test_health_privacy webapp.tests.test_security_
 
 ### RESULT
 Health probes stay cheap and available without advertising rate limits or fleet inventory.
+
+---
+
+## Iteration 30 — 2026-07-19
+
+### OBSERVE
+SPA boot only toasted on catalog failure — no page-level error, no retry control, and non-OK HTTP responses were still parsed as JSON (opaque failures when the API was down or rate-limited).
+
+### PLAN
+**One high-impact change:** robust boot error handling with an accessible full-page error panel and Retry.
+
+Expected outcome: network/HTTP/JSON failures show “Unable to open the ledger” with retry + health link; success path unchanged.
+
+### EXECUTE
+- Validate fetch ok + JSON shape in `boot()`
+- `showBootError()` with `role="alert"`, retry, health link
+- CSS `.boot-error` / `body.boot-failed`
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 9 tests — OK
+```
+- JS contains showBootError, btn-boot-retry, ledger copy
+- Index/catalog still green
+
+### RESULT
+Users see a clear recovery path when the site API is unreachable instead of a blank shell and a fleeting toast.

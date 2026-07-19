@@ -1414,11 +1414,105 @@
     return renderHome();
   }
 
+  /* ——— Boot failure UI ——— */
+  function showBootError(message, detail) {
+    const main = $("#main-content");
+    if (!main) {
+      toast(message || "Failed to load");
+      return;
+    }
+    document.body.classList.add("boot-failed");
+    main.innerHTML = `
+      <div class="boot-error card fade-in" id="boot-error" role="alert" aria-live="assertive">
+        <p class="eyebrow">Connection</p>
+        <h2 class="h-display" style="font-size:clamp(1.6rem,3vw,2.2rem);margin:0.35rem 0 0.75rem">
+          Unable to open the ledger
+        </h2>
+        <p class="lede-sm" style="margin:0;color:var(--ink-dim)">
+          ${escapeHtml(message || "The catalog could not be loaded.")}
+        </p>
+        ${
+          detail
+            ? `<p class="note" style="margin-top:0.75rem"><code>${escapeHtml(detail)}</code></p>`
+            : ""
+        }
+        <ul class="note" style="margin:1rem 0 0;padding-left:1.2rem;color:var(--ink-dim)">
+          <li>Confirm the site server is running (<code>python -m webapp.server</code>)</li>
+          <li>Check <code>/api/health</code> for readiness</li>
+          <li>If you hit a rate limit, wait a moment and retry</li>
+        </ul>
+        <div class="row" style="margin-top:1.25rem;gap:0.6rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary" id="btn-boot-retry">Retry</button>
+          <a class="btn btn-ghost" href="/api/health" target="_blank" rel="noopener">Open health</a>
+        </div>
+      </div>`;
+    $("#btn-boot-retry")?.addEventListener("click", () => {
+      const btn = $("#btn-boot-retry");
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add("busy");
+        btn.textContent = "Retrying…";
+      }
+      location.reload();
+    });
+    $("#btn-boot-retry")?.focus();
+  }
+
   /* ——— Boot ——— */
   async function boot() {
-    const [catRes, scenRes] = await Promise.all([fetch("/api/catalog"), fetch("/api/scenarios")]);
-    state.catalog = await catRes.json();
-    state.scenarios = await scenRes.json();
+    let catRes;
+    let scenRes;
+    try {
+      [catRes, scenRes] = await Promise.all([
+        fetch("/api/catalog"),
+        fetch("/api/scenarios"),
+      ]);
+    } catch (e) {
+      const err = new Error(
+        "Network error — the browser could not reach the Forked History API."
+      );
+      err.code = "network";
+      err.detail = String(e && e.message ? e.message : e);
+      throw err;
+    }
+    if (!catRes.ok) {
+      const body = await catRes.json().catch(() => ({}));
+      const err = new Error(
+        body.error || `Catalog request failed (HTTP ${catRes.status})`
+      );
+      err.code = body.code || "catalog_http";
+      err.detail = `GET /api/catalog → ${catRes.status}`;
+      throw err;
+    }
+    if (!scenRes.ok) {
+      const body = await scenRes.json().catch(() => ({}));
+      const err = new Error(
+        body.error || `Scenarios request failed (HTTP ${scenRes.status})`
+      );
+      err.code = body.code || "scenarios_http";
+      err.detail = `GET /api/scenarios → ${scenRes.status}`;
+      throw err;
+    }
+
+    let catalog;
+    let scenarios;
+    try {
+      catalog = await catRes.json();
+      scenarios = await scenRes.json();
+    } catch (e) {
+      const err = new Error("Catalog response was not valid JSON.");
+      err.code = "bad_json";
+      err.detail = String(e && e.message ? e.message : e);
+      throw err;
+    }
+    if (!catalog || !catalog.brand || !Array.isArray(scenarios)) {
+      const err = new Error("Catalog payload is missing required fields.");
+      err.code = "bad_catalog";
+      throw err;
+    }
+
+    state.catalog = catalog;
+    state.scenarios = scenarios;
 
     $("#brand-name").textContent = state.catalog.brand.name;
     document.title = state.catalog.brand.name + " — " + state.catalog.brand.tagline;
@@ -1508,6 +1602,11 @@
 
   boot().catch((e) => {
     console.error(e);
-    toast("Failed to load catalog — is the site server running?");
+    const msg =
+      (e && e.message) ||
+      "Failed to load catalog — is the site server running?";
+    const detail = [e && e.code, e && e.detail].filter(Boolean).join(" · ");
+    showBootError(msg, detail || "");
+    toast(msg);
   });
 })();
