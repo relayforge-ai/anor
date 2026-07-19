@@ -648,3 +648,30 @@ python3 -m unittest webapp.tests.test_security webapp.tests.test_video_jobs -v
 
 ### RESULT
 Scrape/flood of catalog and poll endpoints is capped without breaking operator health checks.
+
+---
+
+## Iteration 22 — 2026-07-19
+
+### OBSERVE
+Successful renders cleaned `work/`, but failed / cancelled / timed-out jobs left stills, VO audio, and partial clips on disk — wasting space and fighting the free-disk preflight.
+
+### PLAN
+**One high-impact change:** always clean intermediate work on non-success (unless `ANOR_KEEP_VIDEO_WORK`).
+
+Expected outcome: mid-pipeline failure removes `work/` and concat list; keep-flag still retains intermediates for debug.
+
+### EXECUTE
+- `render_video` try/finally: on failure path call `cleanup_video_work`
+- Test: mock ffmpeg failure → work/ absent
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline.TestVideoPipeline -v
+→ Ran 4 tests — OK
+```
+- Failed render cleans work/
+- Success still cleans; KEEP flag still retains
+
+### RESULT
+Failed renders no longer accumulate multi-MB debris under `outputs/videos/`.

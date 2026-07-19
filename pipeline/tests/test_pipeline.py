@@ -134,6 +134,33 @@ class TestVideoPipeline(unittest.TestCase):
             else:
                 os.environ["ANOR_KEEP_VIDEO_WORK"] = prev
 
+    def test_failed_render_cleans_work(self):
+        """Mid-pipeline failure must not leave intermediate stills/clips on disk."""
+        from unittest.mock import patch
+
+        cfg = PipelineConfig.from_env()
+        os.environ.pop("ANOR_KEEP_VIDEO_WORK", None)
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "out"
+            with patch(
+                "pipeline.video_pipeline._ken_burns_clip",
+                side_effect=RuntimeError("simulated ffmpeg failure"),
+            ):
+                with self.assertRaises(RuntimeError):
+                    render_video(
+                        "ELO-003",
+                        choice_id="historical",
+                        out_dir=out,
+                        cfg=cfg,
+                        use_llm=False,
+                    )
+            self.assertFalse(
+                (out / "work").exists(),
+                "work/ must be removed after failed render",
+            )
+            # Concat list should not linger either
+            self.assertFalse((out / "ELO-003-historical.txt").exists())
+
 
 class TestConfig(unittest.TestCase):
     def test_no_hardcoded_hosts_in_describe(self):

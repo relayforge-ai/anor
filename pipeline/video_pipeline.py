@@ -217,91 +217,99 @@ def render_video(
     out_dir.mkdir(parents=True, exist_ok=True)
     work = out_dir / "work"
     work.mkdir(exist_ok=True)
-
-    progress("script", 20, "Writing VO script and shot list")
-    segments = build_script(scenario, choice_id, fork.narrative)
-    # Attach fuller narrative as sidecar for long-form YouTube description drafts
-    script_path = out_dir / "script.md"
-    script_body = [
-        f"# {scenario['title']}",
-        f"Choice: {fork.label} (`{choice_id}`)",
-        f"Speculation: {fork.speculation_level}",
-        "",
-        "## Fork narrative",
-        fork.narrative,
-        "",
-        "## Segment VO",
-    ]
-    for seg in segments:
-        script_body.append(f"### {seg['title']} [{seg['tag']}]")
-        script_body.append(seg["text"])
-        script_body.append("")
-    script_path.write_text("\n".join(script_body), encoding="utf-8")
-
-    images = ImageClient(cfg)
-    tts = TTSClient(cfg)
-    clips: list[Path] = []
-    seg_meta: list[dict] = []
-    n = max(1, len(segments))
-
-    for i, seg in enumerate(segments):
-        # Segments occupy 25% → 85% of the bar
-        base = 25 + (i / n) * 60
-        progress("segment", base, f"Rendering segment {i + 1}/{n}: {seg['title']}")
-        img_path = work / f"{i:02d}_{seg['id']}.png"
-        audio_path = work / f"{i:02d}_{seg['id']}_vo"
-        clip_path = work / f"{i:02d}_{seg['id']}.mp4"
-
-        images.generate(seg["image_prompt"], img_path)
-        progress("segment", base + (60 / n) * 0.35, f"TTS for segment {i + 1}/{n}")
-        audio_file = tts.synthesize(seg["text"], audio_path)
-        progress("segment", base + (60 / n) * 0.7, f"Muxing clip {i + 1}/{n}")
-        dur = _ffprobe_duration(audio_file)
-        _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
-        clips.append(clip_path)
-        # Relative names only — never absolute host paths in build.json
-        seg_meta.append(
-            {
-                "id": seg["id"],
-                "title": seg["title"],
-                "tag": seg["tag"],
-                "image": img_path.name,
-                "audio": Path(audio_file).name,
-                "clip": clip_path.name,
-                "duration_s": dur,
-            }
-        )
-
-    progress("concat", 90, "Concatenating final MP4")
     out_mp4 = out_dir / f"{scenario_id}-{choice_id}.mp4"
     list_file = out_mp4.with_suffix(".txt")
-    _concat_clips(clips, out_mp4)
+    success = False
 
-    cleaned = False
-    if not _keep_work():
-        progress("concat", 96, "Cleaning intermediate work files")
-        cleanup_video_work(work, list_file)
-        cleaned = True
+    try:
+        progress("script", 20, "Writing VO script and shot list")
+        segments = build_script(scenario, choice_id, fork.narrative)
+        # Attach fuller narrative as sidecar for long-form YouTube description drafts
+        script_path = out_dir / "script.md"
+        script_body = [
+            f"# {scenario['title']}",
+            f"Choice: {fork.label} (`{choice_id}`)",
+            f"Speculation: {fork.speculation_level}",
+            "",
+            "## Fork narrative",
+            fork.narrative,
+            "",
+            "## Segment VO",
+        ]
+        for seg in segments:
+            script_body.append(f"### {seg['title']} [{seg['tag']}]")
+            script_body.append(seg["text"])
+            script_body.append("")
+        script_path.write_text("\n".join(script_body), encoding="utf-8")
 
-    meta = {
-        "scenario_id": scenario_id,
-        "choice_id": choice_id,
-        "out_mp4": out_mp4.name,
-        "speculation_level": fork.speculation_level,
-        "is_historical": fork.is_historical,
-        "provenance_ribbon": fork.provenance_ribbon,
-        "segments": seg_meta,
-        "work_cleaned": cleaned,
-        "config": cfg.describe(),
-    }
-    (out_dir / "build.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    progress("done", 100, "Render complete")
+        images = ImageClient(cfg)
+        tts = TTSClient(cfg)
+        clips: list[Path] = []
+        seg_meta: list[dict] = []
+        n = max(1, len(segments))
 
-    return VideoBuildResult(
-        scenario_id=scenario_id,
-        choice_id=choice_id,
-        out_mp4=out_mp4,
-        script_path=script_path,
-        segments=seg_meta,
-        mock_media=cfg.mock_media or not (cfg.image_url and cfg.tts_url),
-    )
+        for i, seg in enumerate(segments):
+            # Segments occupy 25% → 85% of the bar
+            base = 25 + (i / n) * 60
+            progress("segment", base, f"Rendering segment {i + 1}/{n}: {seg['title']}")
+            img_path = work / f"{i:02d}_{seg['id']}.png"
+            audio_path = work / f"{i:02d}_{seg['id']}_vo"
+            clip_path = work / f"{i:02d}_{seg['id']}.mp4"
+
+            images.generate(seg["image_prompt"], img_path)
+            progress("segment", base + (60 / n) * 0.35, f"TTS for segment {i + 1}/{n}")
+            audio_file = tts.synthesize(seg["text"], audio_path)
+            progress("segment", base + (60 / n) * 0.7, f"Muxing clip {i + 1}/{n}")
+            dur = _ffprobe_duration(audio_file)
+            _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
+            clips.append(clip_path)
+            # Relative names only — never absolute host paths in build.json
+            seg_meta.append(
+                {
+                    "id": seg["id"],
+                    "title": seg["title"],
+                    "tag": seg["tag"],
+                    "image": img_path.name,
+                    "audio": Path(audio_file).name,
+                    "clip": clip_path.name,
+                    "duration_s": dur,
+                }
+            )
+
+        progress("concat", 90, "Concatenating final MP4")
+        _concat_clips(clips, out_mp4)
+
+        cleaned = False
+        if not _keep_work():
+            progress("concat", 96, "Cleaning intermediate work files")
+            cleanup_video_work(work, list_file)
+            cleaned = True
+
+        meta = {
+            "scenario_id": scenario_id,
+            "choice_id": choice_id,
+            "out_mp4": out_mp4.name,
+            "speculation_level": fork.speculation_level,
+            "is_historical": fork.is_historical,
+            "provenance_ribbon": fork.provenance_ribbon,
+            "segments": seg_meta,
+            "work_cleaned": cleaned,
+            "config": cfg.describe(),
+        }
+        (out_dir / "build.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        progress("done", 100, "Render complete")
+        success = True
+
+        return VideoBuildResult(
+            scenario_id=scenario_id,
+            choice_id=choice_id,
+            out_mp4=out_mp4,
+            script_path=script_path,
+            segments=seg_meta,
+            mock_media=cfg.mock_media or not (cfg.image_url and cfg.tts_url),
+        )
+    finally:
+        # Failed / cancelled / timed-out renders must not leave multi-MB work trees.
+        # Successful path already cleaned above (unless ANOR_KEEP_VIDEO_WORK).
+        if not success and not _keep_work():
+            cleanup_video_work(work, list_file)
