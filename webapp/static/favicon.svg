@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Forked History">
+  <rect width="32" height="32" rx="6" fill="#0e1118"/>
+  <path d="M10 6v8c0 3 2.5 5 6 5h0c3.5 0 6-2 6-5V6" fill="none" stroke="#e2c46d" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="10" cy="6" r="2.2" fill="#e2c46d"/>
+  <circle cx="22" cy="6" r="2.2" fill="#e2c46d"/>
+  <path d="M16 19v7" fill="none" stroke="#e2c46d" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="16" cy="28" r="2.2" fill="#b7b1a4"/>
+</svg>

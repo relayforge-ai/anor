@@ -83,6 +83,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "visibilitychange",
             "document.hidden",
             "hiddenPollMs",
+            "syncShareMeta",
+            "setMetaContent",
+            'meta[property="og:title"]',
+            "twitter:title",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
@@ -107,6 +111,30 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("<noscript>", html)
         self.assertIn("JavaScript required", html)
         self.assertIn("scenarios/public/", html)
+
+    def test_index_share_and_seo_metadata(self):
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        for needle in (
+            'name="description"',
+            'name="theme-color"',
+            'property="og:title"',
+            'property="og:description"',
+            'property="og:type"',
+            'property="og:site_name"',
+            'name="twitter:card"',
+            'name="twitter:title"',
+            "application/ld+json",
+            "WebApplication",
+            "Labeled speculation",
+            'rel="icon"',
+            "/static/favicon.svg",
+        ):
+            self.assertIn(needle, html, f"missing {needle}")
+        # No hardcoded production hosts or secrets in the shell
+        self.assertNotIn("sk-", html)
+        fav = STATIC / "favicon.svg"
+        self.assertTrue(fav.is_file(), "favicon.svg missing")
+        self.assertIn("svg", fav.read_text(encoding="utf-8")[:200].lower())
 
     def test_index_a11y_and_mobile_nav(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

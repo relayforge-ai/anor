@@ -1509,15 +1509,39 @@
     }
   }
 
+  function setMetaContent(selector, content) {
+    const el = document.querySelector(selector);
+    if (el && content) el.setAttribute("content", content);
+  }
+
+  function syncShareMeta(title, description) {
+    /** Keep og/twitter/description aligned with the SPA route for in-app share sheets. */
+    if (title) {
+      setMetaContent('meta[property="og:title"]', title);
+      setMetaContent('meta[name="twitter:title"]', title);
+    }
+    if (description) {
+      setMetaContent('meta[name="description"]', description);
+      setMetaContent('meta[property="og:description"]', description);
+      setMetaContent('meta[name="twitter:description"]', description);
+    }
+  }
+
   function updateDocumentTitle(page, param) {
     const brand = (state.catalog && state.catalog.brand && state.catalog.brand.name) || "Forked History";
     const tagline =
       (state.catalog && state.catalog.brand && state.catalog.brand.tagline) || "";
+    const defaultDesc =
+      tagline ||
+      "Real decision points. Labeled speculation. Receipts on screen. ANOR Fork Studio.";
     let title = brand;
+    let description = defaultDesc;
     if (page === "home") {
       title = tagline ? `${brand} — ${tagline}` : brand;
+      description = defaultDesc;
     } else if (page === "library") {
       title = `Library — ${brand}`;
+      description = `Browse documented decision episodes and labeled simulations — ${brand}.`;
     } else if (page === "watch") {
       const v =
         (state.catalog &&
@@ -1526,13 +1550,24 @@
         null;
       const label = (v && (v.title || v.id)) || param || "Episode";
       title = `${label} — ${brand}`;
+      description = (v && (v.blurb || v.subtitle)) || defaultDesc;
+      if (v && v.speculation === "simulated") {
+        description = `🧪 Simulated fork — ${description}`;
+      } else if (v && v.speculation === "documented") {
+        description = `📗 Documented baseline — ${description}`;
+      }
     } else if (page === "studio") {
       const sid = param || state.scenarioId || "";
       title = sid ? `Studio · ${sid} — ${brand}` : `Studio — ${brand}`;
+      description = sid
+        ? `Fork ${sid} in the studio — authored branches free; LLM re-render is Scholar. Speculation always labeled.`
+        : `Interactive decision studio — ${brand}. Speculation always labeled.`;
     } else if (page === "pricing") {
       title = `Membership — ${brand}`;
+      description = `Explorer free · Scholar $4.99/mo — full library and studio. Funds sovereign compute.`;
     }
     document.title = title;
+    syncShareMeta(title, description);
   }
 
   async function route() {
