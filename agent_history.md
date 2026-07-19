@@ -1838,3 +1838,31 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
 
 ### RESULT
 Library respects historical integrity labels as first-class browse filters; packs read in time order.
+
+---
+
+## Iteration 64 — 2026-07-19
+
+### OBSERVE
+`ImageClient` had outage mock-fallback + tests; `TTSClient` still failed hard on remote/system TTS errors (killing long video jobs) and had no length cap or unit coverage.
+
+### PLAN
+**One high-impact change:** optional silent-audio fallback on TTS failure (`ANOR_TTS_FALLBACK_MOCK`), clip VO text (`ANOR_TTS_MAX_CHARS`), dedicated tests + CI.
+
+Expected outcome: remote TTS outages finish with silent wav + sidecar; empty text rejected; strict mode still raises.
+
+### EXECUTE
+- `TTSClient.mock_fallback_enabled` / `_clip_text` / `_openai_audio` / `_http_wav`
+- health: `tts_fallback_mock`
+- `.env.example` knobs; CI includes `test_tts_client`
+- Tests: `pipeline/tests/test_tts_client.py`
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_tts_client pipeline.tests.test_image_client \
+  pipeline.tests.test_pipeline.TestVideoPipeline -v
+→ Ran 25 tests — OK
+```
+
+### RESULT
+TTS lights up when `TTS_URL` is set; mock silent path remains the offline/outage safety net for video renders.

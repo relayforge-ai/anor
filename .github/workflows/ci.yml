@@ -59,6 +59,7 @@ jobs:
             pipeline.tests.test_validate \
             pipeline.tests.test_safe_fetch \
             pipeline.tests.test_image_client \
+            pipeline.tests.test_tts_client \
             webapp.tests.test_webapp \
             webapp.tests.test_security \
             webapp.tests.test_security_headers \

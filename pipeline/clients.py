@@ -486,42 +486,80 @@ class TTSClient:
             return "http_wav"
         return "system"
 
+    @staticmethod
+    def mock_fallback_enabled() -> bool:
+        """When remote/system TTS fails, write silent audio so video can finish.
+
+        Default on (matches image fallback). Set ANOR_TTS_FALLBACK_MOCK=0 for strict.
+        """
+        raw = (os.environ.get("ANOR_TTS_FALLBACK_MOCK") or "1").strip().lower()
+        return raw not in ("0", "false", "no", "off")
+
+    @staticmethod
+    def _clip_text(text: str) -> str:
+        """Bound TTS input length (abuse / accidental huge scripts)."""
+        s = (text or "").strip()
+        if not s:
+            raise PipelineError("empty TTS text", retryable=False)
+        max_chars = _env_int("ANOR_TTS_MAX_CHARS", 8_000)
+        if len(s) > max_chars:
+            return s[:max_chars]
+        return s
+
     def synthesize(self, text: str, out_path: Path, voice: str = "alloy") -> Path:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        text = self._clip_text(text)
         backend = self._backend()
 
         if backend == "mock":
             return self._silent(out_path, duration=max(2.0, min(30.0, len(text) / 14.0)))
 
-        if backend == "openai_audio":
-            base = self.cfg.tts_url.rstrip("/")
-            url = base if base.endswith("/audio/speech") else f"{base}/audio/speech"
-            payload = {
-                "model": self.cfg.tts_model,
-                "input": text,
-                "voice": voice,
-                "response_format": "mp3",
-            }
-            raw = _request_bytes(url, payload=payload, api_key=self.cfg.tts_api_key)
-            if not str(out_path).endswith(".mp3"):
-                out_path = out_path.with_suffix(".mp3")
-            out_path.write_bytes(raw)
-            return out_path
+        try:
+            if backend == "openai_audio":
+                return self._openai_audio(text, out_path, voice)
+            if backend == "http_wav":
+                return self._http_wav(text, out_path, voice)
+            if backend == "system":
+                return self._system_say(text, out_path)
+            raise PipelineError(f"Unknown TTS_BACKEND: {backend}")
+        except PipelineError as err:
+            if self.mock_fallback_enabled():
+                note = out_path.with_suffix(".fallback.txt")
+                note.write_text(
+                    f"tts backend={backend} failed; wrote silent mock audio\n"
+                    f"error: {err}\n",
+                    encoding="utf-8",
+                )
+                return self._silent(
+                    out_path,
+                    duration=max(2.0, min(30.0, len(text) / 14.0)),
+                )
+            raise
 
-        if backend == "http_wav":
-            raw = _request_bytes(
-                self.cfg.tts_url.rstrip("/"),
-                payload={"text": text, "voice": voice, "model": self.cfg.tts_model},
-                api_key=self.cfg.tts_api_key,
-            )
-            out_path.write_bytes(raw)
-            return out_path
+    def _openai_audio(self, text: str, out_path: Path, voice: str) -> Path:
+        base = (self.cfg.tts_url or "").rstrip("/")
+        url = base if base.endswith("/audio/speech") else f"{base}/audio/speech"
+        payload = {
+            "model": self.cfg.tts_model,
+            "input": text,
+            "voice": voice,
+            "response_format": "mp3",
+        }
+        raw = _request_bytes(url, payload=payload, api_key=self.cfg.tts_api_key)
+        if not str(out_path).endswith(".mp3"):
+            out_path = out_path.with_suffix(".mp3")
+        out_path.write_bytes(raw)
+        return out_path
 
-        if backend == "system":
-            return self._system_say(text, out_path)
-
-        raise PipelineError(f"Unknown TTS_BACKEND: {backend}")
+    def _http_wav(self, text: str, out_path: Path, voice: str) -> Path:
+        raw = _request_bytes(
+            (self.cfg.tts_url or "").rstrip("/"),
+            payload={"text": text, "voice": voice, "model": self.cfg.tts_model},
+            api_key=self.cfg.tts_api_key,
+        )
+        out_path.write_bytes(raw)
+        return out_path
 
     def _system_say(self, text: str, out_path: Path) -> Path:
         aiff = out_path.with_suffix(".aiff")
@@ -587,5 +625,6 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         "image_fallback_mock": ImageClient.mock_fallback_enabled(),
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),
+        "tts_fallback_mock": TTSClient.mock_fallback_enabled(),
         "http_retry": http_retry_config(),
     }
