@@ -299,10 +299,28 @@ def build_catalog_payload() -> dict[str, Any]:
     return cat
 
 
+def request_timeout_s() -> float | None:
+    """Per-request socket timeout in seconds (None = no timeout).
+
+    Env ``ANOR_REQUEST_TIMEOUT_S`` (default 60). Set ``0`` / ``off`` / ``none``
+    to disable. Bounds slowloris-style clients that never finish a request line
+    or body without holding a thread forever.
+    """
+    raw = (os.environ.get("ANOR_REQUEST_TIMEOUT_S") or "60").strip().lower()
+    if raw in ("0", "off", "none", "false", "no"):
+        return None
+    try:
+        return max(1.0, float(raw))
+    except ValueError:
+        return 60.0
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.20"
+    server_version = "ForkedHistory/1.21"
     # Do not advertise Python version (default is "BaseHTTP/x.y Python/a.b")
     sys_version = ""
+    # Applied at import and refreshed in run_server() so env knobs work without reload hacks
+    timeout = 60.0  # replaced below after class body
 
     def version_string(self) -> str:
         """Product token only — no CPython version fingerprint."""
@@ -1059,16 +1077,25 @@ class Handler(BaseHTTPRequestHandler):
         )
 
 
+# Sync class timeout from env once Handler is defined
+Handler.timeout = request_timeout_s()
+
+
 def run_server(host: str = "127.0.0.1", port: int = 8787) -> None:
+    # Refresh from env each start (tests / process managers may set env late)
+    Handler.timeout = request_timeout_s()
     httpd = ThreadingHTTPServer((host, port), Handler)
     print(f"Forked History → http://{host}:{port}")
     print(f"  static: {STATIC}")
     print(f"  videos: {VIDEOS}")
     print(f"  packs:  {ROOT / 'scenarios' / 'public'}")
+    to = Handler.timeout
+    to_s = f"{to:.0f}s" if isinstance(to, (int, float)) else "off"
     print(
         f"  security: fork≤{sec.FORK_LIMITER.limit}/{int(sec.FORK_LIMITER.window_s)}s "
         f"llm≤{sec.LLM_FORK_LIMITER.limit}/{int(sec.LLM_FORK_LIMITER.window_s)}s "
-        f"body≤{sec.MAX_BODY_BYTES}B seed≤{sec.MAX_SEED_CHARS}c"
+        f"body≤{sec.MAX_BODY_BYTES}B seed≤{sec.MAX_SEED_CHARS}c "
+        f"req_timeout={to_s}"
     )
     try:
         httpd.serve_forever()

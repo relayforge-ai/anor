@@ -2166,3 +2166,30 @@ python3 -m unittest scripts.tests.test_social_drafts scripts.tests.test_pipeline
 
 ### RESULT
 Overlord / D-Day social creative is staged as drafts only, aligned with the new public pack.
+
+---
+
+## Iteration 76 — 2026-07-19
+
+### OBSERVE
+ThreadingHTTPServer handlers had no per-request socket timeout (`BaseHTTPRequestHandler.timeout` default None). Slow or stalled clients could pin worker threads indefinitely (slowloris-style risk on the freemium surface).
+
+### PLAN
+**One high-impact change:** env-driven request timeout (`ANOR_REQUEST_TIMEOUT_S`, default 60s) applied to `Handler.timeout`; disable with `0`/`off`.
+
+Expected outcome: each connection has a finite read timeout; startup log prints `req_timeout`.
+
+### EXECUTE
+- `request_timeout_s()` + `Handler.timeout` sync at import and `run_server`
+- Server version `ForkedHistory/1.21`
+- `.env.example` knob; `webapp/tests/test_request_timeout.py`; CI
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_request_timeout webapp.tests.test_webapp \
+  webapp.tests.test_security -v
+→ Ran 39 tests — OK
+```
+
+### RESULT
+Product HTTP surface bounds hung clients without changing happy-path fork/catalog behavior.
