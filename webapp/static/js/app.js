@@ -1022,10 +1022,12 @@
               }
             </div>`;
           toast(resumed ? "Render finished while you were away" : "Video ready");
+          // Bust catalog ETag cache so new render availability is visible
           try {
-            const cr = await fetch("/api/catalog");
-            if (cr.ok) state.catalog = await cr.json();
+            sessionStorage.removeItem(CACHE_CATALOG + ":etag");
+            sessionStorage.removeItem(CACHE_CATALOG + ":body");
           } catch (_) {}
+          await refreshCatalog();
         } else if (st.status === "cancelled") {
           done = true;
           clearActiveVideoJob();
@@ -1414,6 +1416,91 @@
     return renderHome();
   }
 
+  /* ——— Conditional JSON GET (pairs with server ETag on catalog/scenarios) ——— */
+  const CACHE_CATALOG = "fh:cache:catalog";
+  const CACHE_SCENARIOS = "fh:cache:scenarios";
+
+  function readSessionJson(key) {
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeSessionJson(key, value) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    } catch (_) {}
+  }
+
+  /**
+   * Fetch JSON with If-None-Match when we have a stored ETag.
+   * On 304, return the session-cached body (browser fetch has no body on 304).
+   */
+  async function fetchJsonRevalidatable(url, cacheKey) {
+    const etagKey = cacheKey + ":etag";
+    const bodyKey = cacheKey + ":body";
+    const headers = { Accept: "application/json" };
+    try {
+      const etag = sessionStorage.getItem(etagKey);
+      if (etag) headers["If-None-Match"] = etag;
+    } catch (_) {}
+
+    let res;
+    try {
+      // cache: 'no-cache' forces revalidation (sends conditional request) rather
+      // than serving a stale disk cache without checking the server.
+      res = await fetch(url, { headers, cache: "no-cache" });
+    } catch (e) {
+      const err = new Error("Network error reaching " + url);
+      err.code = "network";
+      err.detail = String(e && e.message ? e.message : e);
+      throw err;
+    }
+
+    if (res.status === 304) {
+      const cached = readSessionJson(bodyKey);
+      if (cached != null) {
+        return { data: cached, status: 304, etag: headers["If-None-Match"] || null, revalidated: true };
+      }
+      // Stale client cache — force unconditional fetch once
+      res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        cache: "reload",
+      });
+    }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const err = new Error(body.error || `Request failed (HTTP ${res.status})`);
+      err.code = body.code || "http_error";
+      err.detail = `GET ${url} → ${res.status}`;
+      err.status = res.status;
+      throw err;
+    }
+
+    const data = await res.json();
+    const etag = res.headers.get("ETag");
+    try {
+      if (etag) sessionStorage.setItem(etagKey, etag);
+      writeSessionJson(bodyKey, data);
+    } catch (_) {}
+    return { data, status: res.status, etag, revalidated: false };
+  }
+
+  async function refreshCatalog() {
+    try {
+      const { data } = await fetchJsonRevalidatable("/api/catalog", CACHE_CATALOG);
+      state.catalog = data;
+      return data;
+    } catch (_) {
+      return state.catalog;
+    }
+  }
+
   /* ——— Boot failure UI ——— */
   function showBootError(message, detail) {
     const main = $("#main-content");
@@ -1460,50 +1547,25 @@
 
   /* ——— Boot ——— */
   async function boot() {
-    let catRes;
-    let scenRes;
-    try {
-      [catRes, scenRes] = await Promise.all([
-        fetch("/api/catalog"),
-        fetch("/api/scenarios"),
-      ]);
-    } catch (e) {
-      const err = new Error(
-        "Network error — the browser could not reach the Forked History API."
-      );
-      err.code = "network";
-      err.detail = String(e && e.message ? e.message : e);
-      throw err;
-    }
-    if (!catRes.ok) {
-      const body = await catRes.json().catch(() => ({}));
-      const err = new Error(
-        body.error || `Catalog request failed (HTTP ${catRes.status})`
-      );
-      err.code = body.code || "catalog_http";
-      err.detail = `GET /api/catalog → ${catRes.status}`;
-      throw err;
-    }
-    if (!scenRes.ok) {
-      const body = await scenRes.json().catch(() => ({}));
-      const err = new Error(
-        body.error || `Scenarios request failed (HTTP ${scenRes.status})`
-      );
-      err.code = body.code || "scenarios_http";
-      err.detail = `GET /api/scenarios → ${scenRes.status}`;
-      throw err;
-    }
-
     let catalog;
     let scenarios;
     try {
-      catalog = await catRes.json();
-      scenarios = await scenRes.json();
+      const [cat, scen] = await Promise.all([
+        fetchJsonRevalidatable("/api/catalog", CACHE_CATALOG),
+        fetchJsonRevalidatable("/api/scenarios", CACHE_SCENARIOS),
+      ]);
+      catalog = cat.data;
+      scenarios = scen.data;
     } catch (e) {
-      const err = new Error("Catalog response was not valid JSON.");
-      err.code = "bad_json";
-      err.detail = String(e && e.message ? e.message : e);
-      throw err;
+      if (e && e.code === "network") {
+        const err = new Error(
+          "Network error — the browser could not reach the Forked History API."
+        );
+        err.code = "network";
+        err.detail = e.detail || "";
+        throw err;
+      }
+      throw e;
     }
     if (!catalog || !catalog.brand || !Array.isArray(scenarios)) {
       const err = new Error("Catalog payload is missing required fields.");

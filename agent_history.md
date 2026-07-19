@@ -971,3 +971,32 @@ python3 -m unittest webapp.tests.test_error_sanitize -v
 
 ### RESULT
 Browser-visible job errors no longer disclose host filesystem layout.
+
+---
+
+## Iteration 33 — 2026-07-19
+
+### OBSERVE
+Server catalog/scenarios already returned ETags (iter 31), but the SPA always fetched full bodies — browsers rarely send If-None-Match for fetch(), so 304 savings never applied.
+
+### PLAN
+**One high-impact change:** client-side revalidation with stored ETag + session body cache.
+
+Expected outcome: second boot/catalog load can 304 and use sessionStorage body; post-render refresh busts catalog cache.
+
+### EXECUTE
+- `fetchJsonRevalidatable` + sessionStorage etag/body keys
+- Boot uses it for catalog + scenarios
+- `refreshCatalog` after video complete (cache bust then revalidate)
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_webapp -v
+→ Ran 11 tests — OK
+```
+- JS contains fetchJsonRevalidatable, If-None-Match, fh:cache:catalog
+- Server ETag 304 still green
+
+### RESULT
+SPA reloads can revalidate catalog/scenarios instead of always downloading full JSON.

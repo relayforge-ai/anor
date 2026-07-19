@@ -58,6 +58,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "btn-boot-retry",
             "boot-failed",
             "Unable to open the ledger",
+            "fetchJsonRevalidatable",
+            "If-None-Match",
+            "fh:cache:catalog",
+            "refreshCatalog",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
