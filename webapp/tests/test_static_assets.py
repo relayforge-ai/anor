@@ -79,6 +79,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "pulse-cta",
             "watch-end-note",
             "Episode complete",
+            "waitWhileDocumentHidden",
+            "visibilitychange",
+            "document.hidden",
+            "hiddenPollMs",
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")

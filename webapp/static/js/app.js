@@ -975,6 +975,32 @@
     return map[stage] ?? 0;
   }
 
+  /**
+   * While the tab is hidden, avoid hammering /api/video/jobs (rate budget + battery).
+   * Resolves when the document becomes visible again, or after ``maxHiddenMs``
+   * so we still take a slow heartbeat if the user leaves the tab for a long time.
+   */
+  function waitWhileDocumentHidden(maxHiddenMs = 15000) {
+    if (typeof document === "undefined" || !document.hidden) {
+      return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (wasHidden) => {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener("visibilitychange", onVis);
+        clearTimeout(tid);
+        resolve(wasHidden);
+      };
+      const onVis = () => {
+        if (!document.hidden) finish(true);
+      };
+      document.addEventListener("visibilitychange", onVis);
+      const tid = setTimeout(() => finish(true), maxHiddenMs);
+    });
+  }
+
   async function pollVideoJob(jobId, { resumed = false } = {}) {
     if (videoPollActiveId && videoPollActiveId === jobId) {
       return; // already polling this job
@@ -991,6 +1017,7 @@
     let done = false;
     let pollMs = resumed ? 400 : 500;
     const pollMax = 4000;
+    const hiddenPollMs = 15000;
 
     const bindCancel = () => {
       const cbtn = $("#btn-cancel-job");
@@ -1120,8 +1147,15 @@
             active.classList.add("error");
           }
         } else {
-          await new Promise((res) => setTimeout(res, pollMs));
-          pollMs = Math.min(pollMax, Math.round(pollMs * 1.35));
+          // Background tabs: wait for focus (or slow heartbeat) before next poll
+          const wasHidden = await waitWhileDocumentHidden(hiddenPollMs);
+          if (wasHidden) {
+            // Tab just returned or heartbeat — poll soon without long backoff pile-up
+            pollMs = Math.min(pollMs, 1000);
+          } else {
+            await new Promise((res) => setTimeout(res, pollMs));
+            pollMs = Math.min(pollMax, Math.round(pollMs * 1.35));
+          }
         }
       }
     } catch (e) {

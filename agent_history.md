@@ -1365,3 +1365,29 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Viewers are guided from finished episode into the decision studio without leaving the watch page.
+
+---
+
+## Iteration 47 — 2026-07-19
+
+### OBSERVE
+Video job polling kept hitting `/api/video/jobs/{id}` on a 0.5–4s cadence even when the tab was backgrounded — burning global API rate budget and battery during long renders.
+
+### PLAN
+**One high-impact change:** pause aggressive polls while `document.hidden`; slow heartbeat every 15s; poll immediately on focus return.
+
+Expected outcome: background tabs wait on visibilitychange (or 15s max); visible tabs keep existing backoff.
+
+### EXECUTE
+- `waitWhileDocumentHidden()`
+- Poll loop uses it before backoff sleep
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 6 tests — OK
+```
+
+### RESULT
+Background studio tabs no longer hammer the video job API during long sovereign renders.
