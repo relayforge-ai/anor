@@ -1309,3 +1309,32 @@ python3 -m unittest webapp.tests.test_security.TestApiRateHelpers \
 
 ### RESULT
 Rate-limit maps stay bounded for long-running Forked History processes.
+
+---
+
+## Iteration 45 — 2026-07-19
+
+### OBSERVE
+Frequent `/api/health` probes filled access logs; missing media 404s echoed filenames; users without JS got a blank shell with no guidance.
+
+### PLAN
+**One high-impact change:** silence health access logs by default; noscript guidance; generic media 404.
+
+Expected outcome: health silent unless `ANOR_LOG_HEALTH=1`; noscript explains JS requirement; media 404 uses `code: not_found` only.
+
+### EXECUTE
+- `log_message` skips `/api/health` unless env opt-in
+- `<noscript>` block in index.html
+- Media missing-file 404 omits `path`
+- Tests: access log + noscript
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_access_log \
+  webapp.tests.test_static_assets.TestStaticProgressUI.test_index_noscript_guidance \
+  webapp.tests.test_paths_and_media.TestMediaStreaming.test_traversal_media_forbidden -v
+→ Ran 4 tests — OK
+```
+
+### RESULT
+Ops logs stay quieter under probes; non-JS visitors see a clear message; media 404s are less chatty.

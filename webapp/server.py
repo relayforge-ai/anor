@@ -180,9 +180,28 @@ class Handler(BaseHTTPRequestHandler):
         return self.server_version
 
     def log_message(self, fmt: str, *args) -> None:
+        """Access log line. Health probes are silent by default (ops noise).
+
+        Set ANOR_LOG_HEALTH=1 to log /api/health hits. Errors on health still
+        surface if the handler raises before a normal completion log.
+        """
+        try:
+            line = fmt % args
+        except Exception:
+            line = str(fmt)
+        # BaseHTTPRequestHandler formats typically include the request path
+        if "/api/health" in line:
+            log_health = (os.environ.get("ANOR_LOG_HEALTH") or "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            )
+            if not log_health:
+                return
         rid = getattr(self, "_request_id", "-")
         sys.stderr.write(
-            f"[forked-history] rid={rid} {self.address_string()} {fmt % args}\n"
+            f"[forked-history] rid={rid} {self.address_string()} {line}\n"
         )
 
     def _ensure_request_id(self) -> str:
@@ -316,14 +335,14 @@ class Handler(BaseHTTPRequestHandler):
           - media: short public cache + Range
         """
         if not path.exists() or not path.is_file():
-            self._json(404, {"error": "not found", "path": path.name})
+            self._json(404, {"error": "not found", "code": "not_found"})
             return
         try:
             st = path.stat()
             size = st.st_size
             mtime_ns = getattr(st, "st_mtime_ns", int(st.st_mtime * 1e9))
         except OSError:
-            self._json(404, {"error": "not found", "path": path.name})
+            self._json(404, {"error": "not found", "code": "not_found"})
             return
 
         ctype = content_type or mimetypes.guess_type(str(path))[0] or "application/octet-stream"

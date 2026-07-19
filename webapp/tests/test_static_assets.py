@@ -92,6 +92,12 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("aria-live", html)
         self.assertIn('role="status"', html)
 
+    def test_index_noscript_guidance(self):
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn("<noscript>", html)
+        self.assertIn("JavaScript required", html)
+        self.assertIn("scenarios/public/", html)
+
     def test_index_a11y_and_mobile_nav(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")
         self.assertIn("skip-link", html)

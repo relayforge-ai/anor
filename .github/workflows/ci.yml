@@ -75,6 +75,7 @@ jobs:
             webapp.tests.test_health_privacy \
             webapp.tests.test_error_sanitize \
             webapp.tests.test_catalog_cache \
+            webapp.tests.test_access_log \
             -v
 
       - name: Pipeline + webapp syntax check
