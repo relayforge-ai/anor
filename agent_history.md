@@ -1619,3 +1619,31 @@ python3 -m unittest pipeline.tests.test_image_client pipeline.tests.test_safe_fe
 
 ### RESULT
 Real image endpoints light up when configured; mock remains the safe offline path and optional outage safety net without weakening SSRF guards.
+
+---
+
+## Iteration 56 — 2026-07-19
+
+### OBSERVE
+Public library had four packs (Cannae, Barbarossa, EXCOMM, Arkhipov). No 1940 Channel campaign decision; studio/catalog depth still thin relative to product ambition.
+
+### PLAN
+**One high-impact change:** add public pack **ELO-009** (Dunkirk halt order) with documented historical path + labeled press-armor / air-heavy branches; catalog + tests.
+
+Expected outcome: five public packs; halt = documented; press = simulated; no MANDOS material.
+
+### EXECUTE
+- `scenarios/public/ELO-009.json`
+- Catalog: ELO-009-historical + ELO-009-press_armor
+- README pack table
+- Tests: core set includes ELO-009; fork label assertions
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
+  webapp.tests.test_webapp webapp.tests.test_catalog_cache -v
+→ Ran 35 tests — OK
+```
+
+### RESULT
+Studio/library gain Dunkirk as a WW2 operational decision point with speculation labels intact.

@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-009",
+  "title": "Dunkirk — the halt that bought a fleet",
+  "era": "1940",
+  "location": "German Army Group A headquarters / Channel approaches, Flanders–Artois",
+  "datetime": "24–26 May 1940, during the race to the Channel",
+  "domain": "WW2 operational command / pursuit vs consolidation",
+  "known_outcome": "German armored spearheads are ordered to halt short of finishing the encirclement of Allied forces around Dunkirk. The pause, combined with weather, RAF cover, and naval improvisation, helps enable Operation Dynamo: over 300,000 British and Allied troops evacuate to Britain. The BEF is saved as a cadre; France still falls.",
+  "decision_question": "With Allied armies pocketed against the sea, do German commanders press armor immediately into the Dunkirk perimeter — or halt, consolidate, and leave the reduction partly to infantry and air power?",
+  "opening": {
+    "cold_open": "May 1940. Panzer divisions have cut across northern France faster than doctrine predicted. Maps show a pocket forming against the Channel. In the German command net the argument is not whether the Allies are beaten in the field — it is whether armor should close the bag now, or stop for fuel, flanks, and Hitler’s caution about the Flanders terrain.",
+    "what_they_knew": "They knew Allied forces were compressed toward the ports. They knew tanks were worn, supply lines thin, and the ground near Dunkirk canal-cut and floodable. They did not know how many ships Britain would throw at a hopeless-looking evacuation — or how stubborn the perimeter defense would be.",
+    "pressure": "Every hour of halt is an hour the Royal Navy and small craft can work. Every hour of attack risks armored attrition before the larger campaign against France’s remaining armies inland."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Halt the armor — consolidate, then reduce",
+      "is_historical": true,
+      "summary": "Documented path: armored thrusts pause; the pocket is not instantly crushed; Dynamo lifts a shattered but living army to England.",
+      "immediate": "German tanks hold short of a full armored coup de grâce. Infantry and Luftwaffe pressure continue; the perimeter still fights.",
+      "near_term": "Evacuation shipping multiplies under fire. Tens and then hundreds of thousands leave. Equipment is lost; cadres and experience return.",
+      "longer_arc": "Britain keeps an army to rebuild. The war continues. Historians still argue how much the halt mattered versus weather, logistics, and Allied defense — but the refusal of an immediate armored finish is part of the documented operational record.",
+      "speculation_level": "documented",
+      "image_prompt": "May 1940 Channel coast, smoke on the horizon, German staff maps and tired panzer officers, documentary historical painting, no text",
+      "vo_script": "May 1940. The pocket is real. The sea is behind the Allies. German armor could try to finish the job — or stop. History records a halt. While arguments continued in headquarters, ships came. The army that left Dunkirk was beaten, but it still existed. That fact shaped everything that followed."
+    },
+    {
+      "id": "press_armor",
+      "label": "Press armor into the perimeter immediately",
+      "is_historical": false,
+      "summary": "SPECULATION: Armored divisions keep driving into the Dunkirk pocket without the historical pause, accepting attrition and canal-country risk.",
+      "immediate": "Harder pressure on the perimeter. Possible earlier collapse of some sectors. Higher German tank losses and fuel burn.",
+      "near_term": "Fewer ships may load if the pocket shrinks faster — or the fight becomes even bloodier street-by-canal combat. Outcomes are not a scoreboard.",
+      "longer_arc": "Simulated. We do not claim a clean German knockout or a guaranteed British annihilation. Logistics, weather, and naval will still matter. Label the uncertainty.",
+      "speculation_level": "simulated",
+      "image_prompt": "1940 panzer column on a wet Flanders road toward a smoky port, restrained documentary still, no gore, no text",
+      "vo_script": "What if the armor does not halt? This is speculation. Closing a pocket looks simple on a map and ugly in canal country. We mark the branch simulated because the honest claim is risk and tempo — not a fantasy of total capture on a timetable."
+    },
+    {
+      "id": "luftwaffe_only",
+      "label": "Hold armor back; rely on air reduction",
+      "is_historical": false,
+      "summary": "SPECULATION: Emphasize Luftwaffe destruction of the pocket and port while armor conserves strength for the drive south — a sharper version of the air-heavy impulse already present in the debate.",
+      "immediate": "Heavier bombing and interdiction focus. Ground armor less committed in the mud of the perimeter.",
+      "near_term": "Air power can kill and panic; it is less reliable at sealing every beach and mole. Evacuation under air attack remains historically costly and incomplete.",
+      "longer_arc": "Dramatized emphasis, not a separate secret plan. Explores the limit of air power as a pocket-finisher. Label: dramatized/simulated process, not a second history book.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1940s aircraft silhouettes over a Channel port under smoke, serious historical documentary still, no text",
+      "vo_script": "What if the answer is the air force alone? Bombs can break docks and nerves. They do not automatically end an army that still has a pier and a night. This branch is dramatized process — a way to study the bet Germany partially made — not a claim of a clean alternative script."
+    }
+  ],
+  "sources": [
+    "Established operational histories of the 1940 Flanders campaign and Operation Dynamo",
+    "Published scholarship on the German halt order debate (Army Group A / OKH / Hitler)",
+    "ELOSTIRION ELO-009 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a contested operational episode into a playable choice. The halt’s exact weight is debated; counterfactual press/air branches are labeled simulated or dramatized.",
+    "corpus": "ELOSTIRION ELO-009 public pack"
+  },
+  "style_lock": "May 1940 northern France and Channel coast, smoke and staff maps, documentary gravity, no modern objects, no text",
+  "tags": ["alt-history", "Dunkirk", "WW2", "1940", "decision-point", "Dynamo"]
+}

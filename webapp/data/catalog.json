@@ -164,6 +164,36 @@
       "speculation": "documented",
       "featured": false,
       "blurb": "Documented baseline: invasion reports meet a hyper-centralized system still arguing with reality."
+    },
+    {
+      "id": "ELO-009-historical",
+      "scenario_id": "ELO-009",
+      "choice_id": "historical",
+      "title": "Dunkirk: the halt",
+      "subtitle": "May 1940 — armor pauses, ships come",
+      "era": "1940",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-009-historical/ELO-009-historical.mp4",
+      "poster_gradient": ["#1a2430", "#0f1115"],
+      "tags": ["WW2", "Dunkirk", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: German armor halts short of finishing the pocket; Dynamo lifts a living army to Britain."
+    },
+    {
+      "id": "ELO-009-press_armor",
+      "scenario_id": "ELO-009",
+      "choice_id": "press_armor",
+      "title": "SPECULATION: Armor keeps driving",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1940",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-009-press_armor/ELO-009-press_armor.mp4",
+      "poster_gradient": ["#2a2018", "#121018"],
+      "tags": ["WW2", "Dunkirk", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: no historical pause — canal country, attrition, and tempo risk, all labeled 🧪."
     }
   ]
 }
