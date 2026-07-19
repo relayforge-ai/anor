@@ -46,6 +46,11 @@ class TestPublicPacks(unittest.TestCase):
         self.assertEqual(p["scenario_id"], "ELO-003")
         self.assertTrue(p["choices"])
 
+    def test_list_scenarios_no_host_paths(self):
+        for item in list_scenarios():
+            self.assertNotIn("path", item)
+            self.assertNotIn(str(ROOT), json.dumps(item))
+
 
 class TestForkEngine(unittest.TestCase):
     def test_historical_fork_authored(self):

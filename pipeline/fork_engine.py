@@ -15,6 +15,7 @@ from typing import Any, Optional
 
 from .clients import LLMClient, PipelineError
 from .config import PipelineConfig
+from .validate import ScenarioValidationError, validate_scenario
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DIR = REPO_ROOT / "scenarios" / "public"
@@ -38,16 +39,23 @@ class ForkResult:
 
 
 def list_scenarios(directory: Path = PUBLIC_DIR) -> list[dict[str, str]]:
+    """List valid public packs. Invalid packs are skipped (never break the catalog).
+
+    Public API surface: no absolute filesystem paths.
+    """
     out = []
     for p in sorted(directory.glob("*.json")):
-        data = json.loads(p.read_text(encoding="utf-8"))
+        try:
+            raw = json.loads(p.read_text(encoding="utf-8"))
+            data = validate_scenario(raw)
+        except (json.JSONDecodeError, ScenarioValidationError, OSError):
+            continue
         out.append(
             {
                 "scenario_id": data["scenario_id"],
                 "title": data["title"],
                 "era": data.get("era", ""),
                 "decision_question": data.get("decision_question", ""),
-                "path": str(p),
             }
         )
     return out
@@ -57,6 +65,7 @@ def load_scenario(scenario_id: str, directory: Path = PUBLIC_DIR) -> dict:
     """Load a public pack by id only — never accept absolute/relative file paths.
 
     Rejects path traversal and any id that does not resolve inside ``directory``.
+    Validates structure before returning.
     """
     if not isinstance(scenario_id, str) or not scenario_id:
         raise FileNotFoundError("Scenario not found: empty id")
@@ -67,13 +76,16 @@ def load_scenario(scenario_id: str, directory: Path = PUBLIC_DIR) -> dict:
     root = directory.resolve()
     path = (root / f"{scenario_id}.json").resolve()
     if not str(path).startswith(str(root) + os.sep) and path != root:
-        # path must be a direct child of root
         raise FileNotFoundError(f"Scenario not found: {scenario_id}")
     if path.parent != root:
         raise FileNotFoundError(f"Scenario not found: {scenario_id}")
     if not path.is_file():
         raise FileNotFoundError(f"Scenario not found: {scenario_id}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise ScenarioValidationError(f"invalid JSON: {e}", path=scenario_id) from e
+    return validate_scenario(raw)
 
 
 def _choice(scenario: dict, choice_id: str) -> dict:

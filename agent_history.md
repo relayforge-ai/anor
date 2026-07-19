@@ -197,3 +197,36 @@ python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_video_jobs
 
 ### RESULT
 Mobile users can reach all primary routes; keyboard and screen-reader paths improved; job API no longer leaks host filesystem paths.
+
+---
+
+## Iteration 7 — 2026-07-18
+
+### OBSERVE
+Scenario packs were loaded with JSON parse only — no structural validation. `list_scenarios` exposed absolute `path` fields; `/api/health` leaked `videos_dir` absolute path. Corrupt packs could crash the studio mid-fork.
+
+### PLAN
+**One high-impact change:** validate public pack structure on load + remove remaining path leaks from public APIs.
+
+Expected outcome: invalid packs rejected with clear errors; catalog/health never return host filesystem paths; all three ELO packs still pass.
+
+### EXECUTE
+- `pipeline/validate.py` — stdlib schema checks (required fields, one historical choice, speculation levels)
+- `load_scenario` / `list_scenarios` validate; list skips invalid packs; no `path` field
+- Health: `videos_count` / `scenarios_count` instead of absolute dirs
+- API maps `ScenarioValidationError` → 422
+- Tests: `pipeline/tests/test_validate.py`
+
+### TEST
+```
+python3 -m unittest pipeline.tests.test_validate pipeline.tests.test_pipeline \
+  pipeline.tests.test_retry webapp.tests.test_security_headers \
+  webapp.tests.test_security webapp.tests.test_webapp \
+  webapp.tests.test_static_assets webapp.tests.test_video_jobs -v
+→ 46 tests OK
+```
+- Real packs validate; corrupt packs rejected
+- list/health free of host absolute paths
+
+### RESULT
+Scenario state is structurally trustworthy at the boundary; remaining path-leak surfaces cleaned.

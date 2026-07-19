@@ -59,8 +59,15 @@ class TestSecurityHeaders(unittest.TestCase):
     def test_json_api_also_hardened(self):
         with urllib.request.urlopen(self.base + "/api/health", timeout=5) as r:
             headers = {k.lower(): v for k, v in r.headers.items()}
+            body = r.read().decode()
         self.assertEqual(headers.get("x-frame-options"), "DENY")
         self.assertIn("content-security-policy", headers)
+        # Health must not leak absolute host paths
+        data = __import__("json").loads(body)
+        self.assertNotIn("videos_dir", data)
+        self.assertIn("videos_count", data)
+        self.assertIn("scenarios_count", data)
+        self.assertNotIn(str(ROOT), body)
 
 
 if __name__ == "__main__":

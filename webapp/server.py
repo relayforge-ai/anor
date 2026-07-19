@@ -38,6 +38,7 @@ if str(ROOT) not in sys.path:
 from pipeline.config import PipelineConfig  # noqa: E402
 from pipeline.fork_engine import list_scenarios, run_fork, scenario_payload  # noqa: E402
 from pipeline.clients import healthcheck  # noqa: E402
+from pipeline.validate import ScenarioValidationError  # noqa: E402
 from webapp import security as sec  # noqa: E402
 from webapp.jobs import QUEUE  # noqa: E402
 
@@ -183,12 +184,16 @@ class Handler(BaseHTTPRequestHandler):
                     },
                     "video_queue": QUEUE.stats(),
                     "pipeline": healthcheck(cfg),
-                    "videos_dir": str(VIDEOS),
+                    # Public health: names only — never absolute host paths
                     "videos_present": sorted(
                         p.name for p in VIDEOS.iterdir() if p.is_dir()
                     )
                     if VIDEOS.exists()
                     else [],
+                    "videos_count": sum(1 for p in VIDEOS.iterdir() if p.is_dir())
+                    if VIDEOS.exists()
+                    else 0,
+                    "scenarios_count": len(list_scenarios()),
                 },
             )
 
@@ -214,6 +219,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, scenario_payload(sid))
             except FileNotFoundError:
                 return self._json(404, {"error": "scenario not found", "code": "not_found"})
+            except ScenarioValidationError as e:
+                return self._json(
+                    422,
+                    {"error": str(e)[:300], "code": "invalid_scenario"},
+                )
 
         return self._json(404, {"error": "not found", "path": path})
 
@@ -294,6 +304,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, payload)
         except FileNotFoundError:
             return self._json(404, {"error": "scenario not found", "code": "not_found"})
+        except ScenarioValidationError as e:
+            return self._json(422, {"error": str(e)[:300], "code": "invalid_scenario"})
         except KeyError as e:
             return self._json(400, {"error": str(e), "code": "bad_choice"})
         except Exception as e:
