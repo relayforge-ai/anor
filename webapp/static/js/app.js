@@ -254,8 +254,67 @@
   /* ——— Studio ——— */
   async function loadScenarioDetail(id) {
     const r = await fetch("/api/scenario/" + encodeURIComponent(id));
-    if (!r.ok) throw new Error("Scenario load failed");
+    if (!r.ok) {
+      let msg = "Scenario load failed";
+      try {
+        const err = await r.json();
+        if (err.error) msg = err.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
     return r.json();
+  }
+
+  /** Staged progress copy for fork simulation (authored vs LLM). */
+  function forkStages(useLlm) {
+    const base = [
+      { id: "validate", label: "Validate decision against public pack" },
+      { id: "ledger", label: "Lock what they knew (no hindsight)" },
+      { id: "branch", label: useLlm ? "Request LLM re-render" : "Compose authored branch" },
+      { id: "ribbon", label: "Attach provenance ribbon" },
+    ];
+    return base;
+  }
+
+  function renderSimProgress({ stages, activeIndex, pct, label, indeterminate }) {
+    const barClass = indeterminate ? "sim-progress-bar indeterminate" : "sim-progress-bar";
+    const width = Math.max(0, Math.min(100, pct || 0));
+    return `
+      <div class="sim-progress" aria-busy="true">
+        <p class="sim-progress-label">${escapeHtml(label || "Working…")}</p>
+        <div class="${barClass}" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             aria-valuenow="${indeterminate ? 0 : Math.round(width)}"
+             aria-label="${escapeHtml(label || "Simulation progress")}">
+          <i style="width:${indeterminate ? 35 : width}%"></i>
+        </div>
+        <ul class="sim-stages">
+          ${stages
+            .map((s, i) => {
+              let cls = "";
+              if (i < activeIndex) cls = "done";
+              else if (i === activeIndex) cls = "active";
+              return `<li class="${cls}">${escapeHtml(s.label)}</li>`;
+            })
+            .join("")}
+        </ul>
+      </div>`;
+  }
+
+  function renderSkeletonStudio() {
+    return `
+      <div class="skeleton skeleton-line lg"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line sm"></div>
+      <div class="skeleton skeleton-block"></div>`;
+  }
+
+  function renderForkError(message, code) {
+    return `
+      <div class="fork-error" role="alert">
+        ${escapeHtml(message || "Something went wrong")}
+        ${code ? `<span class="code">${escapeHtml(code)}</span>` : ""}
+      </div>`;
   }
 
   async function renderStudio(scenarioId) {
@@ -274,11 +333,27 @@
       )
       .join("");
 
+    // Skeleton while pack loads
+    $("#studio-question").textContent = "Loading pack…";
+    $("#studio-known").textContent = "—";
+    $("#studio-opening").innerHTML = renderSkeletonStudio();
+    $("#choice-list").innerHTML = `
+      <div class="skeleton skeleton-line lg"></div>
+      <div class="skeleton skeleton-line lg" style="margin-top:0.5rem"></div>
+      <div class="skeleton skeleton-line lg" style="margin-top:0.5rem"></div>`;
+    $("#fork-result").innerHTML = `
+      <div class="sim-progress">
+        <p class="sim-progress-label">Opening decision ledger…</p>
+        <div class="sim-progress-bar indeterminate"><i></i></div>
+      </div>`;
+
     let detail;
     try {
       detail = await loadScenarioDetail(scenarioId);
     } catch (e) {
       toast(String(e.message || e));
+      $("#studio-opening").textContent = "";
+      $("#fork-result").innerHTML = renderForkError(String(e.message || e), "load_failed");
       return;
     }
     state.scenarioDetail = detail;
@@ -293,16 +368,13 @@
 
     const member = FHFreemium.isMember();
     const choices = detail.choices || [];
-    // Free: all choices visible for viewing; non-historical get "basic" only
-    // Advanced multi-compare locked
     const list = $("#choice-list");
     list.innerHTML = choices
       .map((c) => {
-        const lockedAdvanced = !member && !c.is_historical;
         return `
         <button type="button" class="choice ${state.choiceId === c.id ? "selected" : ""}" data-choice="${escapeHtml(
           c.id
-        )}">
+        )}" aria-pressed="${state.choiceId === c.id ? "true" : "false"}">
           <span class="choice-label">${escapeHtml(c.label)}</span>
           <span class="choice-meta">
             ${c.is_historical ? "★ historical baseline · " : "counterfactual · "}
@@ -316,15 +388,20 @@
     list.querySelectorAll("[data-choice]").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.choiceId = btn.dataset.choice;
-        list.querySelectorAll(".choice").forEach((c) => c.classList.remove("selected"));
+        list.querySelectorAll(".choice").forEach((c) => {
+          c.classList.remove("selected");
+          c.setAttribute("aria-pressed", "false");
+        });
         btn.classList.add("selected");
+        btn.setAttribute("aria-pressed", "true");
       });
     });
 
-    // default historical
     if (!state.choiceId || !choices.find((c) => c.id === state.choiceId)) {
       state.choiceId = choices.find((c) => c.is_historical)?.id || choices[0]?.id;
-      list.querySelector(`[data-choice="${state.choiceId}"]`)?.classList.add("selected");
+      const el = list.querySelector(`[data-choice="${state.choiceId}"]`);
+      el?.classList.add("selected");
+      el?.setAttribute("aria-pressed", "true");
     }
 
     renderStudioControls();
@@ -387,7 +464,6 @@
       toast("Select a scenario and a decision first.");
       return;
     }
-    const access = FHFreemium.canFork({ catalog: state.catalog, wantLlm: useLlm });
     if (useLlm && !FHFreemium.isMember()) {
       openPaywall(
         "LLM re-render is a Scholar control",
@@ -397,8 +473,47 @@
     }
 
     const btn = useLlm ? $("#btn-llm") : $("#btn-fork");
-    btn.disabled = true;
-    $("#fork-result").innerHTML = `<div class="note">Simulating fork…</div>`;
+    const other = useLlm ? $("#btn-fork") : $("#btn-llm");
+    const stages = forkStages(useLlm);
+    let stageIdx = 0;
+    let tickTimer = null;
+
+    const setBusy = (on) => {
+      [btn, other, $("#btn-compare"), $("#btn-export")].forEach((el) => {
+        if (!el) return;
+        el.disabled = on;
+      });
+      if (btn) btn.classList.toggle("busy", on);
+    };
+
+    const paint = (idx, pct, label, indeterminate) => {
+      $("#fork-result").innerHTML = renderSimProgress({
+        stages,
+        activeIndex: idx,
+        pct,
+        label,
+        indeterminate,
+      });
+    };
+
+    setBusy(true);
+    paint(0, 8, "Validating decision…", false);
+
+    // Advance staged UI while the network request is in flight (perceived progress).
+    // Real completion snaps to 100% when the response arrives.
+    tickTimer = setInterval(() => {
+      if (stageIdx < stages.length - 1) {
+        stageIdx += 1;
+      }
+      const pct = Math.min(88, 12 + stageIdx * 22 + Math.random() * 6);
+      paint(
+        stageIdx,
+        pct,
+        stages[stageIdx].label + (useLlm ? " — waiting on model…" : "…"),
+        useLlm && stageIdx >= 2
+      );
+    }, useLlm ? 700 : 280);
+
     try {
       const body = {
         scenario_id: state.scenarioId,
@@ -414,8 +529,16 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || "Fork failed");
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const err = new Error(data.error || `Fork failed (${r.status})`);
+        err.code = data.code || (r.status === 429 ? "rate_limited" : "fork_failed");
+        throw err;
+      }
+      if (tickTimer) clearInterval(tickTimer);
+      paint(stages.length - 1, 100, "Provenance attached — rendering…", false);
+      // Brief beat so users see completion before narrative replaces the bar
+      await new Promise((res) => setTimeout(res, 180));
       state.lastFork = data;
       FHFreemium.recordFork();
       $("#fork-result").innerHTML = renderForkHtml(data);
@@ -423,11 +546,27 @@
       refreshChrome();
       toast(useLlm ? "LLM fork ready" : "Fork ready");
     } catch (e) {
-      $("#fork-result").innerHTML = `<div class="note" style="color:var(--danger)">${escapeHtml(
-        e.message || e
-      )}</div>`;
+      if (tickTimer) clearInterval(tickTimer);
+      const stagesErr = stages.map((s, i) => ({
+        ...s,
+      }));
+      $("#fork-result").innerHTML =
+        renderSimProgress({
+          stages: stagesErr,
+          activeIndex: stageIdx,
+          pct: Math.min(88, 12 + stageIdx * 22),
+          label: "Simulation interrupted",
+          indeterminate: false,
+        }) + renderForkError(e.message || String(e), e.code || "error");
+      // mark active stage as error via class patch
+      const active = $("#fork-result")?.querySelector(".sim-stages li.active");
+      if (active) {
+        active.classList.remove("active");
+        active.classList.add("error");
+      }
     } finally {
-      btn.disabled = false;
+      if (tickTimer) clearInterval(tickTimer);
+      setBusy(false);
       renderStudioControls();
     }
   }

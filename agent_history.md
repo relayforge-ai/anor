@@ -69,3 +69,33 @@ python3 -m unittest pipeline.tests.test_retry pipeline.tests.test_pipeline \
 
 ### RESULT
 Upstream media/LLM calls are resilient to brief outages without masking real validation errors.
+
+---
+
+## Iteration 3 — 2026-07-18
+
+### OBSERVE
+Backend security + HTTP retries landed. Studio UX still showed a flat "Simulating fork…" note during potentially multi-second LLM calls — no progress, no skeleton on pack load, weak error presentation, limited a11y live updates.
+
+### PLAN
+**One high-impact change:** immersive, accessible progress feedback for studio fork + pack loading.
+
+Expected outcome: users see staged progress (validate → ledger → branch → ribbon), skeleton while packs load, structured errors with codes, reduced-motion respect.
+
+### EXECUTE
+- CSS: `.sim-progress`, stages, skeleton shimmer, `.fork-error`, `.btn.busy`, `prefers-reduced-motion`
+- JS: `renderSimProgress`, `forkStages`, `renderSkeletonStudio`, staged timers during fetch, better 429/error handling
+- HTML: `aria-live="polite"` on `#fork-result`
+- Tests: `webapp/tests/test_static_assets.py`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets pipeline.tests.test_retry \
+  pipeline.tests.test_pipeline webapp.tests.test_security webapp.tests.test_webapp -v
+→ 29 tests OK
+```
+- CSS/JS/HTML markers for progress, skeleton, aria-live present
+- Prior security + retry + pipeline suites green
+
+### RESULT
+Studio now communicates work-in-progress for forks and pack loads; errors surface with codes. Next: async video job queue or dependency audit.
