@@ -55,9 +55,22 @@
     return state;
   }
 
+  /** Correlate browser calls with [forked-history] rid= server logs (16 hex). */
+  function newRequestId() {
+    try {
+      if (global.crypto && typeof global.crypto.randomUUID === "function") {
+        return global.crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      }
+    } catch (_) {}
+    return (
+      Date.now().toString(16).slice(-8) + Math.random().toString(16).slice(2, 10)
+    ).slice(0, 16);
+  }
+
   const Freemium = {
     load,
     save,
+    newRequestId,
 
     isMember() {
       return !!load().isMember;
@@ -78,16 +91,30 @@
     },
 
     authHeaders(extra) {
-      const h = Object.assign({ "Content-Type": "application/json" }, extra || {});
+      const h = Object.assign(
+        {
+          "Content-Type": "application/json",
+          "X-Request-ID": newRequestId(),
+        },
+        extra || {}
+      );
       const t = load().memberToken;
       if (t) h["X-ANOR-Member"] = t;
       return h;
     },
 
+    /** Headers for GET/polls that do not need JSON Content-Type. */
+    apiHeaders(extra) {
+      return Object.assign({ "X-Request-ID": newRequestId() }, extra || {});
+    },
+
     async acquireDemoToken(plan = "scholar") {
       const r = await fetch("/api/member/demo", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": newRequestId(),
+        },
         body: JSON.stringify({ plan }),
       });
       const data = await r.json().catch(() => ({}));

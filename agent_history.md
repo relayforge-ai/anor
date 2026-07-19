@@ -1085,3 +1085,31 @@ python3 -m unittest webapp.tests.test_static_assets -v
 
 ### RESULT
 Browser chrome and assistive tech reflect the current SPA view.
+
+---
+
+## Iteration 37 — 2026-07-19
+
+### OBSERVE
+Server already logs `rid=` / echoes `X-Request-ID`, but the SPA almost never sent one — multi-step studio actions (catalog → fork → video poll) could not be stitched together in logs.
+
+### PLAN
+**One high-impact change:** generate a 16-hex `X-Request-ID` on every client API call (auth + GET helpers).
+
+Expected outcome: freemium authHeaders, apiHeaders, catalog revalidation, scenario load, and job polls all carry correlatable request ids.
+
+### EXECUTE
+- `newRequestId` + `apiHeaders` in freemium.js
+- `authHeaders` / demo token / app.js fetches use them
+- Static markers
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets -v
+→ Ran 5 tests — OK
+```
+- freemium has newRequestId, X-Request-ID, apiHeaders
+- app uses FHFreemium.apiHeaders
+
+### RESULT
+Browser actions are correlatable with server `[forked-history] rid=` log lines.

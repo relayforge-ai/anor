@@ -461,7 +461,9 @@
 
   /* ——— Studio ——— */
   async function loadScenarioDetail(id) {
-    const r = await fetch("/api/scenario/" + encodeURIComponent(id));
+    const r = await fetch("/api/scenario/" + encodeURIComponent(id), {
+      headers: FHFreemium.apiHeaders({ Accept: "application/json" }),
+    });
     if (!r.ok) {
       let msg = "Scenario load failed";
       try {
@@ -974,7 +976,9 @@
 
     try {
       while (!done) {
-        const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId));
+        const pr = await fetch("/api/video/jobs/" + encodeURIComponent(jobId), {
+          headers: FHFreemium.apiHeaders({ Accept: "application/json" }),
+        });
         if (pr.status === 404) {
           clearActiveVideoJob();
           throw Object.assign(new Error("Job no longer on server (TTL expired)"), {
@@ -1100,7 +1104,9 @@
     if (videoPollActiveId === rec.jobId) return;
 
     try {
-      const pr = await fetch("/api/video/jobs/" + encodeURIComponent(rec.jobId));
+      const pr = await fetch("/api/video/jobs/" + encodeURIComponent(rec.jobId), {
+        headers: FHFreemium.apiHeaders({ Accept: "application/json" }),
+      });
       if (pr.status === 404) {
         clearActiveVideoJob();
         return;
@@ -1501,7 +1507,7 @@
   async function fetchJsonRevalidatable(url, cacheKey) {
     const etagKey = cacheKey + ":etag";
     const bodyKey = cacheKey + ":body";
-    const headers = { Accept: "application/json" };
+    const headers = FHFreemium.apiHeaders({ Accept: "application/json" });
     try {
       const etag = sessionStorage.getItem(etagKey);
       if (etag) headers["If-None-Match"] = etag;
@@ -1526,7 +1532,7 @@
       }
       // Stale client cache — force unconditional fetch once
       res = await fetch(url, {
-        headers: { Accept: "application/json" },
+        headers: FHFreemium.apiHeaders({ Accept: "application/json" }),
         cache: "reload",
       });
     }

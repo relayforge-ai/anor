@@ -69,8 +69,13 @@ class TestStaticProgressUI(unittest.TestCase):
             "document.title",
             "Library —",
             "Membership —",
+            "apiHeaders",
+            "FHFreemium.apiHeaders",
         ):
             self.assertIn(needle, js, f"missing {needle}")
+        freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
+        for needle in ("newRequestId", "X-Request-ID", "apiHeaders"):
+            self.assertIn(needle, freemium, f"missing {needle} in freemium.js")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
         self.assertIn(".fork-error.is-rate-limit", css)
         self.assertIn(".rate-wait", css)
