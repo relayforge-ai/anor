@@ -49,6 +49,16 @@ See `batch-002/README.md` and `batch-002/postiz-drafts.json`.
 
 See `batch-003/README.md` and `batch-003/postiz-drafts.json`.
 
+## Batch 004 — Rubicon (ELO-004)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-004/ELO-004-historical.md` | Rubicon crossing | historical | YT + TT |
+| `batch-004/ELO-004-stand_down.md` | stand down | simulated | YT + TT |
+| `batch-004/ELO-004-negotiate_delay.md` | negotiate delay | dramatized | YT + TT |
+
+See `batch-004/README.md` and `batch-004/postiz-drafts.json`.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
@@ -60,6 +70,8 @@ python -m pipeline.cli video --scenario ELO-007 --choice historical
 python -m pipeline.cli video --scenario ELO-007 --choice surgical_strike
 python -m pipeline.cli video --scenario ELO-009 --choice historical
 python -m pipeline.cli video --scenario ELO-009 --choice press_armor
+python -m pipeline.cli video --scenario ELO-004 --choice historical
+python -m pipeline.cli video --scenario ELO-004 --choice stand_down
 ```
 
 ## Human gate checklist

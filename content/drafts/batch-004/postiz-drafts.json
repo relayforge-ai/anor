@@ -1,0 +1,89 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-004",
+  "created": "2026-07-19",
+  "theme": "Caesar at the Rubicon 49 BC (ELO-004)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review stand-down and negotiate cuts for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-004-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "49 BC. A river that is mostly a law.\nCross with the army — or stand down.\n📗 Documented: he crosses. Civil war follows.\n#history #rome #caesar #fyp",
+      "media_local": "outputs/videos/ELO-004-historical/ELO-004-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-004-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "49 BC: Caesar crosses the Rubicon — civil war becomes open",
+      "caption": "A shallow river. A legal line more than a military one.\n\n📗 Documented baseline: Caesar crosses with the army; civil war follows.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#caesar #rubicon #rome #history",
+      "media_local": "outputs/videos/ELO-004-historical/ELO-004-historical.mp4",
+      "settings": {
+        "title": "49 BC: Caesar crosses the Rubicon — civil war becomes open",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "rome", "label": "rome"},
+          {"value": "caesar", "label": "caesar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-004-stand-down-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if Caesar lays down the army?\nWe label this 🧪 SIMULATED. History records the crossing.\nCourts ≠ peace by default.\n#althistory #historytok #rome",
+      "media_local": "outputs/videos/ELO-004-stand_down/ELO-004-stand_down.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-004-stand-down-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Caesar never crossed the Rubicon?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: the armed crossing is documented.\n🧪 Stand-down is labeled simulation: courts, enemies, veterans without a war.\n\n#althistory #caesar #speculationlabeled",
+      "media_local": "outputs/videos/ELO-004-stand_down/ELO-004-stand_down.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Caesar never crossed the Rubicon?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "rome", "label": "rome"}
+        ]
+      }
+    },
+    {
+      "id": "elo-004-negotiate-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if Caesar bargained at the Rubicon instead of crossing?",
+      "caption": "⚠️ Dramatized process — not secret history.\n\n📗 Baseline remains the crossing.\nThis cut studies brinkmanship without the ford — labeled so clips cannot lie.\n\n#althistory #caesar #rubicon",
+      "media_local": "outputs/videos/ELO-004-negotiate_delay/ELO-004-negotiate_delay.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if Caesar bargained at the Rubicon instead of crossing?",
+        "type": "public"
+      }
+    }
+  ]
+}

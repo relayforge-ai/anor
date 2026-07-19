@@ -1756,3 +1756,30 @@ python3 -m unittest pipeline.tests.test_pipeline pipeline.tests.test_validate \
 
 ### RESULT
 Studio/library gain the Rubicon as a playable civil-war threshold with speculation labels intact.
+
+---
+
+## Iteration 61 — 2026-07-19
+
+### OBSERVE
+ELO-004 Rubicon pack shipped; social drafts stopped at batch-003 (Dunkirk). No Ryan-reviewable captions for crossing / stand-down / negotiate cuts.
+
+### PLAN
+**One high-impact change:** batch-004 DRAFTS for ELO-004 with human-gate Postiz payload and hygiene tests.
+
+Expected outcome: draft-only captions; 📗/🧪 labels; placeholder integrations; no auto-publish.
+
+### EXECUTE
+- `content/drafts/batch-004/*` (3 cut MDs, postiz-drafts.json, README)
+- Parent drafts README table
+- Tests: batch-004 presence + pack reference + label checks
+
+### TEST
+```
+python3 -m unittest scripts.tests.test_social_drafts \
+  pipeline.tests.test_pipeline.TestPublicPacks -v
+→ Ran 20 tests — OK
+```
+
+### RESULT
+Rubicon social creative is staged as drafts only, aligned with the new public pack.
