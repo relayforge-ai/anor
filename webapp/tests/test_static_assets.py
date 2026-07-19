@@ -40,6 +40,23 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("aria-live", html)
         self.assertIn('role="status"', html)
 
+    def test_index_a11y_and_mobile_nav(self):
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn("skip-link", html)
+        self.assertIn('id="main-content"', html)
+        self.assertIn('id="nav-toggle"', html)
+        self.assertIn('aria-controls="primary-nav"', html)
+        css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
+        self.assertIn(".nav-toggle", css)
+        self.assertIn(":focus-visible", css)
+        self.assertIn(".skip-link", css)
+        # Must not hide all non-cta nav links permanently on mobile
+        self.assertNotIn(".nav-links a:not(.btn) {\n    display: none;", css)
+        js = (STATIC / "js" / "app.js").read_text(encoding="utf-8")
+        self.assertIn("setNavOpen", js)
+        self.assertIn("selectChoice", js)
+        self.assertIn("ArrowDown", js)
+
 
 if __name__ == "__main__":
     unittest.main()

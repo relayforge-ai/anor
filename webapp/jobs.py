@@ -207,12 +207,10 @@ class VideoJobQueue:
                 use_llm=use_llm,
                 on_progress=on_progress,
             )
-            # Public-safe result (paths relative to media mount)
+            # Public-safe result — never expose absolute filesystem paths to clients
             rel_mp4 = f"{scenario_id}-{choice_id}/{result.out_mp4.name}"
             payload = {
-                "out_mp4": str(result.out_mp4),
                 "media_url": f"/media/videos/{rel_mp4}",
-                "script_path": str(result.script_path),
                 "segments": len(result.segments),
                 "mock_media": result.mock_media,
             }

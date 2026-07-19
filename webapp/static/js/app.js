@@ -39,12 +39,34 @@
 
   function setActiveNav(page) {
     $$(".nav-links a[data-nav]").forEach((a) => {
-      a.classList.toggle("active", a.dataset.nav === page);
+      const isActive = a.dataset.nav === page;
+      a.classList.toggle("active", isActive);
+      if (isActive) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
     });
   }
 
   function showPage(id) {
     $$("[data-page]").forEach((p) => p.classList.toggle("page-hidden", p.dataset.page !== id));
+  }
+
+  function setNavOpen(open) {
+    const links = $("#primary-nav");
+    const toggle = $("#nav-toggle");
+    const backdrop = $("#nav-backdrop");
+    if (!links || !toggle) return;
+    links.classList.toggle("open", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    if (backdrop) {
+      backdrop.classList.toggle("open", open);
+      backdrop.hidden = !open;
+    }
+    document.body.style.overflow = open ? "hidden" : "";
+  }
+
+  function closeNav() {
+    setNavOpen(false);
   }
 
   /* ——— Membership strip ——— */
@@ -369,12 +391,16 @@
     const member = FHFreemium.isMember();
     const choices = detail.choices || [];
     const list = $("#choice-list");
+    list.setAttribute("role", "radiogroup");
+    list.setAttribute("aria-label", "Decision choices");
     list.innerHTML = choices
       .map((c) => {
         return `
         <button type="button" class="choice ${state.choiceId === c.id ? "selected" : ""}" data-choice="${escapeHtml(
           c.id
-        )}" aria-pressed="${state.choiceId === c.id ? "true" : "false"}">
+        )}" aria-pressed="${state.choiceId === c.id ? "true" : "false"}" aria-checked="${
+          state.choiceId === c.id ? "true" : "false"
+        }">
           <span class="choice-label">${escapeHtml(c.label)}</span>
           <span class="choice-meta">
             ${c.is_historical ? "★ historical baseline · " : "counterfactual · "}
@@ -385,15 +411,23 @@
       })
       .join("");
 
-    list.querySelectorAll("[data-choice]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.choiceId = btn.dataset.choice;
-        list.querySelectorAll(".choice").forEach((c) => {
-          c.classList.remove("selected");
-          c.setAttribute("aria-pressed", "false");
-        });
-        btn.classList.add("selected");
-        btn.setAttribute("aria-pressed", "true");
+    const choiceBtns = list.querySelectorAll("[data-choice]");
+    choiceBtns.forEach((btn, index) => {
+      btn.setAttribute("role", "radio");
+      btn.setAttribute("tabindex", btn.classList.contains("selected") ? "0" : "-1");
+      btn.addEventListener("click", () => selectChoice(btn, choiceBtns));
+      btn.addEventListener("keydown", (e) => {
+        const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
+        if (!keys.includes(e.key)) return;
+        e.preventDefault();
+        const items = [...choiceBtns];
+        let next = index;
+        if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (index + 1) % items.length;
+        if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (index - 1 + items.length) % items.length;
+        if (e.key === "Home") next = 0;
+        if (e.key === "End") next = items.length - 1;
+        selectChoice(items[next], choiceBtns);
+        items[next].focus();
       });
     });
 
@@ -409,6 +443,20 @@
       state.lastFork && state.lastFork.scenario_id === scenarioId
         ? renderForkHtml(state.lastFork)
         : `<div class="note">Pick a decision and run a fork. Documented baselines stay honest; speculation is labeled.</div>`;
+  }
+
+  function selectChoice(btn, allBtns) {
+    state.choiceId = btn.dataset.choice;
+    allBtns.forEach((c) => {
+      c.classList.remove("selected");
+      c.setAttribute("aria-pressed", "false");
+      c.setAttribute("aria-checked", "false");
+      c.setAttribute("tabindex", "-1");
+    });
+    btn.classList.add("selected");
+    btn.setAttribute("aria-pressed", "true");
+    btn.setAttribute("aria-checked", "true");
+    btn.setAttribute("tabindex", "0");
   }
 
   function renderStudioControls() {
@@ -847,12 +895,29 @@
     $$("[data-nav]").forEach((a) => {
       a.addEventListener("click", (e) => {
         e.preventDefault();
+        closeNav();
         navigate(a.dataset.nav === "home" ? "" : a.dataset.nav);
       });
     });
     $("#nav-upgrade")?.addEventListener("click", (e) => {
       e.preventDefault();
+      closeNav();
       navigate("pricing");
+    });
+    $("#nav-toggle")?.addEventListener("click", () => {
+      const open = $("#nav-toggle").getAttribute("aria-expanded") !== "true";
+      setNavOpen(open);
+      if (open) {
+        const first = $("#primary-nav a[data-nav]");
+        first?.focus();
+      }
+    });
+    $("#nav-backdrop")?.addEventListener("click", closeNav);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeNav();
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) closeNav();
     });
 
     // studio buttons

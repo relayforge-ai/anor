@@ -77,6 +77,11 @@ class TestVideoJobsAPI(unittest.TestCase):
         self.assertEqual(final["pct"], 100)
         self.assertIn("media_url", final.get("result") or {})
         self.assertTrue((final["result"]["media_url"] or "").startswith("/media/videos/"))
+        # Absolute host paths must not leak to clients
+        self.assertNotIn("out_mp4", final.get("result") or {})
+        self.assertNotIn("script_path", final.get("result") or {})
+        blob = json.dumps(final)
+        self.assertNotIn(str(ROOT), blob)
 
     def test_rejects_bad_scenario(self):
         status, data = self.post_job(

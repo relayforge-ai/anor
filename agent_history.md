@@ -166,3 +166,34 @@ python3 scripts/tests/test_dep_audit.py → 3 OK
 
 ### RESULT
 Browser-facing surface hardened; dependency drift is audited in CI.
+
+---
+
+## Iteration 6 — 2026-07-18
+
+### OBSERVE
+Mobile CSS hid all non-button nav links (`display: none`), so phones only saw Scholar CTA — Home/Library/Studio unreachable. Weak keyboard support on decision choices; no skip link or focus-visible styling. Video job results still included absolute `out_mp4` paths.
+
+### PLAN
+**One high-impact change:** fix mobile navigation and accessibility (keyboard + focus + skip link); stop leaking absolute paths in job payloads.
+
+Expected outcome: usable drawer nav under 900px; arrow-key choice radios; visible focus rings; job API returns only `media_url`.
+
+### EXECUTE
+- Mobile hamburger + drawer + backdrop; Escape/resize close
+- Skip link, `:focus-visible`, radiogroup keyboard for choices
+- Strip absolute paths from video job results
+- Tests extended in `test_static_assets` + `test_video_jobs`
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_static_assets webapp.tests.test_video_jobs \
+  webapp.tests.test_security_headers webapp.tests.test_security webapp.tests.test_webapp \
+  pipeline.tests.test_retry pipeline.tests.test_pipeline -v
+→ 37 tests OK
+```
+- Static checks for skip-link, nav-toggle, focus-visible, keyboard handlers
+- Video job payload has media_url only (no absolute paths)
+
+### RESULT
+Mobile users can reach all primary routes; keyboard and screen-reader paths improved; job API no longer leaks host filesystem paths.
