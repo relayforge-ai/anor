@@ -56,3 +56,12 @@ jobs:
 
       - name: Pipeline syntax check
         run: python -m compileall -q pipeline
+
+      - name: Webapp API smoke tests
+        env:
+          ANOR_MOCK_MEDIA: "1"
+          PYTHONPATH: .
+        run: python -m unittest webapp.tests.test_webapp -v
+
+      - name: Webapp syntax check
+        run: python -m compileall -q webapp

@@ -1,0 +1,124 @@
+{
+  "brand": {
+    "name": "Forked History",
+    "tagline": "Real decision points. Labeled speculation. Receipts on screen.",
+    "product": "ANOR Fork Studio",
+    "discipline": "ELOSTIRION"
+  },
+  "pricing": {
+    "currency": "USD",
+    "plans": [
+      {
+        "id": "explorer",
+        "name": "Explorer",
+        "price_monthly": 0,
+        "price_yearly": 0,
+        "badge": "Free",
+        "highlight": false,
+        "features": [
+          "1 full episode unlock (your choice)",
+          "25% preview of every other episode",
+          "Basic scenario fork (authored branches)",
+          "Provenance ribbons on every claim",
+          "No ads — ever"
+        ]
+      },
+      {
+        "id": "scholar",
+        "name": "Scholar",
+        "price_monthly": 4.99,
+        "price_yearly": 39,
+        "badge": "Recommended",
+        "highlight": true,
+        "features": [
+          "Full library — every episode, uncut",
+          "Unlimited forks with multi-branch compare",
+          "Custom pressure seeds & re-renders",
+          "Export narratives as markdown",
+          "Early access to new packs",
+          "Support sovereign compute (Dawes → Nauvoo)"
+        ]
+      },
+      {
+        "id": "council",
+        "name": "Council Seat",
+        "price_monthly": 12,
+        "price_yearly": 99,
+        "badge": "Deep work",
+        "highlight": false,
+        "features": [
+          "Everything in Scholar",
+          "Priority LLM re-simulation slots",
+          "Cast / persona view (when available)",
+          "Private draft workspace",
+          "Founding-member credit on the site"
+        ]
+      }
+    ],
+    "one_time": {
+      "id": "library_pass",
+      "name": "Library Pass",
+      "price": 7.99,
+      "description": "One-time unlock of the current video library for 90 days — no subscription. Ideal if you only want to binge three nights of decision points."
+    },
+    "notes": [
+      "Nominal on purpose: this is a museum with a simulation engine, not a dopamine app.",
+      "$4.99/mo Scholar is the default recommendation — less than one streaming add-on, funds GPU hours.",
+      "Stripe checkout hooks are stubbed; membership can be demo-unlocked for review."
+    ]
+  },
+  "freemium": {
+    "full_videos_free": 1,
+    "preview_fraction": 0.25,
+    "free_forks_per_day": 3,
+    "free_controls": ["view_opening", "pick_choice", "authored_fork"],
+    "paid_controls": ["llm_rerender", "compare_branches", "custom_seed", "export", "multi_scenario_session"]
+  },
+  "videos": [
+    {
+      "id": "ELO-003-historical",
+      "scenario_id": "ELO-003",
+      "choice_id": "historical",
+      "title": "After Cannae: Hannibal says no",
+      "subtitle": "The night Maharbal begged for five days",
+      "era": "216 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-003-historical/ELO-003-historical.mp4",
+      "poster_gradient": ["#2a1810", "#0f1115"],
+      "tags": ["Cannae", "Rome", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: after the greatest battlefield victory of the ancient world, Hannibal refuses the cavalry march on Rome."
+    },
+    {
+      "id": "ELO-003-march",
+      "scenario_id": "ELO-003",
+      "choice_id": "march",
+      "title": "SPECULATION: If Hannibal rides",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "216 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-003-march/ELO-003-march.mp4",
+      "poster_gradient": ["#3a2010", "#121018"],
+      "tags": ["Cannae", "simulated"],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: accept Maharbal's proposal. Walls, logistics, and overconfident legends — all labeled 🧪."
+    },
+    {
+      "id": "ELO-013-historical",
+      "scenario_id": "ELO-013",
+      "choice_id": "historical",
+      "title": "One vote on B-59",
+      "subtitle": "27 October 1962 — the documented refusal",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-013-historical/ELO-013-historical.mp4",
+      "poster_gradient": ["#0a1a22", "#0f1115"],
+      "tags": ["Cold War", "Arkhipov", "documented"],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Heat, depth charges, incomplete information. The historical path: refuse the nuclear shot and surface."
+    }
+  ]
+}

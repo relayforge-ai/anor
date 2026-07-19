@@ -45,9 +45,14 @@ def main(argv: list[str] | None = None) -> int:
     p_show = sub.add_parser("show", help="Print scenario packet (public fields)")
     p_show.add_argument("--scenario", required=True)
 
-    p_site = sub.add_parser("site", help="Run interactive fork site")
+    p_site = sub.add_parser("site", help="Run Forked History product site (freemium library + studio)")
     p_site.add_argument("--host", default="127.0.0.1")
     p_site.add_argument("--port", type=int, default=8787)
+    p_site.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Use the minimal pipeline fork UI instead of the product site",
+    )
 
     args = parser.parse_args(argv)
     cfg = PipelineConfig.from_env()
@@ -97,9 +102,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "site":
-        from .site_app import run_server
+        if args.legacy:
+            from .site_app import run_server
 
-        run_server(host=args.host, port=args.port)
+            run_server(host=args.host, port=args.port)
+        else:
+            from webapp.server import run_server as run_product_site
+
+            run_product_site(host=args.host, port=args.port)
         return 0
 
     parser.print_help()

@@ -24,9 +24,12 @@ python3 -m pipeline.cli fork --scenario ELO-003 --choice march --no-llm
 # Render a draft explainer (requires ffmpeg on PATH)
 python3 -m pipeline.cli video --scenario ELO-013 --choice historical
 
-# Interactive site
+# Product site — Forked History (freemium library + studio)
 python3 -m pipeline.cli site --port 8787
+# → http://127.0.0.1:8787
 ```
+
+**Forked History** (`webapp/`) is the branded web product: cinematic library, freemium video gates (1 full free, then 25% previews), interactive scenario studio, and membership UI (Scholar **$4.99/mo** recommended). See [`webapp/README.md`](webapp/README.md).
 
 **Fleet portability:** all model/media calls read `LLM_URL`, `IMAGE_URL`, and `TTS_URL` from the environment — no hardcoded hosts — so the same code runs on Dawes now and Nauvoo later. Copy [`.env.example`](.env.example).
 
@@ -132,8 +135,9 @@ Authoring guidelines:
 
 ```
 anor/
+├── webapp/               # Forked History product (freemium web app)
 ├── sim/                  # decision-tree sim engine (benchmark runtime)
-├── pipeline/             # content pipeline: fork site + video
+├── pipeline/             # content pipeline: fork engine + video
 ├── scenarios/public/     # shareable ELOSTIRION decision packs
 ├── content/drafts/       # social captions staged for human gate
 ├── docs/

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forked History</title>
+  <meta name="description" content="Real decision points. Labeled speculation. Receipts on screen. ANOR Fork Studio." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <nav class="nav">
+      <a class="nav-brand" href="#/" data-nav="home">
+        <div class="nav-mark" aria-hidden="true"></div>
+        <div class="nav-title" id="brand-name">Forked History
+          <span>ANOR · ELOSTIRION</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="#/" data-nav="home">Home</a>
+        <a href="#/library" data-nav="library">Library</a>
+        <a href="#/studio" data-nav="studio">Studio</a>
+        <a href="#/pricing" data-nav="pricing">Membership</a>
+        <a class="btn btn-primary btn-sm nav-cta" href="#/pricing" id="nav-upgrade">Scholar · $4.99</a>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="member-strip" id="member-strip"></div>
+
+      <!-- HOME -->
+      <section data-page="home" class="fade-in">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">Museum of decisions · simulation of forks</p>
+            <h1 class="h-display h1">History held its breath.<br/>You choose the next word.</h1>
+            <p class="lede" style="margin-top:1rem">
+              Watch real decision points — Cannae, B-59, Barbarossa night — with speculation labeled like a ledger.
+              Then open the studio and pull a different thread. Free for your first full episode; deeper work is a small membership.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#/library">Enter the library</a>
+              <a class="btn btn-ghost" href="#/studio">Open the fork studio</a>
+            </div>
+            <div class="hero-meta">
+              <span class="pill pill-doc">📗 documented baseline</span>
+              <span class="pill pill-sim">🧪 simulated forks</span>
+              <span class="pill">no master sources · public canon only</span>
+            </div>
+          </div>
+          <div class="card hero-panel" id="hero-art">
+            <div class="hero-panel-body">
+              <span class="pill pill-warn">Featured</span>
+              <h3 id="hero-feature-title">—</h3>
+              <p id="hero-feature-blurb">—</p>
+              <div style="margin-top:0.6rem">
+                <button class="btn btn-primary btn-sm" id="hero-watch">Watch free full episode</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div>
+            <h2 class="h-display h2">Episodes</h2>
+            <p>One full episode free. After that, Explorers get the first quarter — Scholars get everything.</p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="#/library">All episodes</a>
+        </div>
+        <div class="grid grid-3" id="home-video-grid"></div>
+
+        <div class="section-head">
+          <div>
+            <h2 class="h-display h2">Decision packs</h2>
+            <p>Manipulate the fork. Free includes basic authored branches; Scholar unlocks the full console.</p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="#/studio">Studio</a>
+        </div>
+        <div class="grid grid-3" id="home-scenario-grid"></div>
+      </section>
+
+      <!-- LIBRARY -->
+      <section data-page="library" class="page-hidden fade-in">
+        <p class="eyebrow">Library</p>
+        <h1 class="h-display h2">Episodes with receipts</h1>
+        <p class="lede">Every claim carries a provenance tag. Counterfactuals never pretend to be facts.</p>
+        <div class="grid grid-3" id="library-grid" style="margin-top:1.5rem"></div>
+      </section>
+
+      <!-- WATCH -->
+      <section data-page="watch" class="page-hidden fade-in">
+        <p class="eyebrow">Now playing</p>
+        <h1 class="h-display h2" id="watch-title">—</h1>
+        <p class="lede" id="watch-sub" style="margin:0.4rem 0 0.8rem">—</p>
+        <div class="row" id="watch-pills" style="margin-bottom:1rem"></div>
+
+        <div class="player-layout">
+          <div class="player-stage">
+            <video id="player" controls playsinline preload="metadata"></video>
+            <div class="player-gate" id="player-gate">
+              <div class="gate-card">
+                <span class="pill pill-warn">Preview complete</span>
+                <h3>The rest of this fork is for Scholars</h3>
+                <p id="gate-copy">You've used your free full episode. Explorers can preview a quarter of each additional title.</p>
+                <div class="gate-actions">
+                  <button class="btn btn-primary" id="gate-upgrade">Unlock Scholar · $4.99/mo</button>
+                  <button class="btn btn-ghost" id="gate-demo">Demo unlock (review)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <aside class="card side-panel">
+            <h3 class="h3">About this cut</h3>
+            <p class="lede-sm" id="watch-blurb">—</p>
+            <div class="quota" id="watch-quota"></div>
+            <div class="stack-sm">
+              <button class="btn btn-primary" id="watch-studio">Manipulate this decision in Studio</button>
+              <a class="btn btn-ghost" href="#/pricing">See membership</a>
+            </div>
+            <hr class="hr" />
+            <p class="note">Human-gated publishing · sovereign compute · ELOSTIRION discipline</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- STUDIO -->
+      <section data-page="studio" class="page-hidden fade-in">
+        <p class="eyebrow">Fork Studio</p>
+        <h1 class="h-display h2">Change the decision. Watch history split.</h1>
+        <p class="lede">Free: basic authored forks. Scholar: LLM re-render, compare, custom seeds, export.</p>
+
+        <div class="studio-layout" style="margin-top:1.4rem">
+          <div class="card side-panel">
+            <div class="field">
+              <label for="studio-scenario">Scenario pack</label>
+              <select id="studio-scenario"></select>
+            </div>
+            <h3 class="h3" id="studio-question">—</h3>
+            <p class="note" style="margin-bottom:0.8rem"><strong style="color:var(--ink)">Known outcome:</strong> <span id="studio-known"></span></p>
+            <div class="opening-box" id="studio-opening"></div>
+            <hr class="hr" />
+            <label class="note" style="display:block;margin-bottom:0.45rem;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--font-ui);font-size:0.72rem">Your decision</label>
+            <div class="choice-list" id="choice-list"></div>
+            <div class="quota" id="studio-quota" style="margin-top:1rem"></div>
+            <div class="field" id="seed-wrap" style="display:none;margin-top:0.8rem">
+              <label for="custom-seed">Custom pressure seed (Scholar)</label>
+              <textarea id="custom-seed" placeholder="e.g. A rider reports the Capuan senate will defect only if cavalry leaves within 24 hours…"></textarea>
+            </div>
+            <div class="stack-sm" style="margin-top:0.8rem">
+              <button class="btn btn-primary" id="btn-fork">Run basic fork</button>
+              <button class="btn btn-ghost" id="btn-llm">LLM re-render</button>
+              <div class="row">
+                <button class="btn btn-ghost btn-sm" id="btn-compare">Compare branches</button>
+                <button class="btn btn-ghost btn-sm" id="btn-export">Export .md</button>
+              </div>
+            </div>
+            <div class="control-grid" id="control-tiles"></div>
+          </div>
+          <div class="card side-panel">
+            <h3 class="h3">The fork</h3>
+            <div id="fork-result" class="fork-result"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRICING -->
+      <section data-page="pricing" class="page-hidden fade-in">
+        <p class="eyebrow">Membership</p>
+        <h1 class="h-display h2">A museum ticket, not a casino.</h1>
+        <p class="lede">
+          Nominal pricing on purpose. One free full episode, then 25% previews —
+          or a coffee-scale membership for the full library and studio.
+        </p>
+
+        <div class="grid grid-3" id="pricing-grid" style="margin-top:1.6rem"></div>
+
+        <div class="card side-panel" id="one-time" style="margin-top:1.2rem"></div>
+
+        <div class="card side-panel" style="margin-top:1.2rem">
+          <h3 class="h3">Why these prices?</h3>
+          <ul id="pricing-notes" style="color:var(--ink-dim);line-height:1.6;padding-left:1.1rem"></ul>
+          <hr class="hr" />
+          <p class="note">
+            Suggested default: <strong style="color:var(--ink)">Scholar at $4.99/mo</strong> (or $39/yr).
+            Alternatives: $7.99 Library Pass (90 days), Council Seat $12/mo for deep re-sim work.
+            Stripe checkout is stubbed — use Demo unlock for review until Ryan wires payments.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div>
+          <strong style="color:var(--ink);font-family:var(--font-display);font-size:1.1rem">Forked History</strong>
+          <div>Public ANOR / ELOSTIRION canon only · no MANDOS master sources</div>
+        </div>
+        <div class="row">
+          <a href="#/pricing">Membership</a>
+          <a href="https://github.com/relayforge-ai/anor" target="_blank" rel="noopener">GitHub</a>
+          <span>RelayForge</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="paywall" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3 id="pay-title">Unlock Scholar</h3>
+      <p id="pay-copy">Full library, unlimited studio controls, LLM re-renders.</p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="pay-confirm">Continue · demo checkout</button>
+        <button class="btn btn-ghost" id="pay-demo">Demo unlock Scholar</button>
+        <button class="btn btn-ghost" id="pay-close">Not now</button>
+      </div>
+      <p class="note" style="margin-top:0.9rem;text-align:center">No charge in this build. Stripe hook ready for production.</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="/static/js/freemium.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
