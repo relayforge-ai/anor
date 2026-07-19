@@ -55,7 +55,7 @@ def _read_json(path: Path):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "ForkedHistory/1.10"
+    server_version = "ForkedHistory/1.11"
 
     def log_message(self, fmt: str, *args) -> None:
         rid = getattr(self, "_request_id", "-")
@@ -523,14 +523,19 @@ class Handler(BaseHTTPRequestHandler):
         if rate_err:
             return self._validation_error(rate_err)
 
-        # Fail closed before queueing if host cannot render (ffmpeg missing)
+        # Fail closed before queueing if host cannot render (ffmpeg / disk)
         from webapp.jobs import check_render_dependencies
 
         ok, dep_msg = check_render_dependencies()
         if not ok:
+            code = (
+                "insufficient_disk"
+                if "disk" in dep_msg.lower() or "space" in dep_msg.lower()
+                else "render_deps_missing"
+            )
             return self._json(
                 503,
-                {"error": dep_msg, "code": "render_deps_missing"},
+                {"error": dep_msg, "code": code},
             )
 
         try:

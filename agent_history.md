@@ -492,3 +492,35 @@ python3 -m unittest webapp.tests.test_http_range webapp.tests.test_paths_and_med
 
 ### RESULT
 Video players can seek reliably; unsatisfiable ranges fail closed without dumping the full MP4.
+
+---
+
+## Iteration 17 — 2026-07-19
+
+### OBSERVE
+Video enqueue checked ffmpeg but not free disk. Renders write stills, segment clips, and final MP4 under `outputs/` — a near-full volume fails mid-pipeline after GPU work. Health did not expose free space for operators.
+
+### PLAN
+**One high-impact change:** fail closed on insufficient free disk before enqueue (and at worker start), with health stats for free MB.
+
+Expected outcome: enqueue returns 503 `insufficient_disk` when free space under `outputs/` is below `ANOR_MIN_FREE_DISK_MB` (default 512); health reports `disk_ok` / `disk_free_mb`.
+
+### EXECUTE
+- `check_disk_space()` + split `check_ffmpeg()` from combined `check_render_dependencies()`
+- Queue stats: `disk_ok`, `disk_free_mb`, `min_free_disk_mb`
+- Enqueue maps disk failures to code `insufficient_disk`
+- Env: `ANOR_MIN_FREE_DISK_MB` (0 disables)
+- Tests: low-disk mock, disable-with-zero, stats fields
+
+### TEST
+```
+python3 -m unittest webapp.tests.test_render_deps webapp.tests.test_video_jobs \
+  webapp.tests.test_job_timeout -v
+→ Ran 16 tests — OK
+```
+- 10MB free mocked → insufficient disk
+- ANOR_MIN_FREE_DISK_MB=0 → check disabled
+- Video job enqueue/complete still green
+
+### RESULT
+Renders refuse to start when the volume cannot hold intermediates; operators can monitor free space via `/api/health` queue stats.

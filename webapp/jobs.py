@@ -8,6 +8,7 @@ Env:
   ANOR_VIDEO_MAX_QUEUED      (default 8)
   ANOR_VIDEO_JOB_TTL_S       (default 3600) — finished jobs retained this long
   ANOR_VIDEO_JOB_TIMEOUT_S   (default 600) — max wall time for a running render
+  ANOR_MIN_FREE_DISK_MB      (default 512) — refuse enqueue when free space under outputs/ is below this (0 = skip check)
 """
 
 from __future__ import annotations
@@ -36,8 +37,8 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-def check_render_dependencies() -> tuple[bool, str]:
-    """Fail fast if the host cannot run the video pipeline."""
+def check_ffmpeg() -> tuple[bool, str]:
+    """Fail fast if ffmpeg is missing or not runnable."""
     if not shutil.which("ffmpeg"):
         return False, "ffmpeg not found on PATH — install ffmpeg to render videos"
     try:
@@ -49,6 +50,53 @@ def check_render_dependencies() -> tuple[bool, str]:
         )
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
         return False, f"ffmpeg not runnable: {e}"
+    return True, "ok"
+
+
+def check_disk_space(min_free_mb: int | None = None) -> tuple[bool, str, int]:
+    """Ensure enough free space under ``outputs/`` for stills + intermediate clips + MP4.
+
+    Returns (ok, message, free_mb). ``free_mb`` is -1 when the check is disabled.
+    Set ANOR_MIN_FREE_DISK_MB=0 to skip (CI hosts with tiny disks can opt out).
+    """
+    if min_free_mb is None:
+        # _env_int clamps to ≥1; allow explicit 0 via raw env to disable
+        raw = os.environ.get("ANOR_MIN_FREE_DISK_MB", "").strip()
+        if raw == "0":
+            min_free_mb = 0
+        else:
+            min_free_mb = _env_int("ANOR_MIN_FREE_DISK_MB", 512)
+    if min_free_mb <= 0:
+        return True, "disk check disabled", -1
+
+    out_root = ROOT / "outputs"
+    try:
+        out_root.mkdir(parents=True, exist_ok=True)
+        usage = shutil.disk_usage(out_root)
+    except OSError as e:
+        return False, f"disk check failed: {e}", 0
+
+    free_mb = int(usage.free // (1024 * 1024))
+    if free_mb < min_free_mb:
+        return (
+            False,
+            (
+                f"insufficient disk space: {free_mb}MB free under outputs/ "
+                f"(need ≥{min_free_mb}MB; set ANOR_MIN_FREE_DISK_MB to adjust)"
+            ),
+            free_mb,
+        )
+    return True, "ok", free_mb
+
+
+def check_render_dependencies() -> tuple[bool, str]:
+    """Fail fast if the host cannot run the video pipeline (ffmpeg + free disk)."""
+    ok, msg = check_ffmpeg()
+    if not ok:
+        return False, msg
+    ok, msg, _free = check_disk_space()
+    if not ok:
+        return False, msg
     return True, "ok"
 
 
@@ -133,7 +181,10 @@ class VideoJobQueue:
             statuses = {}
             for j in self._jobs.values():
                 statuses[j.status] = statuses.get(j.status, 0) + 1
-            ok, msg = check_render_dependencies()
+            ff_ok, ff_msg = check_ffmpeg()
+            disk_ok, disk_msg, free_mb = check_disk_space()
+            raw_min = os.environ.get("ANOR_MIN_FREE_DISK_MB", "").strip()
+            min_free = 0 if raw_min == "0" else _env_int("ANOR_MIN_FREE_DISK_MB", 512)
             return {
                 "max_concurrent": self.max_concurrent,
                 "max_queued": self.max_queued,
@@ -141,8 +192,12 @@ class VideoJobQueue:
                 "timeout_s": self.timeout_s,
                 "jobs": len(self._jobs),
                 "by_status": statuses,
-                "ffmpeg_ok": ok,
-                "ffmpeg_detail": msg if not ok else "ok",
+                "ffmpeg_ok": ff_ok,
+                "ffmpeg_detail": ff_msg if not ff_ok else "ok",
+                "disk_ok": disk_ok,
+                "disk_free_mb": free_mb,
+                "min_free_disk_mb": min_free,
+                "disk_detail": disk_msg if not disk_ok else "ok",
             }
 
     def find_active(
