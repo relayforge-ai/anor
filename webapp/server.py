@@ -1001,20 +1001,24 @@ class Handler(BaseHTTPRequestHandler):
         if rate_err:
             return self._validation_error(rate_err)
 
-        # Fail closed before queueing if host cannot render (ffmpeg / disk)
-        from webapp.jobs import check_render_dependencies
+        force = bool(data.get("force"))
+        # Cache hit needs no ffmpeg/disk headroom — skip dep check to serve
+        # already-rendered library MP4s on lean hosts.
+        from webapp.jobs import check_render_dependencies, find_cached_video
 
-        ok, dep_msg = check_render_dependencies(force=True)
-        if not ok:
-            code = (
-                "insufficient_disk"
-                if "disk" in dep_msg.lower() or "space" in dep_msg.lower()
-                else "render_deps_missing"
-            )
-            return self._json(
-                503,
-                {"error": dep_msg, "code": code},
-            )
+        will_cache = (not force) and find_cached_video(scenario_id, choice_id) is not None
+        if not will_cache:
+            ok, dep_msg = check_render_dependencies(force=True)
+            if not ok:
+                code = (
+                    "insufficient_disk"
+                    if "disk" in dep_msg.lower() or "space" in dep_msg.lower()
+                    else "render_deps_missing"
+                )
+                return self._json(
+                    503,
+                    {"error": dep_msg, "code": code},
+                )
 
         try:
             job, deduped = QUEUE.enqueue(
@@ -1022,6 +1026,7 @@ class Handler(BaseHTTPRequestHandler):
                 choice_id,
                 use_llm=use_llm,
                 owner_key=key,
+                force=force,
             )
         except RuntimeError as e:
             return self._client_error(503, e, "queue_full")
@@ -1030,10 +1035,18 @@ class Handler(BaseHTTPRequestHandler):
 
         # 202 Accepted — client polls GET /api/video/jobs/{id}
         # Deduped responses reuse the active job (no second GPU worker)
+        # Cache hits return completed immediately (result.cached=true)
         payload = QUEUE.to_public_enriched(job)
         payload["deduped"] = deduped
+        cache_hit = bool(
+            job.status == "completed"
+            and isinstance(job.result, dict)
+            and job.result.get("cached")
+        )
+        payload["cache_hit"] = cache_hit
         extra = {
             "X-Job-Deduped": "1" if deduped else "0",
+            "X-Job-Cache-Hit": "1" if cache_hit else "0",
             **rate_headers,
         }
         return self._json(202, payload, extra=extra)

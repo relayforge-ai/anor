@@ -57,6 +57,42 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def video_artifact_dir(scenario_id: str, choice_id: str) -> Path:
+    """Directory for a scenario/choice render under outputs/videos/."""
+    return ROOT / "outputs" / "videos" / f"{scenario_id}-{choice_id}"
+
+
+def find_cached_video(scenario_id: str, choice_id: str) -> Optional[Path]:
+    """Return path to an existing MP4 if large enough to be a real render.
+
+    Tiny files are ignored (failed/truncated artifacts). Override minimum with
+    ANOR_VIDEO_CACHE_MIN_BYTES (default 2048).
+    """
+    out_dir = video_artifact_dir(scenario_id, choice_id)
+    # Canonical name matches video_pipeline final deliverable
+    candidates = [
+        out_dir / f"{scenario_id}-{choice_id}.mp4",
+        *sorted(out_dir.glob("*.mp4")),
+    ]
+    min_bytes = _env_int("ANOR_VIDEO_CACHE_MIN_BYTES", 2048)
+    seen: set[Path] = set()
+    for p in candidates:
+        if p in seen:
+            continue
+        seen.add(p)
+        try:
+            if p.is_file() and p.stat().st_size >= min_bytes:
+                return p
+        except OSError:
+            continue
+    return None
+
+
+def media_url_for(scenario_id: str, choice_id: str, filename: str) -> str:
+    """Public media URL for a finished MP4 (no absolute host paths)."""
+    return f"/media/videos/{scenario_id}-{choice_id}/{filename}"
+
+
 def sanitize_public_error(message: object, *, limit: int = 400) -> str:
     """Redact absolute host paths from exception text before client delivery.
 
@@ -400,12 +436,18 @@ class VideoJobQueue:
         *,
         dedupe: bool = True,
         owner_key: Optional[str] = None,
+        force: bool = False,
     ) -> tuple[VideoJob, bool]:
         """Enqueue a render. Returns (job, deduped).
 
         When ``dedupe`` is True (default), a second request for the same
         scenario/choice/use_llm while one is queued or running reuses that job
         instead of spawning duplicate GPU work.
+
+        When ``force`` is False (default) and a finished MP4 already exists on
+        disk for this scenario/choice, return an immediate **completed** job
+        with ``result.cached=true`` — no worker, no GPU/TTS. Set ``force=True``
+        to re-render.
 
         ``owner_key`` is the rate-limit client identity used to scope job lists
         so one client cannot enumerate another's renders.
@@ -426,6 +468,32 @@ class VideoJobQueue:
                         if owner_key and not j.owner_key:
                             j.owner_key = owner_key
                         return j, True
+            # Disk cache hit — skip queue slot and GPU entirely
+            if not force:
+                cached = find_cached_video(scenario_id, choice_id)
+                if cached is not None:
+                    now = time.time()
+                    job = VideoJob(
+                        id=uuid.uuid4().hex[:16],
+                        scenario_id=scenario_id,
+                        choice_id=choice_id,
+                        use_llm=use_llm,
+                        owner_key=owner_key,
+                        status="completed",
+                        stage="done",
+                        pct=100.0,
+                        message="Using existing render (cache hit)",
+                        started_at=now,
+                        finished_at=now,
+                        result={
+                            "media_url": media_url_for(scenario_id, choice_id, cached.name),
+                            "segments": None,
+                            "mock_media": None,
+                            "cached": True,
+                        },
+                    )
+                    self._jobs[job.id] = job
+                    return job, False
             active = sum(
                 1 for j in self._jobs.values() if j.status in ("queued", "running")
             )

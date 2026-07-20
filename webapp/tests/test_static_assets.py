@@ -34,6 +34,8 @@ class TestStaticProgressUI(unittest.TestCase):
             'role="progressbar"',
             "queueVideoRender",
             "/api/video/jobs",
+            "cache_hit",
+            "Using existing render",
             "setPlayerLoading",
             "pollMs",
             "libraryEmptyHtml",

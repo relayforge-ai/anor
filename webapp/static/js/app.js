@@ -1364,16 +1364,21 @@
           done = true;
           clearActiveVideoJob();
           const url = st.result?.media_url || "";
+          const wasCached = !!(st.result && st.result.cached);
+          const cachedNote = wasCached
+            ? `<p class="note">Served from disk cache — no new stills/TTS/ffmpeg work.</p>`
+            : "";
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
               activeIndex: stages.length - 1,
               pct: 100,
-              label: "Render complete",
+              label: wasCached ? "Existing render ready" : "Render complete",
               indeterminate: false,
             }) +
             `<div style="margin-top:1rem">
               <p class="note">Async job <code>${escapeHtml(jobId)}</code> finished.</p>
+              ${cachedNote}
               ${
                 url
                   ? `<a class="btn btn-primary btn-sm" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open MP4</a>
@@ -1382,7 +1387,13 @@
                   : ""
               }
             </div>`;
-          toast(resumed ? "Render finished while you were away" : "Video ready");
+          toast(
+            wasCached
+              ? "Existing render ready"
+              : resumed
+                ? "Render finished while you were away"
+                : "Video ready"
+          );
           // Bust catalog ETag cache so new render availability is visible
           try {
             sessionStorage.removeItem(CACHE_CATALOG + ":etag");
@@ -1545,7 +1556,13 @@
         choiceId: state.choiceId,
         startedAt: Date.now(),
       });
-      toast(job.deduped ? "Joined existing render job" : "Video job queued");
+      if (job.cache_hit || (job.result && job.result.cached)) {
+        toast("Using existing render — no GPU work");
+      } else if (job.deduped) {
+        toast("Joined existing render job");
+      } else {
+        toast("Video job queued");
+      }
       noteRateRemaining(r, "Video");
       await pollVideoJob(jobId, { resumed: false });
     } catch (e) {

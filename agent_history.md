@@ -2271,3 +2271,25 @@ Full local CI (unittest suite + compileall + pytest + pip-audit) → OK
 
 ### RESULT
 Operators and Scholars see real pipeline stages and wait estimates; phones keep Fork/LLM/Video/Compare reachable.
+
+---
+
+## Iteration 80 — 2026-07-20
+
+### OBSERVE
+Re-queue after a finished MP4 re-ran full still→TTS→ffmpeg. Costly on Dawes and common after refresh/compare.
+
+### PLAN
+**One high-impact change:** disk cache hit on enqueue — return completed job with `result.cached` when MP4 exists; `force=true` re-renders.
+
+### EXECUTE
+- `find_cached_video` / `media_url_for`; enqueue short-circuit; server skips dep check on cache; SPA toast + UI note
+- Tests: cache hit no worker, force bypass, tiny-file ignore
+
+### TEST
+```
+Full local CI → OK
+```
+
+### RESULT
+Scholars get instant “existing render” when media is already on disk; GPU/TTS watts preserved.
