@@ -14,9 +14,12 @@ class TestStaticProgressUI(unittest.TestCase):
         for needle in (
             ".sim-progress",
             ".sim-progress-bar",
+            ".sim-progress-pct",
             ".skeleton",
             "prefers-reduced-motion",
             ".fork-error",
+            ".studio-dock",
+            "scroll-padding-top",
         ):
             self.assertIn(needle, css, f"missing {needle}")
 
@@ -39,6 +42,13 @@ class TestStaticProgressUI(unittest.TestCase):
             "tryResumeVideoJob",
             "jobProgressLabel",
             "jobs_ahead",
+            "eta_s",
+            "sim-progress-pct",
+            "videoStageIndex",
+            "studio-dock",
+            "syncStudioDock",
+            "dock-fork",
+            "Ken Burns clips",
             "pollVideoJob",
             "fh:lastFork",
             "saveLastFork",

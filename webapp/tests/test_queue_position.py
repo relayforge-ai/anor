@@ -98,6 +98,10 @@ class TestQueuePosition(unittest.TestCase):
                             self.assertEqual(p1["jobs_ahead"], 0)
                             self.assertEqual(p2["queue_position"], 1)
                             self.assertEqual(p2["jobs_ahead"], 0)
+                            # Running job may expose wall-clock remaining as eta_s
+                            self.assertIn("eta_s", p1)
+                            # Queued next-in-line → ~0 wait estimate
+                            self.assertEqual(p2.get("eta_s"), 0)
 
                             j3, _ = q.enqueue("ELO-013", "historical", use_llm=False)
                             time.sleep(0.05)
@@ -107,6 +111,9 @@ class TestQueuePosition(unittest.TestCase):
                             self.assertEqual(p2b["queue_position"], 1)
                             self.assertEqual(p3["jobs_ahead"], 1)
                             self.assertEqual(p3["queue_position"], 2)
+                            # jobs_ahead=1 → one slot of heuristic ETA
+                            eta_per = int(os.environ.get("ANOR_VIDEO_ETA_PER_JOB_S") or "120")
+                            self.assertEqual(p3.get("eta_s"), eta_per)
 
                             gate["go"] = True
                             deadline = time.time() + 10

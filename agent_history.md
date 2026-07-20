@@ -2247,3 +2247,27 @@ Full local CI (unittest incl. test_cli_still + compileall + pytest + pip-audit) 
 
 ### RESULT
 Content ops can mint stills (+ optional 1080p Ken Burns) without a full video render.
+
+---
+
+## Iteration 79 — 2026-07-20
+
+### OBSERVE
+Main green after still CLI. Studio video progress treated stills/TTS/clips as one flat stage; no queue wait ETA; mobile users scrolled past primary actions on long studio pages.
+
+### PLAN
+**One high-impact change:** finer render progress ladder + queue `eta_s` + mobile studio dock + progress % polish.
+
+### EXECUTE
+- `video_pipeline`: stages `still` / `tts` / `clip` with segment n/N messages
+- `jobs.to_public_enriched`: `eta_s` (queued: jobs_ahead × ANOR_VIDEO_ETA_PER_JOB_S; running: deadline remaining)
+- SPA: VIDEO_STAGES ladder, percent readout, sticky `#studio-dock` ≤720px, scroll-padding / reduced-motion
+- Tests: static assets, queue position ETA
+
+### TEST
+```
+Full local CI (unittest suite + compileall + pytest + pip-audit) → OK
+```
+
+### RESULT
+Operators and Scholars see real pipeline stages and wait estimates; phones keep Fork/LLM/Video/Compare reachable.

@@ -146,6 +146,11 @@
       if (st.jobs_ahead === 0) msg += " · next in line";
       else msg += ` · ${st.jobs_ahead} ahead`;
     }
+    if (st.eta_s != null && st.eta_s >= 0 && (st.status === "queued" || st.status === "running")) {
+      if (st.status === "queued" && st.eta_s > 0) {
+        msg += ` · ~${formatDuration(st.eta_s)} estimate`;
+      }
+    }
     msg += jobTimeSuffix(st);
     return msg;
   }
@@ -184,6 +189,28 @@
 
   function showPage(id) {
     $$("[data-page]").forEach((p) => p.classList.toggle("page-hidden", p.dataset.page !== id));
+    const dock = $("#studio-dock");
+    if (dock) {
+      // Mobile sticky actions only while studio is visible
+      dock.hidden = id !== "studio";
+    }
+  }
+
+  function syncStudioDock() {
+    /** Mirror primary control disabled/busy state onto the mobile dock. */
+    const pairs = [
+      ["#btn-fork", "#dock-fork"],
+      ["#btn-llm", "#dock-llm"],
+      ["#btn-video", "#dock-video"],
+      ["#btn-compare", "#dock-compare"],
+    ];
+    pairs.forEach(([srcSel, dockSel]) => {
+      const src = $(srcSel);
+      const d = $(dockSel);
+      if (!src || !d) return;
+      d.disabled = !!src.disabled;
+      d.classList.toggle("busy", src.classList.contains("busy"));
+    });
   }
 
   function setNavOpen(open) {
@@ -615,11 +642,16 @@
   function renderSimProgress({ stages, activeIndex, pct, label, indeterminate }) {
     const barClass = indeterminate ? "sim-progress-bar indeterminate" : "sim-progress-bar";
     const width = Math.max(0, Math.min(100, pct || 0));
+    const pctRounded = Math.round(width);
+    const pctText = indeterminate ? "…" : `${pctRounded}%`;
     return `
       <div class="sim-progress" aria-busy="true">
-        <p class="sim-progress-label">${escapeHtml(label || "Working…")}</p>
+        <div class="sim-progress-head">
+          <p class="sim-progress-label">${escapeHtml(label || "Working…")}</p>
+          <span class="sim-progress-pct" aria-hidden="true">${pctText}</span>
+        </div>
         <div class="${barClass}" role="progressbar" aria-valuemin="0" aria-valuemax="100"
-             aria-valuenow="${indeterminate ? 0 : Math.round(width)}"
+             aria-valuenow="${indeterminate ? 0 : pctRounded}"
              aria-label="${escapeHtml(label || "Simulation progress")}">
           <i style="width:${indeterminate ? 35 : width}%"></i>
         </div>
@@ -946,6 +978,8 @@
       })
       .join("");
 
+    syncStudioDock();
+
     // custom seed field
     $("#seed-wrap").style.display = member ? "block" : "none";
     $("#btn-llm").disabled = !member;
@@ -1200,7 +1234,9 @@
     { id: "queue", label: "Accepted by render queue" },
     { id: "fork", label: "Decision narrative" },
     { id: "script", label: "VO script & shot list" },
-    { id: "segment", label: "Stills · TTS · clips" },
+    { id: "still", label: "Archival stills (image)" },
+    { id: "tts", label: "Narration (TTS)" },
+    { id: "clip", label: "Ken Burns clips" },
     { id: "concat", label: "Final MP4 assembly" },
   ];
 
@@ -1211,11 +1247,17 @@
       load: 1,
       fork: 1,
       script: 2,
+      // Finer pipeline stages (iter 79+) — fall back to still for legacy "segment"
+      still: 3,
       segment: 3,
-      concat: 4,
-      done: 4,
-      timeout: 3,
-      error: 3,
+      image: 3,
+      tts: 4,
+      clip: 5,
+      mux: 5,
+      concat: 6,
+      done: 6,
+      timeout: 5,
+      error: 5,
     };
     return map[stage] ?? 0;
   }
@@ -1257,6 +1299,7 @@
       btn.disabled = true;
       btn.classList.add("busy");
     }
+    syncStudioDock();
 
     const stages = VIDEO_STAGES;
     let done = false;
@@ -1412,6 +1455,7 @@
         btn.classList.remove("busy");
       }
       renderStudioControls();
+      syncStudioDock();
     }
   }
 
@@ -2082,6 +2126,11 @@
     $("#btn-compare")?.addEventListener("click", compareBranches);
     $("#btn-copy")?.addEventListener("click", copyForkNarrative);
     $("#btn-export")?.addEventListener("click", exportFork);
+    // Mobile dock mirrors primary actions (click-through to same handlers)
+    $("#dock-fork")?.addEventListener("click", () => $("#btn-fork")?.click());
+    $("#dock-llm")?.addEventListener("click", () => $("#btn-llm")?.click());
+    $("#dock-video")?.addEventListener("click", () => $("#btn-video")?.click());
+    $("#dock-compare")?.addEventListener("click", () => $("#btn-compare")?.click());
     bindStudioKeyboardShortcuts();
 
     // player gate buttons

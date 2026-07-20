@@ -476,19 +476,26 @@ class VideoJobQueue:
         return bool(owner_key) and job.owner_key == owner_key
 
     def to_public_enriched(self, job: VideoJob) -> dict[str, Any]:
-        """Public job dict plus queue_position / jobs_ahead for studio feedback.
+        """Public job dict plus queue_position / jobs_ahead / eta_s for studio feedback.
 
-        - running: queue_position=0, jobs_ahead=0
-        - queued: 1-based position among queued (oldest first); jobs_ahead = position-1
-        - terminal: both null
+        - running: queue_position=0, jobs_ahead=0, eta_s from wall-clock deadline
+        - queued: 1-based position among queued (oldest first); jobs_ahead = position-1;
+          eta_s ≈ jobs_ahead * ANOR_VIDEO_ETA_PER_JOB_S (heuristic for UX, not a SLA)
+        - terminal: queue fields null
         """
         d = job.to_public()
+        eta_per = _env_int("ANOR_VIDEO_ETA_PER_JOB_S", 120)
         with self._lock:
             live = self._jobs.get(job.id) or job
             status = live.status
             if status == "running":
                 d["queue_position"] = 0
                 d["jobs_ahead"] = 0
+                if live.deadline_at:
+                    left = max(0, int(live.deadline_at - time.time()))
+                    d["eta_s"] = left
+                else:
+                    d["eta_s"] = None
             elif status == "queued":
                 queued = sorted(
                     (j for j in self._jobs.values() if j.status == "queued"),
@@ -498,13 +505,17 @@ class VideoJobQueue:
                     if j.id == live.id:
                         d["queue_position"] = i + 1
                         d["jobs_ahead"] = i
+                        # Rough wait: each job ahead ≈ eta_per seconds of GPU/ffmpeg work
+                        d["eta_s"] = int(i * eta_per) if eta_per > 0 else None
                         break
                 else:
                     d["queue_position"] = None
                     d["jobs_ahead"] = None
+                    d["eta_s"] = None
             else:
                 d["queue_position"] = None
                 d["jobs_ahead"] = None
+                d["eta_s"] = None
         return d
 
     def list_recent(self, limit: int = 20) -> list[VideoJob]:

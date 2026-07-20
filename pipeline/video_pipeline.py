@@ -295,17 +295,32 @@ def render_video(
         n = max(1, len(segments))
 
         for i, seg in enumerate(segments):
-            # Segments occupy 25% → 85% of the bar
-            base = 25 + (i / n) * 60
-            progress("segment", base, f"Rendering segment {i + 1}/{n}: {seg['title']}")
+            # Segments occupy 25% → 85% of the bar; sub-stages still → tts → clip
+            # so the studio can paint a finer progress ladder (not one flat "segment").
+            span = 60.0 / n
+            base = 25.0 + i * span
+            title = seg.get("title") or seg.get("id") or f"shot {i + 1}"
+            progress(
+                "still",
+                base,
+                f"Still {i + 1}/{n}: {title} (image)",
+            )
             img_path = work / f"{i:02d}_{seg['id']}.png"
             audio_path = work / f"{i:02d}_{seg['id']}_vo"
             clip_path = work / f"{i:02d}_{seg['id']}.mp4"
 
             images.generate(seg["image_prompt"], img_path)
-            progress("segment", base + (60 / n) * 0.35, f"TTS for segment {i + 1}/{n}")
+            progress(
+                "tts",
+                base + span * 0.4,
+                f"Narration {i + 1}/{n}: {title} (TTS)",
+            )
             audio_file = tts.synthesize(seg["text"], audio_path)
-            progress("segment", base + (60 / n) * 0.7, f"Muxing clip {i + 1}/{n}")
+            progress(
+                "clip",
+                base + span * 0.75,
+                f"Ken Burns clip {i + 1}/{n}: {title}",
+            )
             dur = _ffprobe_duration(audio_file)
             _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
             clips.append(clip_path)
