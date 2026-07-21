@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-011",
+  "title": "Munich 1938 — stand firm or concede the Sudetenland?",
+  "era": "1938",
+  "location": "Munich / London / Prague / Berlin",
+  "datetime": "September 1938, the Sudeten crisis summit window",
+  "domain": "Interwar crisis / alliance politics / deterrence",
+  "known_outcome": "Britain and France accept a settlement that transfers the Sudetenland to Germany without fighting. Czechoslovakia is pressured to comply. The Munich Agreement is signed; war in Europe is postponed — not prevented.",
+  "decision_question": "With partial mobilization already visible and alliance commitments thin, do London and Paris stand firm behind Prague, accept a transfer under pressure, or push a limited compromise short of full Sudeten cession?",
+  "opening": {
+    "cold_open": "September air over Europe is thick with radios and rumors. Maps of Bohemia sit under cabinet lamps. Hitler’s deadlines move faster than parliaments. Prague waits for words that may never arrive as tanks.",
+    "what_they_knew": "They knew German demands targeted the Sudetenland and that Czech defenses were not trivial. They knew public opinion in Britain and France was exhausted by the last war. They did not know whether a firm line would produce climb-down, local war, or a general European war on a timetable nobody controlled.",
+    "pressure": "Fear of aerial bombing of cities. Incomplete rearmament. Alliance optics with Prague. Domestic politics. The belief — true or false — that time bought is time rearmed."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Concede under pressure — Munich settlement path",
+      "is_historical": true,
+      "summary": "Documented path: Britain and France accept a settlement transferring the Sudetenland; Czechoslovakia is compelled to yield; war is postponed.",
+      "immediate": "Diplomacy outruns Czech sovereignty. German forces enter the ceded zone under the cover of ‘agreement’.",
+      "near_term": "Prague’s strategic depth collapses. Hitler’s next moves still lie ahead; the ‘peace for our time’ phrase becomes a moral ledger entry.",
+      "longer_arc": "Munich becomes the canonical case study in crisis bargaining, deterrence credibility, and the cost of buying time under incomplete information.",
+      "speculation_level": "documented",
+      "image_prompt": "1938 Munich conference table, period suits and maps of Czechoslovakia, documentary chiaroscuro still photograph, film grain, sepia warmth, no text, no caricature",
+      "vo_script": "September 1938. The Sudeten crisis is not a classroom puzzle. Cabinets trade hours against cities. History records the Munich path: Britain and France accept a settlement that strips Czechoslovakia of the Sudetenland without a fight. War is postponed. Credibility is spent."
+    },
+    {
+      "id": "stand_firm",
+      "label": "Stand firm — refuse transfer without Czech consent and real guarantees",
+      "is_historical": false,
+      "summary": "SPECULATION: London and Paris refuse a dictated transfer, accepting the risk of local or general war rather than a settlement Prague cannot freely accept.",
+      "immediate": "Diplomacy hardens. Mobilization signals intensify. The crisis may still end in climb-down, limited war, or wider war — outcomes are not a scoreboard.",
+      "near_term": "Czech defenses and French-British posture become the real variables. There is no honest guarantee of a short clean victory.",
+      "longer_arc": "Simulated. Explores deterrence credibility and alliance obligation under incomplete rearmament — not a secret history of automatic German collapse.",
+      "speculation_level": "simulated",
+      "image_prompt": "1938 map room with Czech border highlighted, British and French officers under lamp light, tense archival documentary still, film grain, no text, no modern objects",
+      "vo_script": "What if they stand firm? This is speculation. Refusing a dictated transfer is not a guaranteed short war — and not a guaranteed climb-down. It is a different bill: credibility paid in risk, not in ceded mountains. We label the branch simulated because the only honest detail is the trade."
+    },
+    {
+      "id": "limited_deal",
+      "label": "Limited deal — delay and partial concessions without full Sudeten cession",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: push a narrower compromise and delay while rearming, without signing away the entire Sudeten barrier in one stroke.",
+      "immediate": "Talks stretch. Partial maps appear. Neither Prague nor Berlin may accept the middle for long.",
+      "near_term": "A thinner border and a thinner coalition may both result. Delay can rearm — or simply move the same crisis a few months later.",
+      "longer_arc": "Dramatized process study of half-measures under deadline pressure, not a claim of a stable peace architecture.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1938 conference antechamber, clocks and briefcases, partial maps of Bohemia, restrained documentary painting, sepia, film grain, no text",
+      "vo_script": "What if the middle path is the first tool — delay, partial lines, more time? Half-measures can buy factories. They can also buy the same crisis with weaker maps. This branch is dramatized process, not a secret third history that settles Europe cleanly."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Sudeten crisis and Munich Agreement (September 1938)",
+    "Published diplomatic correspondence and secondary literature on British and French crisis decision-making",
+    "ELOSTIRION ELO-011 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses multi-capital diplomacy into a playable London/Paris go/no-go. Counterfactual stand-firm and limited-deal branches are labeled simulated or dramatized — not secret history.",
+    "corpus": "ELOSTIRION ELO-011 public pack"
+  },
+  "style_lock": "1938 European cabinets and Czech border maps, interwar documentary gravity, sepia/chiaroscuro archival stills, period dress, no modern objects, no text",
+  "tags": ["alt-history", "Munich", "1938", "Sudetenland", "appeasement", "decision-point"]
+}

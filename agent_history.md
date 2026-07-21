@@ -2704,3 +2704,27 @@ Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Freemium library and home read as a decision museum timeline instead of a file-append dump.
+
+---
+
+## Iteration 99 — 2026-07-21
+
+### OBSERVE
+Main green after chronological library. Public canon had no interwar Munich decision pack; freemium catalog and social drafts stopped at 10 packs / 30 cuts. ELO-001 historical was also unfeatured.
+
+### PLAN
+**One high-impact change:** ship public pack ELO-011 (Munich 1938) end-to-end — pack, catalog, drafts, docs.
+
+### EXECUTE
+- `scenarios/public/ELO-011.json` — historical / stand_firm / limited_deal (labeled)
+- Catalog: 3 video rows + feature ELO-001-historical
+- `content/drafts/batch-010/` human-gate captions + Postiz skeleton
+- README / PIPELINE / social tests for batch-010
+
+### TEST
+```
+Full local CI → 286 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+New monetizable decision pack on Munich with freemium library coverage and draft-only social pipeline; mock-media path unchanged.

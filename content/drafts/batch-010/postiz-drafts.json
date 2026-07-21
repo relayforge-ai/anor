@@ -1,0 +1,93 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-010",
+  "created": "2026-07-21",
+  "theme": "Munich 1938 Sudeten crisis (ELO-011)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review stand_firm and limited_deal for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-011-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1938. Sudeten crisis. Peace for our time?\n📗 Documented settlement path.\nWar postponed — not prevented.\n#historytok #munich #1938",
+      "media_local": "outputs/videos/ELO-011-historical/ELO-011-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-011-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "September 1938: The Munich settlement path",
+      "caption": "Cabinets trade hours against cities.\n\n📗 Documented baseline: Britain and France accept a Sudeten settlement. War is postponed — not prevented.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#history #munich #1938 #ww2",
+      "media_local": "outputs/videos/ELO-011-historical/ELO-011-historical.mp4",
+      "settings": {
+        "title": "September 1938: The Munich settlement path",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "munich", "label": "munich"},
+          {"value": "1938", "label": "1938"}
+        ]
+      }
+    },
+    {
+      "id": "elo-011-stand-firm-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they stand firm in 1938?\n🧪 SIMULATED — not a guaranteed short war.\n📗 History took the settlement.\n#althistory #historytok #munich",
+      "media_local": "outputs/videos/ELO-011-stand_firm/ELO-011-stand_firm.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-011-stand-firm-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if London and Paris stood firm behind Prague in 1938?",
+      "caption": "⚠️ SIMULATED counterfactual — not a secret second Munich.\n\n📗 Baseline: settlement path is documented.\n🧪 Stand firm pays credibility in risk, not ceded mountains.\n\n#althistory #munich #speculationlabeled",
+      "media_local": "outputs/videos/ELO-011-stand_firm/ELO-011-stand_firm.mp4",
+      "settings": {
+        "title": "SPECULATION: What if London and Paris stood firm behind Prague in 1938?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "munich", "label": "munich"}
+        ]
+      }
+    },
+    {
+      "id": "elo-011-limited-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if Munich was a thinner deal and more time?",
+      "caption": "⚠️ DRAMATIZED process — not a secret third history.\n\nHalf-measures can buy factories. They can also buy the same crisis with weaker maps.\n\n#althistory #munich #speculationlabeled",
+      "media_local": "outputs/videos/ELO-011-limited_deal/ELO-011-limited_deal.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if Munich was a thinner deal and more time?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "1938", "label": "1938"}
+        ]
+      }
+    }
+  ]
+}

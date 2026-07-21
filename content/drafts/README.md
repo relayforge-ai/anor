@@ -108,7 +108,17 @@ See `batch-008/README.md` and `batch-008/postiz-drafts.json`.
 | `batch-009/ELO-001-disinformation_trap.md` | longer denial framing | disinformation_trap | YT |
 | `batch-009/ELO-003-recon.md` | Cannae limited probe | recon | YT + TT |
 
-See `batch-009/README.md` and `batch-009/postiz-drafts.json`. Completes social-draft coverage for every public pack choice.
+See `batch-009/README.md` and `batch-009/postiz-drafts.json`.
+
+## Batch 010 — Munich 1938 (ELO-011)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-010/ELO-011-historical.md` | Munich settlement | historical | YT + TT |
+| `batch-010/ELO-011-stand_firm.md` | stand firm | simulated | YT + TT |
+| `batch-010/ELO-011-limited_deal.md` | limited deal + delay | dramatized | YT + TT |
+
+See `batch-010/README.md` and `batch-010/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
 
 Render commands (offline-safe with mock media, or point env at Dawes):
 
@@ -136,7 +146,11 @@ python -m pipeline.cli video --scenario ELO-008 --choice historical
 python -m pipeline.cli video --scenario ELO-008 --choice delay_longer
 python -m pipeline.cli video --scenario ELO-010 --choice historical
 python -m pipeline.cli video --scenario ELO-010 --choice scrub
+python -m pipeline.cli video --scenario ELO-011 --choice historical
+python -m pipeline.cli video --scenario ELO-011 --choice stand_firm
+python -m pipeline.cli video --scenario ELO-011 --choice limited_deal
 ```
+
 
 
 ## Human gate checklist
