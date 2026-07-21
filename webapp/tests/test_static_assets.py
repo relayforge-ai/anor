@@ -342,7 +342,9 @@ class TestStaticProgressUI(unittest.TestCase):
             "Labeled speculation",
             'rel="icon"',
             'rel="canonical"',
+            'rel="manifest"',
             "/static/favicon.svg",
+            "/static/site.webmanifest",
             'rel="sitemap"',
             "/sitemap.xml",
         ):
@@ -352,6 +354,15 @@ class TestStaticProgressUI(unittest.TestCase):
         fav = STATIC / "favicon.svg"
         self.assertTrue(fav.is_file(), "favicon.svg missing")
         self.assertIn("svg", fav.read_text(encoding="utf-8")[:200].lower())
+        man = STATIC / "site.webmanifest"
+        self.assertTrue(man.is_file(), "site.webmanifest missing")
+        man_txt = man.read_text(encoding="utf-8")
+        self.assertIn("Forked History", man_txt)
+        self.assertIn('"start_url"', man_txt)
+        self.assertIn("/#/library", man_txt)
+        self.assertIn("/#/studio", man_txt)
+        self.assertNotIn("sk-", man_txt)
+        self.assertNotIn("mandos", man_txt.lower())
 
     def test_index_a11y_and_mobile_nav(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

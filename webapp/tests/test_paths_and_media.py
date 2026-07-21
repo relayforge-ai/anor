@@ -77,6 +77,18 @@ class TestMediaStreaming(unittest.TestCase):
         except urllib.error.HTTPError as e:
             self.assertIn(e.code, (403, 404))
 
+    def test_webmanifest_served_with_manifest_type(self):
+        """PWA installability: site.webmanifest is public static with correct type."""
+        with urllib.request.urlopen(
+            self.base + "/static/site.webmanifest", timeout=5
+        ) as r:
+            self.assertEqual(r.status, 200)
+            ctype = r.headers.get("Content-Type", "")
+            self.assertIn("manifest", ctype.lower())
+            body = r.read().decode("utf-8")
+            self.assertIn("Forked History", body)
+            self.assertIn("start_url", body)
+
     def test_range_request_when_media_present(self):
         if not self.sample_rel:
             self.skipTest("no sample mp4 under outputs/videos")

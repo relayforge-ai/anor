@@ -3500,3 +3500,27 @@ Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Render → freemium watch is one primary click; raw MP4 remains available without becoming the default path.
+
+---
+
+## Iteration 133 — 2026-07-21
+
+### OBSERVE
+Main green after 16e03b2 (Watch episode CTA). Freemium SPA had SEO, share, and install-adjacent chrome (theme-color, apple-touch-icon) but no Web App Manifest — mobile/desktop "install app" and home-screen shortcuts were missing.
+
+### PLAN
+**One high-impact change:** add public site.webmanifest for installable freemium surface.
+
+### EXECUTE
+- `webapp/static/site.webmanifest` (name, start_url, Library/Studio shortcuts, SVG icons)
+- `rel=manifest` in index.html
+- Serve `.webmanifest` as `application/manifest+json` with static cache
+- Static + HTTP path tests (no secrets/MANDOS)
+
+### TEST
+```
+Full local CI → 309 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can install Forked History as a standalone shell with Library/Studio shortcuts; no service worker, no offline secrets.

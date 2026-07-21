@@ -1,0 +1,41 @@
+{
+  "name": "Forked History",
+  "short_name": "Forked History",
+  "description": "Real decision points. Labeled speculation. Receipts on screen. ANOR Fork Studio — free Explorer, Scholar for full library.",
+  "start_url": "/#/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1118",
+  "theme_color": "#0e1118",
+  "lang": "en",
+  "categories": ["education", "entertainment"],
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Library",
+      "short_name": "Library",
+      "description": "Browse documented episodes and labeled forks",
+      "url": "/#/library"
+    },
+    {
+      "name": "Studio",
+      "short_name": "Studio",
+      "description": "Fork a decision with labeled speculation",
+      "url": "/#/studio"
+    }
+  ]
+}

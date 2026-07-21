@@ -741,7 +741,19 @@ class Handler(BaseHTTPRequestHandler):
     def _file(self, path: Path, content_type: str | None = None) -> None:
         # HTML: always revalidate; CSS/JS: cacheable with ETag
         suffix = path.suffix.lower()
-        if suffix in {".css", ".js", ".woff2", ".woff", ".png", ".jpg", ".jpeg", ".svg", ".ico"}:
+        if suffix in {
+            ".css",
+            ".js",
+            ".woff2",
+            ".woff",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".svg",
+            ".ico",
+            ".webmanifest",
+            ".manifest",
+        }:
             mode = "static"
         else:
             mode = "no-store"
@@ -813,6 +825,9 @@ class Handler(BaseHTTPRequestHandler):
             target = safe_join(STATIC, rel)
             if target is None:
                 return self._json(403, {"error": "forbidden", "code": "bad_path"})
+            # Browsers expect manifest+json; mimetypes often miss .webmanifest
+            if target.suffix.lower() in (".webmanifest", ".manifest"):
+                return self._file(target, "application/manifest+json; charset=utf-8")
             return self._file(target)
 
         if path.startswith("/media/videos/"):
