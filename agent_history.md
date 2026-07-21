@@ -3593,3 +3593,27 @@ Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Watch keyboard suite includes share for freemium discovery without leaving the player.
+
+---
+
+## Iteration 137 — 2026-07-21
+
+### OBSERVE
+Main green after e1eab17. Studio media strip only said "MP4 on this host" — Scholars could not see host-measured runtime/size before deciding to Force re-render (GPU cost).
+
+### PLAN
+**One high-impact change:** surface deliverable metrics on the Studio media strip.
+
+### EXECUTE
+- `paintStudioMediaStrip` shows `videoRuntimeLabel` (duration/size from catalog/build.json)
+- Open MP4 link next to Open episode when media is present
+- Queue video tooltip includes host deliverable metrics when available
+- Static contract tests
+
+### TEST
+```
+Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Scholars see on-host deliverable cost in Studio before re-paying the cost ladder.

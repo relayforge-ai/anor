@@ -2076,7 +2076,11 @@
   }
 
   function paintStudioMediaStrip() {
-    /** Show whether the selected pack/choice already has an MP4 on this host. */
+    /**
+     * Show whether the selected pack/choice already has an MP4 on this host.
+     * When available, surface host-measured runtime/size (catalog/build.json)
+     * so Scholars see deliverable cost before re-queueing GPU work.
+     */
     const el = $("#studio-media-strip");
     if (!el) return;
     const sid = state.scenarioId;
@@ -2092,22 +2096,35 @@
       return;
     }
     if (v.available !== false) {
+      const metrics = videoRuntimeLabel(v);
+      const metricsNote = metrics
+        ? `<span class="pill" title="Host-measured deliverable from build.json when present">${escapeHtml(
+            metrics
+          )}</span>`
+        : "";
       el.innerHTML = `
         <span class="pill pill-doc">MP4 on this host</span>
+        ${metricsNote}
         <span> Cache hit will skip GPU for this branch.</span>
-        <a class="btn btn-ghost btn-sm" href="#/watch/${escapeHtml(v.id)}" style="margin-left:0.35rem">Open episode</a>`;
+        <a class="btn btn-ghost btn-sm" href="#/watch/${escapeHtml(v.id)}" style="margin-left:0.35rem">Open episode</a>
+        <a class="btn btn-ghost btn-sm" href="/media/videos/${escapeHtml(
+          String(v.file || "").replace(/^\/+/, "")
+        )}" target="_blank" rel="noopener" title="Raw MP4 on this host">Open MP4</a>`;
     } else {
       el.innerHTML = `
         <span class="pill pill-warn">Media not on host</span>
         <span> Queue video render for this branch (Scholar control · cost ladder: still/TTS/clip caches).</span>`;
     }
-    // Video button tooltip reflects availability
+    // Video button tooltip reflects availability + deliverable metrics
     const vbtn = $("#btn-video");
     if (vbtn) {
+      const metrics = videoRuntimeLabel(v);
       vbtn.title =
         v.available !== false
-          ? "Queue video — existing MP4 will cache-hit unless Force re-render"
-          : "Queue async video render (script → TTS → stills → ffmpeg)";
+          ? metrics
+            ? `Queue video — cache hit unless Force re-render · host deliverable ${metrics}`
+            : "Queue video — existing MP4 will cache-hit unless Force re-render"
+          : "Queue async video render (script → TTS → stills → ffmpeg) · Ctrl/⌘+Shift+V";
     }
   }
 
