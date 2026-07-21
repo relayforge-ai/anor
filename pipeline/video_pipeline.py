@@ -26,6 +26,32 @@ DEFAULT_OUT = REPO_ROOT / "outputs" / "videos"
 _CLIP_CACHE_MIN_BYTES = 500
 
 
+def media_cache_hit_sidecar(path: Path, *, kind: str) -> bool:
+    """True when a still/tts/clip path has a hit sidecar from the cost caches.
+
+    Sidecar layouts:
+      still/clip: ``{stem}.cache.txt`` next to the asset
+      tts:        ``{file}{suffix}.cache.txt`` (e.g. vo.wav.cache.txt)
+    """
+    path = Path(path)
+    needle = {
+        "still": "still_cache_hit",
+        "tts": "tts_cache_hit",
+        "clip": "clip_cache_hit",
+    }.get(kind, "_cache_hit")
+    candidates = [
+        path.with_suffix(".cache.txt"),
+        Path(str(path) + ".cache.txt"),
+    ]
+    for note in candidates:
+        try:
+            if note.is_file() and needle in note.read_text(encoding="utf-8"):
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def _keep_work() -> bool:
     """When true, leave work/ intermediates for debugging (default: clean up)."""
     return (os.environ.get("ANOR_KEEP_VIDEO_WORK") or "").strip().lower() in (
@@ -491,12 +517,14 @@ def render_video(
             clip_path = work / f"{i:02d}_{seg['id']}.mp4"
 
             images.generate(seg["image_prompt"], img_path)
+            still_hit = media_cache_hit_sidecar(img_path, kind="still")
             progress(
                 "tts",
                 base + span * 0.4,
                 f"Narration {i + 1}/{n}: {title} (TTS)",
             )
             audio_file = tts.synthesize(seg["text"], audio_path)
+            tts_hit = media_cache_hit_sidecar(Path(audio_file), kind="tts")
             progress(
                 "clip",
                 base + span * 0.75,
@@ -504,6 +532,7 @@ def render_video(
             )
             dur = _ffprobe_duration(audio_file)
             _ken_burns_clip(img_path, audio_file, clip_path, duration=dur)
+            clip_hit = media_cache_hit_sidecar(clip_path, kind="clip")
             clips.append(clip_path)
             # Relative names only — never absolute host paths in build.json
             seg_meta.append(
@@ -515,6 +544,9 @@ def render_video(
                     "audio": Path(audio_file).name,
                     "clip": clip_path.name,
                     "duration_s": dur,
+                    "still_cache_hit": still_hit,
+                    "tts_cache_hit": tts_hit,
+                    "clip_cache_hit": clip_hit,
                 }
             )
 
@@ -527,6 +559,12 @@ def render_video(
             cleanup_video_work(work, list_file)
             cleaned = True
 
+        cache_summary = {
+            "still_hits": sum(1 for s in seg_meta if s.get("still_cache_hit")),
+            "tts_hits": sum(1 for s in seg_meta if s.get("tts_cache_hit")),
+            "clip_hits": sum(1 for s in seg_meta if s.get("clip_cache_hit")),
+            "segments": len(seg_meta),
+        }
         meta = {
             "scenario_id": scenario_id,
             "choice_id": choice_id,
@@ -535,6 +573,7 @@ def render_video(
             "is_historical": fork.is_historical,
             "provenance_ribbon": fork.provenance_ribbon,
             "segments": seg_meta,
+            "cache": cache_summary,
             "work_cleaned": cleaned,
             "config": cfg.describe(),
         }

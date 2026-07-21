@@ -506,6 +506,37 @@ class TestKenBurns(unittest.TestCase):
             self.assertEqual(probe.stdout.strip(), "640,360")
 
 
+class TestMediaCacheSidecar(unittest.TestCase):
+    def test_media_cache_hit_sidecar_kinds(self):
+        from pipeline.video_pipeline import media_cache_hit_sidecar
+
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            still = td_path / "s.png"
+            still.write_bytes(b"x" * 20)
+            still.with_suffix(".cache.txt").write_text(
+                "still_cache_hit key=abc\n", encoding="utf-8"
+            )
+            self.assertTrue(media_cache_hit_sidecar(still, kind="still"))
+            self.assertFalse(media_cache_hit_sidecar(still, kind="clip"))
+
+            vo = td_path / "vo.wav"
+            vo.write_bytes(b"y" * 20)
+            Path(str(vo) + ".cache.txt").write_text(
+                "tts_cache_hit key=def\n", encoding="utf-8"
+            )
+            self.assertTrue(media_cache_hit_sidecar(vo, kind="tts"))
+            self.assertFalse(media_cache_hit_sidecar(vo, kind="still"))
+
+            clip = td_path / "c.mp4"
+            clip.write_bytes(b"z" * 20)
+            clip.with_suffix(".cache.txt").write_text(
+                "clip_cache_hit key=ghi\n", encoding="utf-8"
+            )
+            self.assertTrue(media_cache_hit_sidecar(clip, kind="clip"))
+            self.assertFalse(media_cache_hit_sidecar(td_path / "missing.mp4", kind="clip"))
+
+
 class TestClipCache(unittest.TestCase):
     """Content-addressed Ken Burns mux cache (skip ffmpeg on still+audio match)."""
 

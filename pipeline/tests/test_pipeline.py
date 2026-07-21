@@ -185,6 +185,12 @@ class TestVideoPipeline(unittest.TestCase):
             meta = json.loads((out / "build.json").read_text())
             self.assertEqual(meta["scenario_id"], "ELO-013")
             self.assertTrue(meta.get("work_cleaned"))
+            # Cost ladder accounting (hits may be 0 under mock defaults)
+            cache = meta.get("cache") or {}
+            self.assertIn("still_hits", cache)
+            self.assertIn("tts_hits", cache)
+            self.assertIn("clip_hits", cache)
+            self.assertEqual(cache.get("segments"), len(meta.get("segments") or []))
             # Intermediate work/ and concat list must be gone after success
             self.assertFalse((out / "work").exists())
             self.assertFalse(result.out_mp4.with_suffix(".txt").exists())
@@ -197,6 +203,12 @@ class TestVideoPipeline(unittest.TestCase):
                     val = seg.get(key) or ""
                     self.assertNotIn("/", val)
                     self.assertNotIn("\\", val)
+                self.assertIn("still_cache_hit", seg)
+                self.assertIn("tts_cache_hit", seg)
+                self.assertIn("clip_cache_hit", seg)
+                self.assertIsInstance(seg["still_cache_hit"], bool)
+                self.assertIsInstance(seg["tts_cache_hit"], bool)
+                self.assertIsInstance(seg["clip_cache_hit"], bool)
 
     def test_render_keep_work_when_flagged(self):
         cfg = PipelineConfig.from_env()

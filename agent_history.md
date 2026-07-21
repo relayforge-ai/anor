@@ -2979,3 +2979,27 @@ Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Library reads as a dated museum ledger (216 BC → … → 1962) instead of an undifferentiated card wall.
+
+---
+
+## Iteration 111 — 2026-07-21
+
+### OBSERVE
+Main green after library era headers. Cost ladder (still/TTS/clip caches) was invisible in render outputs — operators could not tell from build.json which segments skipped GPU/TTS/ffmpeg.
+
+### PLAN
+**One high-impact change:** record per-segment cache hits + summary in build.json.
+
+### EXECUTE
+- `media_cache_hit_sidecar` for still/tts/clip hit notes
+- Segment fields `still_cache_hit` / `tts_cache_hit` / `clip_cache_hit`
+- Top-level `cache: { still_hits, tts_hits, clip_hits, segments }`
+- Unit tests for sidecar helper + render_mock_mp4 assertions
+
+### TEST
+```
+Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Each video render leaves auditable cost-ladder accounting for fleet ops without logging secrets or absolute paths.
