@@ -366,7 +366,7 @@
     }
     paintHomeContinue();
     const grid = $("#home-video-grid");
-    grid.innerHTML = state.catalog.videos
+    grid.innerHTML = videosChronological(state.catalog.videos || [])
       .map((v) => videoCardHtml(v))
       .join("");
     bindVideoCards(grid);
@@ -527,6 +527,23 @@
     });
   }
 
+  /**
+   * Museum order for catalog cuts: era → pack → documented baseline first → id.
+   * Keeps freemium library/home coherent instead of catalog-file insertion order.
+   */
+  function videosChronological(list) {
+    return [...(list || [])].sort((a, b) => {
+      const d = eraSortKey(a.era) - eraSortKey(b.era);
+      if (d !== 0) return d;
+      const s = String(a.scenario_id || "").localeCompare(String(b.scenario_id || ""));
+      if (s !== 0) return s;
+      const ad = a.speculation === "documented" ? 0 : 1;
+      const bd = b.speculation === "documented" ? 0 : 1;
+      if (ad !== bd) return ad - bd;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+  }
+
   function normalizeLibraryQuery(q) {
     return String(q || "")
       .trim()
@@ -637,11 +654,13 @@
       searchInput.value = state.libraryQuery || "";
     }
     const all = state.catalog.videos || [];
-    const videos = filterLibraryVideos(
-      all,
-      state.libraryFilter,
-      state.libraryQuery,
-      state.catalog
+    const videos = videosChronological(
+      filterLibraryVideos(
+        all,
+        state.libraryFilter,
+        state.libraryQuery,
+        state.catalog
+      )
     );
     const grid = $("#library-grid");
     const status = $("#library-filter-status");
@@ -656,7 +675,7 @@
       };
       const q = normalizeLibraryQuery(state.libraryQuery);
       const qNote = q ? ` · search “${q}”` : "";
-      status.textContent = `${labels[state.libraryFilter] || labels.all}${qNote} · ${videos.length} of ${all.length}`;
+      status.textContent = `${labels[state.libraryFilter] || labels.all} · chronological${qNote} · ${videos.length} of ${all.length}`;
     }
     if (!all.length) {
       grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");

@@ -2681,3 +2681,26 @@ Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Watch sessions resume mid-cut on the same device without accounts or analytics — freemium retention for previews and free unlocks.
+
+---
+
+## Iteration 98 — 2026-07-21
+
+### OBSERVE
+Main green after resume playback. Library/home episode grids followed catalog insertion order (Cannae → 1962 → … → Dunkirk), not museum chronology — packs already sorted chronologically on home.
+
+### PLAN
+**One high-impact change:** chronological sort for catalog episode cards (era → pack → documented first).
+
+### EXECUTE
+- `videosChronological` shared helper
+- Library filter results + home episode grid use it
+- Status line notes chronological order; static/library tests
+
+### TEST
+```
+Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Freemium library and home read as a decision museum timeline instead of a file-append dump.

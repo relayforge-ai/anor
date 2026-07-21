@@ -31,6 +31,11 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn('f === "preview"', JS)
         self.assertIn("videoAccess", JS)
         self.assertIn("claimable_full", JS)
+        # Museum chronological order (era → pack → documented first)
+        self.assertIn("function videosChronological", JS)
+        self.assertIn("function eraSortKey", JS)
+        self.assertIn("videosChronological(", JS)
+        self.assertIn("chronological", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)
