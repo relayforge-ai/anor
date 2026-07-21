@@ -2790,6 +2790,23 @@
           const forceBtn = FHFreemium.isMember()
             ? `<button type="button" class="btn btn-ghost btn-sm" id="btn-force-rerender" title="Ignore disk cache and re-run stills → TTS → Ken Burns">Force re-render</button>`
             : "";
+          // Freemium product loop: land on watch page for the cut just rendered
+          const catV = findCatalogVideo(state.scenarioId, state.choiceId);
+          const watchId =
+            (catV && catV.id) ||
+            (state.scenarioId && state.choiceId
+              ? `${state.scenarioId}-${state.choiceId}`
+              : "");
+          const watchBtn = watchId
+            ? `<a class="btn btn-primary btn-sm pulse-cta" id="btn-watch-episode" href="#/watch/${escapeHtml(
+                watchId
+              )}" title="Open this cut in the freemium watch player">Watch episode</a>`
+            : "";
+          const openMp4Btn = url
+            ? `<a class="btn btn-ghost btn-sm" href="${escapeHtml(
+                url
+              )}" target="_blank" rel="noopener" title="Raw MP4 on this host">Open MP4</a>`
+            : "";
           const doneLabel = wasCached
             ? "Existing render ready"
             : ladderHits > 0
@@ -2808,13 +2825,10 @@
               ${deliverableNote}
               ${cachedNote}
               <div class="row" style="flex-wrap:wrap;gap:0.45rem;margin-top:0.35rem">
-              ${
-                url
-                  ? `<a class="btn btn-primary btn-sm" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open MP4</a>
-                     <a class="btn btn-ghost btn-sm" href="#/library">Open library</a>
-                     ${forceBtn}`
-                  : forceBtn
-              }
+              ${watchBtn}
+              ${openMp4Btn}
+              <a class="btn btn-ghost btn-sm" href="#/library">Open library</a>
+              ${forceBtn}
               </div>
               ${
                 url
@@ -2825,12 +2839,12 @@
           bindForceRerenderButton();
           toast(
             wasCached
-              ? "Existing render ready"
+              ? "Existing render ready — Watch episode"
               : ladderHits > 0
                 ? `Video ready — reused ${ladder.still_hits || 0} still / ${ladder.tts_hits || 0} TTS / ${ladder.clip_hits || 0} clip`
                 : resumed
-                  ? "Render finished while you were away"
-                  : "Video ready"
+                  ? "Render finished while you were away — Watch episode"
+                  : "Video ready — Watch episode"
           );
           // Bust catalog ETag cache so new render availability is visible
           try {
@@ -2838,6 +2852,10 @@
             sessionStorage.removeItem(CACHE_CATALOG + ":body");
           } catch (_) {}
           await refreshCatalog();
+          // Media strip flips to "MP4 on this host" after catalog refresh
+          try {
+            paintStudioMediaStrip();
+          } catch (_) {}
         } else if (st.status === "cancelled") {
           done = true;
           clearActiveVideoJob();

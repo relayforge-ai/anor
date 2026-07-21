@@ -3477,3 +3477,26 @@ Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Missing-media → Studio flow ends on a highlighted Queue video control so Scholars can finish the render without re-finding the button.
+
+---
+
+## Iteration 132 — 2026-07-21
+
+### OBSERVE
+Main green after 85e0cda (queue intent pulse). Studio render-complete UI led with raw Open MP4 / library — freemium product loop (render → watch player with resume/speed/share) was one click further than it should be.
+
+### PLAN
+**One high-impact change:** primary Watch episode CTA after video job completion.
+
+### EXECUTE
+- Completed job panel: primary `Watch episode` → `#/watch/{id}` (pulse), Open MP4 secondary
+- Refresh catalog + repaint studio media strip after success
+- Toasts mention Watch episode; static needles
+
+### TEST
+```
+Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Render → freemium watch is one primary click; raw MP4 remains available without becoming the default path.
