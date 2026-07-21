@@ -72,6 +72,7 @@ jobs:
             webapp.tests.test_render_deps \
             webapp.tests.test_job_timeout \
             webapp.tests.test_queue_position \
+            webapp.tests.test_running_eta \
             webapp.tests.test_http_range \
             webapp.tests.test_job_privacy \
             webapp.tests.test_render_lock \

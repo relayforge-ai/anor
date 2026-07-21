@@ -146,13 +146,51 @@
       if (st.jobs_ahead === 0) msg += " · next in line";
       else msg += ` · ${st.jobs_ahead} ahead`;
     }
-    if (st.eta_s != null && st.eta_s >= 0 && (st.status === "queued" || st.status === "running")) {
-      if (st.status === "queued" && st.eta_s > 0) {
-        msg += ` · ~${formatDuration(st.eta_s)} estimate`;
-      }
+    // Work-based (running) or queue (queued) estimate — both use eta_s from server
+    if (
+      st.eta_s != null &&
+      st.eta_s > 0 &&
+      (st.status === "queued" || st.status === "running")
+    ) {
+      msg += ` · ~${formatDuration(st.eta_s)} left`;
     }
     msg += jobTimeSuffix(st);
     return msg;
+  }
+
+  function updateStudioDockProgress(st) {
+    /** Mobile dock: live % / stage while a render is tracked. */
+    const dock = $("#studio-dock");
+    const statusEl = $("#dock-status");
+    const cancelEl = $("#dock-cancel");
+    if (!dock || !statusEl) return;
+    const active =
+      st && (st.status === "queued" || st.status === "running");
+    statusEl.hidden = !active;
+    if (cancelEl) {
+      cancelEl.hidden = !active;
+      cancelEl.disabled = !active;
+    }
+    if (!active) {
+      statusEl.textContent = "";
+      return;
+    }
+    const pct =
+      st.status === "queued"
+        ? "…"
+        : `${Math.round(Math.max(0, Math.min(100, st.pct || 0)))}%`;
+    const stage = (st.stage || st.status || "").toString();
+    let line = `${pct}`;
+    if (stage && stage !== "queued") line += ` · ${stage}`;
+    if (st.eta_s != null && st.eta_s > 0) {
+      line += ` · ~${formatDuration(st.eta_s)}`;
+    }
+    statusEl.textContent = line;
+    statusEl.title = jobProgressLabel(st);
+  }
+
+  function clearStudioDockProgress() {
+    updateStudioDockProgress(null);
   }
 
   function toast(msg) {
@@ -1359,10 +1397,12 @@
             indeterminate: st.status === "queued",
           }) + cancelBar;
         bindCancel();
+        updateStudioDockProgress(st);
 
         if (st.status === "completed") {
           done = true;
           clearActiveVideoJob();
+          clearStudioDockProgress();
           const url = st.result?.media_url || "";
           const wasCached = !!(st.result && st.result.cached);
           const cachedNote = wasCached
@@ -1403,6 +1443,7 @@
         } else if (st.status === "cancelled") {
           done = true;
           clearActiveVideoJob();
+          clearStudioDockProgress();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -1416,6 +1457,7 @@
         } else if (st.status === "timed_out") {
           done = true;
           clearActiveVideoJob();
+          clearStudioDockProgress();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -1426,12 +1468,15 @@
             }) +
             renderForkError(
               st.error || "Render exceeded the wall-clock timeout",
-              "video_timed_out"
+              "video_timed_out",
+              { retryAction: "video" }
             );
+          bindRateLimitRetry(0, () => queueVideoRender());
           toast("Render timed out");
         } else if (st.status === "failed") {
           done = true;
           clearActiveVideoJob();
+          clearStudioDockProgress();
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
@@ -1439,7 +1484,11 @@
               pct: st.pct || 0,
               label: "Render failed",
               indeterminate: false,
-            }) + renderForkError(st.error || "Render failed", "video_failed");
+            }) +
+            renderForkError(st.error || "Render failed", "video_failed", {
+              retryAction: "video",
+            });
+          bindRateLimitRetry(0, () => queueVideoRender());
           const active = $("#fork-result")?.querySelector(".sim-stages li.active");
           if (active) {
             active.classList.remove("active");
@@ -1458,7 +1507,13 @@
         }
       }
     } catch (e) {
-      $("#fork-result").innerHTML = renderForkError(e.message || String(e), e.code || "video_error");
+      clearStudioDockProgress();
+      $("#fork-result").innerHTML = renderForkError(
+        e.message || String(e),
+        e.code || "video_error",
+        { retryAction: "video" }
+      );
+      bindRateLimitRetry(0, () => queueVideoRender());
     } finally {
       if (videoPollActiveId === jobId) videoPollActiveId = null;
       if (btn) {
@@ -2148,6 +2203,10 @@
     $("#dock-llm")?.addEventListener("click", () => $("#btn-llm")?.click());
     $("#dock-video")?.addEventListener("click", () => $("#btn-video")?.click());
     $("#dock-compare")?.addEventListener("click", () => $("#btn-compare")?.click());
+    $("#dock-cancel")?.addEventListener("click", () => {
+      const c = $("#btn-cancel-job");
+      if (c && !c.disabled) c.click();
+    });
     bindStudioKeyboardShortcuts();
 
     // player gate buttons

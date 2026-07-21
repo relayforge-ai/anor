@@ -93,6 +93,43 @@ def media_url_for(scenario_id: str, choice_id: str, filename: str) -> str:
     return f"/media/videos/{scenario_id}-{choice_id}/{filename}"
 
 
+def estimate_running_eta_s(
+    *,
+    started_at: Optional[float],
+    pct: float,
+    deadline_at: Optional[float] = None,
+    eta_per_job_s: int = 120,
+    now: Optional[float] = None,
+) -> Optional[int]:
+    """Heuristic seconds remaining for a *running* render (UX, not SLA).
+
+    Prefers work-based extrapolation once progress is meaningful:
+      remaining ≈ elapsed * (100 - pct) / pct
+    Falls back to a fraction of ANOR_VIDEO_ETA_PER_JOB_S early on.
+    Always capped by wall-clock deadline remaining when known.
+    """
+    t = time.time() if now is None else float(now)
+    deadline_left: Optional[int] = None
+    if deadline_at is not None:
+        deadline_left = max(0, int(deadline_at - t))
+
+    work_eta: Optional[float] = None
+    p = max(0.0, min(100.0, float(pct or 0.0)))
+    if started_at is not None and p >= 5.0:
+        elapsed = max(0.0, t - float(started_at))
+        if elapsed > 0.5:
+            work_eta = elapsed * (100.0 - p) / p
+    if work_eta is None:
+        # Early in the job — assume ~eta_per remaining scaled by progress
+        frac_left = max(0.0, (100.0 - p) / 100.0)
+        work_eta = float(max(1, eta_per_job_s)) * frac_left
+
+    eta = int(max(0, round(work_eta)))
+    if deadline_left is not None:
+        eta = min(eta, deadline_left)
+    return eta
+
+
 def sanitize_public_error(message: object, *, limit: int = 400) -> str:
     """Redact absolute host paths from exception text before client delivery.
 
@@ -546,7 +583,8 @@ class VideoJobQueue:
     def to_public_enriched(self, job: VideoJob) -> dict[str, Any]:
         """Public job dict plus queue_position / jobs_ahead / eta_s for studio feedback.
 
-        - running: queue_position=0, jobs_ahead=0, eta_s from wall-clock deadline
+        - running: queue_position=0, jobs_ahead=0;
+          eta_s from work-based progress extrapolation (capped by deadline)
         - queued: 1-based position among queued (oldest first); jobs_ahead = position-1;
           eta_s ≈ jobs_ahead * ANOR_VIDEO_ETA_PER_JOB_S (heuristic for UX, not a SLA)
         - terminal: queue fields null
@@ -559,11 +597,12 @@ class VideoJobQueue:
             if status == "running":
                 d["queue_position"] = 0
                 d["jobs_ahead"] = 0
-                if live.deadline_at:
-                    left = max(0, int(live.deadline_at - time.time()))
-                    d["eta_s"] = left
-                else:
-                    d["eta_s"] = None
+                d["eta_s"] = estimate_running_eta_s(
+                    started_at=live.started_at,
+                    pct=live.pct,
+                    deadline_at=live.deadline_at,
+                    eta_per_job_s=eta_per,
+                )
             elif status == "queued":
                 queued = sorted(
                     (j for j in self._jobs.values() if j.status == "queued"),

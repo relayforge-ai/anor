@@ -19,6 +19,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "prefers-reduced-motion",
             ".fork-error",
             ".studio-dock",
+            ".studio-dock-status",
             "scroll-padding-top",
         ):
             self.assertIn(needle, css, f"missing {needle}")
@@ -45,6 +46,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "jobProgressLabel",
             "jobs_ahead",
             "eta_s",
+            "~${formatDuration(st.eta_s)} left",
+            "updateStudioDockProgress",
+            "dock-status",
+            "dock-cancel",
             "sim-progress-pct",
             "videoStageIndex",
             "studio-dock",
@@ -52,6 +57,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "dock-fork",
             "Ken Burns clips",
             "pollVideoJob",
+            'retryAction: "video"',
             "fh:lastFork",
             "saveLastFork",
             "parseRetryAfter",

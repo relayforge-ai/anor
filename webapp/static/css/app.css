@@ -1435,30 +1435,53 @@ body.boot-failed .member-strip {
 @media (max-width: 720px) {
   .studio-dock:not([hidden]) {
     display: flex;
+    flex-direction: column;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 40;
-    gap: 0.4rem;
-    padding: 0.55rem 0.7rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.35rem;
+    padding: 0.5rem 0.7rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
     background: linear-gradient(180deg, transparent, rgba(7, 8, 12, 0.92) 28%, rgba(7, 8, 12, 0.98));
     border-top: 1px solid var(--line);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+  .studio-dock-status {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    color: var(--gold);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .studio-dock-status[hidden] {
+    display: none !important;
+  }
+  .studio-dock-actions {
+    display: flex;
+    gap: 0.4rem;
     justify-content: stretch;
   }
   .studio-dock .btn {
     flex: 1;
     justify-content: center;
     min-width: 0;
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
-    font-size: 0.78rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    font-size: 0.76rem;
+  }
+  .studio-dock .dock-cancel:not([hidden]) {
+    border-color: rgba(217, 107, 107, 0.45);
+    color: var(--danger);
   }
   /* Keep fork result readable above the dock */
   section[data-page="studio"] {
-    padding-bottom: 5.5rem;
+    padding-bottom: 6.25rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {

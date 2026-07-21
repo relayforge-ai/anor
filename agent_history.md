@@ -2293,3 +2293,26 @@ Full local CI → OK
 
 ### RESULT
 Scholars get instant “existing render” when media is already on disk; GPU/TTS watts preserved.
+
+---
+
+## Iteration 81 — 2026-07-21
+
+### OBSERVE
+Main green after cache-hit video. Running `eta_s` was wall-clock timeout budget (misleading during long still/TTS). Mobile dock lacked live % / cancel; video fail paths had no Try again.
+
+### PLAN
+**One high-impact change:** work-based running ETA + dock progress/cancel + fail retry.
+
+### EXECUTE
+- `estimate_running_eta_s` (pct extrapolation, deadline cap); wire in `to_public_enriched`
+- SPA: show `~… left` for running; dock status strip + Cancel; retryAction on fail/timeout
+- Tests: `test_running_eta`; static needles; CI module list
+
+### TEST
+```
+Full local CI (unittest + compileall + pytest + pip-audit) → OK
+```
+
+### RESULT
+Scholars see honest remaining-time estimates during render; phones keep cancel + stage progress reachable.
