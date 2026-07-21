@@ -335,6 +335,20 @@ class ImageClient:
         return _REPO_ROOT / "outputs" / "still_cache"
 
     @staticmethod
+    def comfy_quality_fingerprint() -> str:
+        """Steps/CFG/sampler/scheduler — quality knobs that change pixel output.
+
+        Included in still-cache keys so turning ANOR_COMFY_STEPS (etc.) does not
+        reuse a still rendered under different settings. Seed is intentionally
+        excluded so identical prompts still share GPU cost across jobs.
+        """
+        steps = _env_int("ANOR_COMFY_STEPS", 25)
+        cfg = _env_float("ANOR_COMFY_CFG", 7.0)
+        sampler = (os.environ.get("ANOR_COMFY_SAMPLER") or "euler").strip()
+        scheduler = (os.environ.get("ANOR_COMFY_SCHEDULER") or "normal").strip()
+        return f"s{steps}|c{cfg:.3f}|{sampler}|{scheduler}"
+
+    @staticmethod
     def still_cache_key(
         *,
         full_prompt: str,
@@ -344,8 +358,9 @@ class ImageClient:
         image_model: str,
         upscale: bool,
         upscale_model: str,
+        quality: str = "",
     ) -> str:
-        """Stable short key for prompt + geometry + model path (not a secret)."""
+        """Stable short key for prompt + geometry + model + quality knobs (not a secret)."""
         material = "|".join(
             [
                 full_prompt.strip(),
@@ -355,6 +370,7 @@ class ImageClient:
                 image_model or "",
                 "up1" if upscale else "up0",
                 upscale_model if upscale else "",
+                quality or "",
             ]
         )
         return hashlib.sha256(material.encode("utf-8")).hexdigest()[:28]
@@ -404,6 +420,7 @@ class ImageClient:
         upscale = self.comfy_upscale_enabled() if backend == "comfy" else False
         up_model = self.comfy_upscale_model() if upscale else ""
         cache_on = self.still_cache_enabled(backend=backend)
+        quality = self.comfy_quality_fingerprint() if backend == "comfy" else ""
         cache_key = (
             self.still_cache_key(
                 full_prompt=full_prompt,
@@ -413,6 +430,7 @@ class ImageClient:
                 image_model=self.cfg.image_model,
                 upscale=upscale,
                 upscale_model=up_model,
+                quality=quality,
             )
             if cache_on
             else ""

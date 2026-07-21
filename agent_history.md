@@ -2728,3 +2728,26 @@ Full local CI → 286 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 New monetizable decision pack on Munich with freemium library coverage and draft-only social pipeline; mock-media path unchanged.
+
+---
+
+## Iteration 100 — 2026-07-21
+
+### OBSERVE
+Main green after ELO-011. Still cache keyed only on prompt/geometry/model/upscale — changing ANOR_COMFY_STEPS/CFG/sampler could return a still rendered under different quality knobs (wrong cache hit, stale look) or force operators to wipe cache manually.
+
+### PLAN
+**One high-impact change:** include Comfy quality fingerprint in still-cache keys (seed still excluded for cost sharing).
+
+### EXECUTE
+- `ImageClient.comfy_quality_fingerprint` (steps/CFG/sampler/scheduler)
+- `still_cache_key(..., quality=)` wired for comfy backend only
+- Tests for quality sensitivity; .env.example note
+
+### TEST
+```
+Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Still cache remains a GPU cost saver for identical prompts, without serving wrong quality after knob changes.

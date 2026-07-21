@@ -187,6 +187,7 @@ class TestStillCache(unittest.TestCase):
             image_model="sd_xl_base_1.0.safetensors",
             upscale=True,
             upscale_model="RealESRGAN_x4plus.pth",
+            quality="s25|c7.000|euler|normal",
         )
         k2 = ImageClient.still_cache_key(
             full_prompt="a",
@@ -196,6 +197,7 @@ class TestStillCache(unittest.TestCase):
             image_model="sd_xl_base_1.0.safetensors",
             upscale=True,
             upscale_model="RealESRGAN_x4plus.pth",
+            quality="s25|c7.000|euler|normal",
         )
         k3 = ImageClient.still_cache_key(
             full_prompt="b",
@@ -205,10 +207,50 @@ class TestStillCache(unittest.TestCase):
             image_model="sd_xl_base_1.0.safetensors",
             upscale=True,
             upscale_model="RealESRGAN_x4plus.pth",
+            quality="s25|c7.000|euler|normal",
+        )
+        k4 = ImageClient.still_cache_key(
+            full_prompt="a",
+            width=1024,
+            height=576,
+            backend="comfy",
+            image_model="sd_xl_base_1.0.safetensors",
+            upscale=True,
+            upscale_model="RealESRGAN_x4plus.pth",
+            quality="s30|c7.000|euler|normal",
         )
         self.assertEqual(k1, k2)
         self.assertNotEqual(k1, k3)
+        self.assertNotEqual(k1, k4)
         self.assertEqual(len(k1), 28)
+
+    def test_comfy_quality_fingerprint_tracks_env(self):
+        prev = {
+            k: os.environ.get(k)
+            for k in (
+                "ANOR_COMFY_STEPS",
+                "ANOR_COMFY_CFG",
+                "ANOR_COMFY_SAMPLER",
+                "ANOR_COMFY_SCHEDULER",
+            )
+        }
+        try:
+            os.environ["ANOR_COMFY_STEPS"] = "25"
+            os.environ["ANOR_COMFY_CFG"] = "7.0"
+            os.environ["ANOR_COMFY_SAMPLER"] = "euler"
+            os.environ["ANOR_COMFY_SCHEDULER"] = "normal"
+            a = ImageClient.comfy_quality_fingerprint()
+            os.environ["ANOR_COMFY_STEPS"] = "30"
+            b = ImageClient.comfy_quality_fingerprint()
+            self.assertNotEqual(a, b)
+            self.assertIn("s25", a)
+            self.assertIn("s30", b)
+        finally:
+            for k, v in prev.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
 
     def test_mock_cache_hit_skips_second_generate_work(self):
         prev = {
