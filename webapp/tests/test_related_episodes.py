@@ -23,6 +23,11 @@ class TestRelatedEpisodes(unittest.TestCase):
         self.assertIn("score += 100", JS)  # same scenario weight
         self.assertIn("score += 10", JS)  # tag overlap
         self.assertIn("paintWatchRelated(video)", JS)
+        # Partial grind hosts: same-pack first, then on-host others, then missing
+        self.assertIn("samePack.concat(playableOther).concat(missingOther)", JS)
+        self.assertIn("playableOther", JS)
+        self.assertIn("missingOther", JS)
+        self.assertIn("on-host nearby topics", JS)
 
     def test_css_hides_when_empty(self):
         self.assertIn(".watch-related[hidden]", CSS)

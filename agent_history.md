@@ -3756,3 +3756,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Incomplete public packs fail CI before freemium/library/social ship.
+
+---
+
+## Iteration 144 — 2026-07-21
+
+### OBSERVE
+Main green after 41a5bcb (catalog integrity CI). ELO-015 complete. Related strip scored same-pack first but only lightly penalized missing media — cross-pack suggestions could lead with "not on host" on partial grind inventories.
+
+### PLAN
+**One high-impact change:** partition relatedEpisodes — same-pack → on-host others → missing others.
+
+### EXECUTE
+- After score sort, stable partition into samePack / playableOther / missingOther
+- paintWatchRelated note when cross-pack on-host fills
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Related discovery keeps pack siblings for Studio queue and prefers playable host media for nearby topics.

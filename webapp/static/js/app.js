@@ -1248,6 +1248,12 @@
     /**
      * Rank other catalog cuts: same scenario first, then tag overlap, then era.
      * Keeps freemium discovery inside the public catalog only.
+     *
+     * Partition after scoring (partial grind hosts):
+     *   1) same-pack branches (even if not on host — Queue in Studio)
+     *   2) other on-host playable cuts
+     *   3) other missing-media cuts
+     * So related strips prefer resume-able media outside the current pack.
      */
     const lim = Math.max(1, Math.min(limit || 3, 6));
     const all = (state.catalog && state.catalog.videos) || [];
@@ -1272,7 +1278,15 @@
       if (score > 0) scored.push({ v, score });
     }
     scored.sort((a, b) => b.score - a.score || String(a.v.id).localeCompare(String(b.v.id)));
-    return scored.slice(0, lim).map((x) => x.v);
+    const samePack = [];
+    const playableOther = [];
+    const missingOther = [];
+    for (const { v } of scored) {
+      if (sid && v.scenario_id === sid) samePack.push(v);
+      else if (v.available === false) missingOther.push(v);
+      else playableOther.push(v);
+    }
+    return samePack.concat(playableOther).concat(missingOther).slice(0, lim);
   }
 
   /**
@@ -1578,11 +1592,26 @@
     }
     wrap.hidden = false;
     const samePack = related.filter((r) => r.scenario_id === video.scenario_id).length;
+    const crossHost = related.some(
+      (r) =>
+        r &&
+        r.scenario_id !== video.scenario_id &&
+        r.available !== false
+    );
     if (note) {
-      note.textContent =
-        samePack > 0
-          ? "Other branches of this decision — and nearby topics in the public catalog."
-          : "Nearby topics in the public catalog (speculation still labeled).";
+      if (samePack > 0 && crossHost) {
+        note.textContent =
+          "Other branches of this decision — plus on-host nearby topics when available.";
+      } else if (samePack > 0) {
+        note.textContent =
+          "Other branches of this decision — and nearby topics in the public catalog.";
+      } else if (crossHost) {
+        note.textContent =
+          "On-host nearby topics in the public catalog (speculation still labeled).";
+      } else {
+        note.textContent =
+          "Nearby topics in the public catalog (speculation still labeled).";
+      }
     }
     grid.innerHTML = related.map(videoCardHtml).join("");
     bindVideoCards(grid);

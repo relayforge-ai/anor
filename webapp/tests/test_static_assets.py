@@ -144,6 +144,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "queueIntent",
             "relatedEpisodes",
             "paintWatchRelated",
+            "samePack.concat(playableOther).concat(missingOther)",
+            "on-host nearby topics",
             "watch-related",
             "paintHomeContinue",
             "home-continue",
