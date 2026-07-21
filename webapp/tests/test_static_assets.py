@@ -219,6 +219,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "X-RateLimit-Remaining",
             "libraryFilter",
             "applySmartLibraryDefault",
+            "maybeToastSmartLibraryDefault",
+            "On this host (partial inventory)",
             "filterLibraryVideos",
             "bindLibraryFilters",
             "scenariosChronological",

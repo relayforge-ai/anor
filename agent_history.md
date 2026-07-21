@@ -4035,3 +4035,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Explorers can jump to any device playback rate without cycling.
+
+---
+
+## Iteration 156 — 2026-07-21
+
+### OBSERVE
+Main green after f244f5a (speed presets). Library smart-defaulted to On this host on mixed inventories without explaining the filter — Explorers could think most of the catalog was missing.
+
+### PLAN
+**One high-impact change:** one-shot session toast when smart Library default applies.
+
+### EXECUTE
+- `maybeToastSmartLibraryDefault(applied)` + `SMART_LIB_TOAST_KEY`
+- Boot: toast after apply when no saved prefs and inventory is mixed
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Partial-host Library auto-filter is transparent; All remains one tap away.

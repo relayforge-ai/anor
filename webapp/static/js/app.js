@@ -882,6 +882,8 @@
   }
 
   const LIBRARY_PREFS_KEY = "fh:libraryPrefs";
+  /** Session: already toasted the smart "On this host" default (once per tab). */
+  const SMART_LIB_TOAST_KEY = "fh:smartLibDefaultNotified";
 
   function saveLibraryPrefs() {
     try {
@@ -913,6 +915,7 @@
    * so Explorers land on playable media instead of a wall of missing renders.
    * Only when session has no saved prefs and inventory is mixed (some available,
    * some not). Full-host or empty-host inventories stay on "All".
+   * Returns true when the default was applied.
    */
   function applySmartLibraryDefault() {
     try {
@@ -930,6 +933,26 @@
       return true;
     }
     return false;
+  }
+
+  /**
+   * One-shot toast when Library was auto-filtered to host media so Explorers
+   * know the catalog is not truncated permanently (switch to All anytime).
+   */
+  function maybeToastSmartLibraryDefault(applied) {
+    if (!applied) return;
+    try {
+      if (sessionStorage.getItem(SMART_LIB_TOAST_KEY)) return;
+      sessionStorage.setItem(SMART_LIB_TOAST_KEY, "1");
+    } catch (_) {
+      /* still toast once this boot if storage blocked */
+    }
+    // Defer past first paint so the toast is visible after chrome is ready
+    setTimeout(() => {
+      toast(
+        "Library: On this host (partial inventory). Tap All to see every branch."
+      );
+    }, 450);
   }
 
   function libraryEmptyHtml(reason) {
@@ -3971,7 +3994,8 @@
     state.catalog = catalog;
     state.scenarios = scenarios;
     const hadPrefs = loadLibraryPrefs();
-    if (!hadPrefs) applySmartLibraryDefault();
+    const smartLib = !hadPrefs && applySmartLibraryDefault();
+    maybeToastSmartLibraryDefault(smartLib);
 
     $("#brand-name").textContent = state.catalog.brand.name;
     document.title = state.catalog.brand.name + " — " + state.catalog.brand.tagline;

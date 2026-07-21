@@ -62,6 +62,10 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("applySmartLibraryDefault()", JS)
         self.assertIn('state.libraryFilter = "available"', JS)
         self.assertIn("anyPlayable && anyMissing", JS)
+        self.assertIn("function maybeToastSmartLibraryDefault", JS)
+        self.assertIn("maybeToastSmartLibraryDefault(smartLib)", JS)
+        self.assertIn("On this host (partial inventory)", JS)
+        self.assertIn("SMART_LIB_TOAST_KEY", JS)
         # Home/Studio pack pickers prefer packs with host media when mixed
         self.assertIn("function scenariosForDiscovery", JS)
         self.assertIn("function packIdsWithHostMedia", JS)
