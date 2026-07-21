@@ -34,6 +34,16 @@ class TestLibrarySearchSurface(unittest.TestCase):
     def test_css_styles_search(self):
         self.assertIn(".library-search", CSS)
         self.assertIn(".library-toolbar", CSS)
+        self.assertIn(".video-card-tags", CSS)
+
+    def test_video_tags_click_to_search(self):
+        self.assertIn("videoCardTagsHtml", JS)
+        self.assertIn("data-lib-tag", JS)
+        self.assertIn("applyLibraryTagSearch", JS)
+        self.assertIn("fh:libraryPrefs", JS)
+        self.assertIn("saveLibraryPrefs", JS)
+        # Search haystack includes tags
+        self.assertIn("v.tags", JS)
 
 
 if __name__ == "__main__":

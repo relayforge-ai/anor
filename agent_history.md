@@ -2362,3 +2362,26 @@ Full local CI → OK
 
 ### RESULT
 Explorers can find packs by era/title without scrolling the full grid.
+
+---
+
+## Iteration 84 — 2026-07-21
+
+### OBSERVE
+Main green after library search. Catalog already carries `tags` but cards hid them; filter/search prefs reset on refresh.
+
+### PLAN
+**One high-impact change:** topic tags on video cards (click → search) + session-persisted library prefs.
+
+### EXECUTE
+- `videoCardTagsHtml` / `applyLibraryTagSearch`; tags in search haystack
+- `fh:libraryPrefs` sessionStorage for filter + query
+- CSS + tests
+
+### TEST
+```
+Full local CI → OK
+```
+
+### RESULT
+Explorers browse by theme (Cold War, Cannae, …) and keep library context across in-tab navigations.

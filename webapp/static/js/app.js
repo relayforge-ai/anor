@@ -361,6 +361,23 @@
     });
   }
 
+  function videoCardTagsHtml(v) {
+    const tags = Array.isArray(v.tags) ? v.tags.filter(Boolean).slice(0, 4) : [];
+    if (!tags.length) return "";
+    return `<div class="video-card-tags" role="group" aria-label="Topics">
+      ${tags
+        .map(
+          (t) =>
+            `<button type="button" class="pill video-tag" data-lib-tag="${escapeHtml(
+              String(t)
+            )}" title="Search library for ${escapeHtml(String(t))}">${escapeHtml(
+              String(t)
+            )}</button>`
+        )
+        .join("")}
+    </div>`;
+  }
+
   function videoCardHtml(v) {
     const access = FHFreemium.videoAccess(v.id, state.catalog);
     const unavailable = v.available === false;
@@ -384,6 +401,7 @@
           <div class="video-card-meta">${spec}${gatePill}<span class="pill">${escapeHtml(v.era)}</span></div>
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
+          ${videoCardTagsHtml(v)}
           <div class="note">${
             unavailable
               ? "Media missing — open Studio and queue a render"
@@ -393,10 +411,56 @@
       </article>`;
   }
 
+  function applyLibraryTagSearch(tag) {
+    const q = String(tag || "").trim();
+    if (!q) return;
+    state.libraryQuery = q;
+    const input = $("#library-search");
+    if (input) input.value = q;
+    saveLibraryPrefs();
+    if (state.route !== "library") {
+      navigate("library");
+    } else {
+      renderLibrary();
+    }
+    toast(`Library search: ${q}`);
+  }
+
   function bindVideoCards(root) {
+    root.querySelectorAll("[data-lib-tag]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        applyLibraryTagSearch(btn.getAttribute("data-lib-tag") || "");
+      });
+    });
     root.querySelectorAll("[data-video]").forEach((el) => {
       el.addEventListener("click", () => navigate("watch/" + el.dataset.video));
     });
+  }
+
+  const LIBRARY_PREFS_KEY = "fh:libraryPrefs";
+
+  function saveLibraryPrefs() {
+    try {
+      sessionStorage.setItem(
+        LIBRARY_PREFS_KEY,
+        JSON.stringify({
+          filter: state.libraryFilter || "all",
+          query: state.libraryQuery || "",
+        })
+      );
+    } catch (_) {}
+  }
+
+  function loadLibraryPrefs() {
+    try {
+      const raw = sessionStorage.getItem(LIBRARY_PREFS_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p && typeof p.filter === "string") state.libraryFilter = p.filter;
+      if (p && typeof p.query === "string") state.libraryQuery = p.query;
+    } catch (_) {}
   }
 
   function libraryEmptyHtml(reason) {
@@ -459,6 +523,7 @@
     if (!q) return list;
     const tokens = q.split(" ").filter(Boolean);
     return list.filter((v) => {
+      const tagStr = Array.isArray(v.tags) ? v.tags.join(" ") : "";
       const hay = [
         v.id,
         v.scenario_id,
@@ -467,6 +532,7 @@
         v.blurb,
         v.era,
         v.speculation,
+        tagStr,
       ]
         .map((x) => String(x || "").toLowerCase())
         .join(" ");
@@ -482,6 +548,7 @@
       const btn = e.target.closest("[data-lib-filter]");
       if (!btn) return;
       state.libraryFilter = btn.getAttribute("data-lib-filter") || "all";
+      saveLibraryPrefs();
       paintLibraryFilterBar();
       renderLibrary();
     });
@@ -494,6 +561,7 @@
     if (state.libraryQuery) input.value = state.libraryQuery;
     input.addEventListener("input", () => {
       state.libraryQuery = input.value || "";
+      saveLibraryPrefs();
       renderLibrary();
     });
     input.addEventListener("keydown", (e) => {
@@ -502,6 +570,7 @@
           e.preventDefault();
           input.value = "";
           state.libraryQuery = "";
+          saveLibraryPrefs();
           renderLibrary();
         } else {
           input.blur();
@@ -526,8 +595,7 @@
     paintLibraryFilterBar();
     const searchInput = $("#library-search");
     if (searchInput && searchInput.value !== (state.libraryQuery || "")) {
-      // Keep input stable while typing (renderLibrary re-enters on each keystroke)
-      // only sync if state was cleared programmatically
+      searchInput.value = state.libraryQuery || "";
     }
     const all = state.catalog.videos || [];
     const videos = filterLibraryVideos(all, state.libraryFilter, state.libraryQuery);
@@ -2238,6 +2306,7 @@
 
     state.catalog = catalog;
     state.scenarios = scenarios;
+    loadLibraryPrefs();
 
     $("#brand-name").textContent = state.catalog.brand.name;
     document.title = state.catalog.brand.name + " — " + state.catalog.brand.tagline;

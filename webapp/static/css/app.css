@@ -685,6 +685,27 @@ textarea {
   gap: 0.45rem;
   flex: 1;
 }
+.video-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+.video-card-tags .video-tag {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-dim);
+  padding: 0.2rem 0.45rem;
+}
+.video-card-tags .video-tag:hover,
+.video-card-tags .video-tag:focus-visible {
+  color: var(--gold);
+  border-color: rgba(212, 179, 90, 0.4);
+  background: var(--gold-soft);
+}
 .video-card-body h3 {
   margin: 0;
   font-family: var(--font-display);
