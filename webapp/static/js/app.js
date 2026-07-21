@@ -2311,16 +2311,29 @@
   }
 
   function bindStudioKeyboardShortcuts() {
-    /** Ctrl/⌘+Enter basic fork; Ctrl/⌘+Shift+Enter LLM (Scholar). */
+    /**
+     * Ctrl/⌘+Enter basic fork; Ctrl/⌘+Shift+Enter LLM (Scholar);
+     * Ctrl/⌘+Shift+V queue video (Scholar gate inside queueVideoRender).
+     */
     if (document.documentElement.dataset.studioKbd === "1") return;
     document.documentElement.dataset.studioKbd = "1";
     document.addEventListener("keydown", (e) => {
       if (state.route !== "studio") return;
       if ($("#paywall")?.classList.contains("open")) return;
       if (document.body.classList.contains("boot-failed")) return;
-      if (!(e.ctrlKey || e.metaKey) || e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
       // Allow from seed textarea; block bare text fields that aren't our studio seed
       if (isEditableTarget(e.target) && e.target.id !== "custom-seed") return;
+      // Queue video — complements missing-media deep link + pulse CTA
+      if (
+        e.shiftKey &&
+        (e.code === "KeyV" || e.key === "v" || e.key === "V")
+      ) {
+        e.preventDefault();
+        queueVideoRender();
+        return;
+      }
+      if (e.key !== "Enter") return;
       e.preventDefault();
       if (e.shiftKey) {
         runFork({ useLlm: true });

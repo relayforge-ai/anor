@@ -246,8 +246,13 @@ class TestStaticProgressUI(unittest.TestCase):
             "studioKbd",
             "runFork({ useLlm: false })",
             "runFork({ useLlm: true })",
+            'e.code === "KeyV"',
+            "queueVideoRender()",
         ):
             self.assertIn(needle, js, f"missing {needle}")
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn("Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V", html)
+        self.assertIn("queue video (Scholar)", html)
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
         for needle in (
             "newRequestId",

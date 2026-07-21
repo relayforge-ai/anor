@@ -396,7 +396,13 @@
               >
                 LLM re-render
               </button>
-              <button class="btn btn-ghost" id="btn-video" title="Queue async video render (script → TTS → stills → ffmpeg)">Queue video render</button>
+              <button
+                class="btn btn-ghost"
+                id="btn-video"
+                title="Queue async video render (script → TTS → stills → ffmpeg) · Ctrl/⌘+Shift+V"
+              >
+                Queue video render
+              </button>
               <div class="row">
                 <button class="btn btn-ghost btn-sm" id="btn-compare">Compare branches</button>
                 <button class="btn btn-ghost btn-sm" id="btn-copy" disabled title="Copy labeled narrative to clipboard">
@@ -408,7 +414,8 @@
               </div>
               <p class="note studio-kbd-hint" id="studio-kbd-hint">
                 Keyboard: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> basic fork ·
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> LLM (Scholar)
+                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> LLM (Scholar) ·
+                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> queue video (Scholar)
               </p>
             </div>
             <div class="control-grid" id="control-tiles"></div>

@@ -3524,3 +3524,26 @@ Full local CI → 309 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can install Forked History as a standalone shell with Library/Studio shortcuts; no service worker, no offline secrets.
+
+---
+
+## Iteration 134 — 2026-07-21
+
+### OBSERVE
+Main green after 10a87d0 (webmanifest). Studio keyboard covered fork/LLM only — Scholars completing missing-media deep links still needed the mouse for Queue video after the pulse CTA.
+
+### PLAN
+**One high-impact change:** Ctrl/⌘+Shift+V queues video render from Studio keyboard map.
+
+### EXECUTE
+- `bindStudioKeyboardShortcuts` handles Shift+V → `queueVideoRender()`
+- Studio kbd hint + btn-video title updated
+- Static contract tests
+
+### TEST
+```
+Full local CI → 309 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Scholar keyboard path: deep-link branch → Ctrl+Shift+V queue (paywall still enforced for Explorers).
