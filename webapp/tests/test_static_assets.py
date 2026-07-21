@@ -131,6 +131,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "home-continue-grid",
             "recordWatch",
             "recentWatches",
+            "saveWatchPosition",
+            "getWatchPosition",
+            "persistWatchPos",
+            "Resumed where you left off",
             "formatForkMarkdown",
             "copyForkNarrative",
             "copyTextToClipboard",
@@ -176,6 +180,10 @@ class TestStaticProgressUI(unittest.TestCase):
             "recentWatches",
             "clearWatchHistory",
             "forked_history_watch_history_v1",
+            "saveWatchPosition",
+            "getWatchPosition",
+            "clearWatchPosition",
+            "forked_history_watch_pos_v1",
         ):
             self.assertIn(needle, freemium, f"missing {needle} in freemium.js")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")

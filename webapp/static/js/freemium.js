@@ -7,6 +7,10 @@
   /** Recent watch ids for freemium "Continue watching" (client-only; no PII). */
   const WATCH_HISTORY_KEY = "forked_history_watch_history_v1";
   const WATCH_HISTORY_MAX = 8;
+  /** Per-episode resume times (seconds) — local only, no analytics. */
+  const WATCH_POS_KEY = "forked_history_watch_pos_v1";
+  const WATCH_POS_MAX = 24;
+  const WATCH_POS_MIN_S = 5; // ignore scrub noise / intro clicks
 
   const DEFAULTS = {
     isMember: false,
@@ -239,8 +243,89 @@
     clearWatchHistory() {
       try {
         localStorage.removeItem(WATCH_HISTORY_KEY);
+        localStorage.removeItem(WATCH_POS_KEY);
       } catch (_) {}
       return [];
+    },
+
+    /**
+     * Persist playback position for resume (localStorage only).
+     * Skips near-start / near-end so restarts stay clean.
+     */
+    saveWatchPosition(videoId, seconds, duration) {
+      const id = String(videoId || "").trim();
+      if (!id || id.length > 128) return null;
+      const t = Number(seconds);
+      const d = Number(duration);
+      if (!Number.isFinite(t) || t < WATCH_POS_MIN_S) {
+        // Near start — drop stale resume
+        this.clearWatchPosition(id);
+        return null;
+      }
+      if (Number.isFinite(d) && d > 0 && t >= d * 0.92) {
+        // Near complete — next open starts fresh
+        this.clearWatchPosition(id);
+        return null;
+      }
+      let map = {};
+      try {
+        const raw = localStorage.getItem(WATCH_POS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) map = parsed;
+        }
+      } catch (_) {
+        map = {};
+      }
+      map[id] = {
+        t: Math.round(t * 10) / 10,
+        d: Number.isFinite(d) && d > 0 ? Math.round(d * 10) / 10 : null,
+        at: Date.now(),
+      };
+      // Cap size by recency
+      const entries = Object.entries(map).sort(
+        (a, b) => (b[1] && b[1].at ? b[1].at : 0) - (a[1] && a[1].at ? a[1].at : 0)
+      );
+      map = Object.fromEntries(entries.slice(0, WATCH_POS_MAX));
+      try {
+        localStorage.setItem(WATCH_POS_KEY, JSON.stringify(map));
+      } catch (_) {}
+      return map[id];
+    },
+
+    getWatchPosition(videoId) {
+      const id = String(videoId || "").trim();
+      if (!id) return null;
+      try {
+        const raw = localStorage.getItem(WATCH_POS_KEY);
+        if (!raw) return null;
+        const map = JSON.parse(raw);
+        if (!map || typeof map !== "object") return null;
+        const row = map[id];
+        if (!row || typeof row !== "object") return null;
+        const t = Number(row.t);
+        if (!Number.isFinite(t) || t < WATCH_POS_MIN_S) return null;
+        return {
+          t,
+          d: Number.isFinite(Number(row.d)) ? Number(row.d) : null,
+          at: row.at || 0,
+        };
+      } catch (_) {
+        return null;
+      }
+    },
+
+    clearWatchPosition(videoId) {
+      const id = String(videoId || "").trim();
+      if (!id) return;
+      try {
+        const raw = localStorage.getItem(WATCH_POS_KEY);
+        if (!raw) return;
+        const map = JSON.parse(raw);
+        if (!map || typeof map !== "object") return;
+        delete map[id];
+        localStorage.setItem(WATCH_POS_KEY, JSON.stringify(map));
+      } catch (_) {}
     },
 
     /**

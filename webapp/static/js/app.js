@@ -818,6 +818,8 @@
     player.oncanplay = null;
     player.onerror = null;
     player.onended = null;
+    player.ontimeupdate = null;
+    player.onpause = null;
     player.load();
     gate.classList.remove("open");
 
@@ -845,12 +847,29 @@
     setPlayerLoading(true, "Loading episode…");
     player.src = "/media/videos/" + video.file;
 
+    /** Persist mid-watch position for freemium resume (throttled). */
+    let lastPosSave = 0;
+    const persistWatchPos = (force) => {
+      try {
+        if (!player.duration || !Number.isFinite(player.currentTime)) return;
+        const now = Date.now();
+        if (!force && now - lastPosSave < 2500) return;
+        lastPosSave = now;
+        FHFreemium.saveWatchPosition(videoId, player.currentTime, player.duration);
+      } catch (_) {}
+    };
+
     player.oncanplay = () => setPlayerLoading(false);
     player.onerror = () => {
       setPlayerLoading(true, "Could not load this episode. Try Studio → Queue video render.");
     };
+    player.ontimeupdate = () => persistWatchPos(false);
+    player.onpause = () => persistWatchPos(true);
     // After a full playthrough, nudge viewers into the decision studio
     player.onended = () => {
+      try {
+        FHFreemium.clearWatchPosition(videoId);
+      } catch (_) {}
       if (access2.mode === "preview") {
         // Preview ceiling usually fires first; still open paywall if they reach true end
         gate.classList.add("open");
@@ -891,9 +910,26 @@
             player.pause();
             player.currentTime = previewCeiling;
             gate.classList.add("open");
+            try {
+              FHFreemium.saveWatchPosition(videoId, previewCeiling, player.duration);
+            } catch (_) {}
           }
         }, 200);
       }
+      // Resume mid-episode (local) — clamp inside Explorer preview window
+      try {
+        const pos = FHFreemium.getWatchPosition(videoId);
+        if (pos && pos.t > 5 && Number.isFinite(player.duration) && player.duration > 0) {
+          let seek = Math.min(pos.t, Math.max(0, player.duration - 1));
+          if (access2.mode === "preview" && previewCeiling != null) {
+            seek = Math.min(seek, Math.max(0, previewCeiling - 1.5));
+          }
+          if (seek > 5) {
+            player.currentTime = seek;
+            toast("Resumed where you left off on this device");
+          }
+        }
+      } catch (_) {}
     };
 
     // side quota

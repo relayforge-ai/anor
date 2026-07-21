@@ -2658,3 +2658,26 @@ Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Crawlers can find the freemium surface and public pack/episode deep links without indexing job/API noise.
+
+---
+
+## Iteration 97 — 2026-07-21
+
+### OBSERVE
+Main green after robots/sitemap. Continue watching only reopened episodes at 0:00 — Explorers lost mid-preview progress; full unlocks restarted too.
+
+### PLAN
+**One high-impact change:** local resume playback position for freemium watch.
+
+### EXECUTE
+- `FHFreemium.saveWatchPosition` / `getWatchPosition` / `clearWatchPosition` (localStorage, min 5s, clear near end)
+- Player: throttle save on timeupdate/pause; seek on loadedmetadata; clear on ended
+- Clamp resume inside Explorer preview ceiling; Clear continue also wipes positions
+
+### TEST
+```
+Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Watch sessions resume mid-cut on the same device without accounts or analytics — freemium retention for previews and free unlocks.
