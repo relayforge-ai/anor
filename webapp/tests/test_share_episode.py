@@ -16,6 +16,16 @@ class TestShareEpisode(unittest.TestCase):
         self.assertIn("Share episode", HTML)
         # Guardrail language: share page ≠ auto-publish social
         self.assertRegex(HTML, r"[Hh]uman.?gate")
+        # Host deliverable when media is available
+        self.assertIn('id="watch-open-mp4"', HTML)
+        self.assertIn("Open MP4", HTML)
+
+    def test_js_paints_open_mp4_when_available(self):
+        self.assertIn("function paintWatchOpenMp4", JS)
+        self.assertIn("paintWatchOpenMp4(video)", JS)
+        self.assertIn("/media/videos/", JS)
+        self.assertIn('watch-open-mp4', JS)
+        self.assertIn("download", JS)
 
     def test_js_share_payload_and_fallback(self):
         self.assertIn("function episodeSharePayload", JS)

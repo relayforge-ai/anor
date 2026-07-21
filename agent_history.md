@@ -3382,3 +3382,26 @@ Full local CI → 304 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Partial host inventories binge onto ready media instead of dead "not on host" stops.
+
+---
+
+## Iteration 128 — 2026-07-21
+
+### OBSERVE
+Main green after ab9251e (on-host binge). Studio offered Open MP4 after renders, but the freemium watch page did not — Explorers with host media had no direct deliverable link beside Share/Studio.
+
+### PLAN
+**One high-impact change:** Open MP4 control on watch when media is available on host.
+
+### EXECUTE
+- `#watch-open-mp4` + `paintWatchOpenMp4` (public `/media/videos/…`, download filename from id)
+- Hidden when unavailable; title includes measured runtime/size when known
+- Share + static contract tests
+
+### TEST
+```
+Full local CI → 305 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Watch matches Studio’s host-deliverable affordance for on-host cuts without path leaks or auto-publish.

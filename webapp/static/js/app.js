@@ -1318,6 +1318,33 @@
     }
   }
 
+  /**
+   * Surface host MP4 when available (same /media path Studio uses after render).
+   * Hidden when media is missing so Studio remains the clear next action.
+   */
+  function paintWatchOpenMp4(video) {
+    const a = $("#watch-open-mp4");
+    if (!a) return;
+    const unavailable = !video || video.available === false || !video.file;
+    if (unavailable) {
+      a.hidden = true;
+      a.removeAttribute("href");
+      a.removeAttribute("download");
+      return;
+    }
+    const href = "/media/videos/" + String(video.file).replace(/^\/+/, "");
+    a.href = href;
+    a.hidden = false;
+    // Friendly download name without host paths
+    const base = String(video.id || "episode").replace(/[^\w.-]+/g, "_");
+    a.setAttribute("download", base + ".mp4");
+    const bits = ["Narrated cut on this host"];
+    const rt = videoRuntimeLabel(video);
+    if (rt) bits.push(rt);
+    a.title = bits.join(" · ");
+    a.textContent = "Open MP4";
+  }
+
   function paintWatchAdjacent(video) {
     const bar = $("#watch-adjacent");
     if (!bar) return;
@@ -1429,6 +1456,8 @@
       ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
     $("#watch-studio").onclick = () => navigate("studio/" + video.scenario_id);
+    // Host deliverable link — only when media is present (no secrets; public /media path)
+    paintWatchOpenMp4(video);
     const shareBtn = $("#watch-share");
     if (shareBtn) {
       shareBtn.onclick = () => shareEpisode(video.id);

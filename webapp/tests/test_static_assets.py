@@ -127,6 +127,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "episodeSharePayload",
             "navigator.share",
             "watch-share",
+            "watch-open-mp4",
+            "paintWatchOpenMp4",
             "relatedEpisodes",
             "paintWatchRelated",
             "watch-related",
