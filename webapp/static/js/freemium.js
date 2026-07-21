@@ -4,6 +4,9 @@
  */
 (function (global) {
   const KEY = "forked_history_entitlements_v1";
+  /** Recent watch ids for freemium "Continue watching" (client-only; no PII). */
+  const WATCH_HISTORY_KEY = "forked_history_watch_history_v1";
+  const WATCH_HISTORY_MAX = 8;
 
   const DEFAULTS = {
     isMember: false,
@@ -199,6 +202,45 @@
         save(s);
       }
       return s;
+    },
+
+    /**
+     * Record a watch open for Continue watching (most-recent first, de-duped).
+     * Client-only localStorage — no analytics beacon, no secrets.
+     */
+    recordWatch(videoId) {
+      const id = String(videoId || "").trim();
+      if (!id || id.length > 128) return this.recentWatches();
+      let list = this.recentWatches(WATCH_HISTORY_MAX);
+      list = [id, ...list.filter((x) => x !== id)].slice(0, WATCH_HISTORY_MAX);
+      try {
+        localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(list));
+      } catch (_) {}
+      return list;
+    },
+
+    /** Most-recent video ids opened on this browser (Explorer/Scholar alike). */
+    recentWatches(limit) {
+      const lim = Math.max(1, Math.min(limit || WATCH_HISTORY_MAX, WATCH_HISTORY_MAX));
+      try {
+        const raw = localStorage.getItem(WATCH_HISTORY_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        return arr
+          .map((x) => String(x || "").trim())
+          .filter((x) => x && x.length <= 128)
+          .slice(0, lim);
+      } catch (_) {
+        return [];
+      }
+    },
+
+    clearWatchHistory() {
+      try {
+        localStorage.removeItem(WATCH_HISTORY_KEY);
+      } catch (_) {}
+      return [];
     },
 
     /**

@@ -324,6 +324,34 @@
   }
 
   /* ——— Home ——— */
+  function paintHomeContinue() {
+    const wrap = $("#home-continue");
+    const grid = $("#home-continue-grid");
+    const clearBtn = $("#home-continue-clear");
+    if (!wrap || !grid) return;
+    const ids = FHFreemium.recentWatches(6);
+    const byId = new Map(
+      ((state.catalog && state.catalog.videos) || []).map((v) => [v.id, v])
+    );
+    const videos = ids.map((id) => byId.get(id)).filter(Boolean);
+    if (!videos.length) {
+      wrap.hidden = true;
+      grid.innerHTML = "";
+      return;
+    }
+    wrap.hidden = false;
+    grid.innerHTML = videos.map((v) => videoCardHtml(v)).join("");
+    bindVideoCards(grid);
+    if (clearBtn && clearBtn.dataset.bound !== "1") {
+      clearBtn.dataset.bound = "1";
+      clearBtn.addEventListener("click", () => {
+        FHFreemium.clearWatchHistory();
+        paintHomeContinue();
+        toast("Cleared local watch history");
+      });
+    }
+  }
+
   function renderHome() {
     showPage("home");
     setActiveNav("home");
@@ -336,6 +364,7 @@
       $("#hero-feature-blurb").textContent = pick.blurb;
       $("#hero-watch").onclick = () => navigate("watch/" + pick.id);
     }
+    paintHomeContinue();
     const grid = $("#home-video-grid");
     grid.innerHTML = state.catalog.videos
       .map((v) => videoCardHtml(v))
@@ -727,6 +756,10 @@
     }
     state.videoId = videoId;
     clearPreviewWatch();
+    // Freemium retention: local continue-watching strip (no network, no PII)
+    try {
+      FHFreemium.recordWatch(videoId);
+    } catch (_) {}
     paintWatchRelated(video);
 
     const access = FHFreemium.videoAccess(videoId, state.catalog);

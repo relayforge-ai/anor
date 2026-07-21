@@ -2565,3 +2565,26 @@ Full local CI → 274 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Identical Ken Burns muxes skip ffmpeg zoompan on subsequent video jobs when still+audio fingerprints match — completes the still → TTS → clip cost ladder.
+
+---
+
+## Iteration 93 — 2026-07-21
+
+### OBSERVE
+Main green at 709feff after still/TTS/clip cost ladder. Image path + mock fallback solid. Freemium home still had no return path to recently opened cuts — Explorers lose context between sessions.
+
+### PLAN
+**One high-impact change:** client-only Continue watching strip for freemium retention.
+
+### EXECUTE
+- `FHFreemium.recordWatch` / `recentWatches` / `clearWatchHistory` (localStorage, de-duped, max 8)
+- Home `#home-continue` grid + Clear; painted from catalog match
+- Record on watch open; CSS + static asset needles
+
+### TEST
+```
+Full local CI → 274 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers and Scholars resume recent cuts from the home page without accounts or analytics — privacy-preserving freemium polish.

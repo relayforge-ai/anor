@@ -596,6 +596,17 @@ textarea {
   font-size: 0.9rem;
 }
 
+/* Home: continue watching (local freemium history) */
+.home-continue[hidden] {
+  display: none !important;
+}
+.home-continue {
+  margin-top: 0.25rem;
+}
+.home-continue .section-head {
+  margin-top: 1.5rem;
+}
+
 /* Watch: related cuts */
 .watch-related[hidden] {
   display: none !important;

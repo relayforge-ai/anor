@@ -126,6 +126,11 @@ class TestStaticProgressUI(unittest.TestCase):
             "relatedEpisodes",
             "paintWatchRelated",
             "watch-related",
+            "paintHomeContinue",
+            "home-continue",
+            "home-continue-grid",
+            "recordWatch",
+            "recentWatches",
             "formatForkMarkdown",
             "copyForkNarrative",
             "copyTextToClipboard",
@@ -163,7 +168,15 @@ class TestStaticProgressUI(unittest.TestCase):
         ):
             self.assertIn(needle, js, f"missing {needle}")
         freemium = (STATIC / "js" / "freemium.js").read_text(encoding="utf-8")
-        for needle in ("newRequestId", "X-Request-ID", "apiHeaders"):
+        for needle in (
+            "newRequestId",
+            "X-Request-ID",
+            "apiHeaders",
+            "recordWatch",
+            "recentWatches",
+            "clearWatchHistory",
+            "forked_history_watch_history_v1",
+        ):
             self.assertIn(needle, freemium, f"missing {needle} in freemium.js")
         css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
         self.assertIn(".fork-error.is-rate-limit", css)
@@ -176,6 +189,11 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".library-filter.active", css)
         self.assertIn(".studio-kbd-hint", css)
         self.assertIn("studio-kbd-hint kbd", css)
+        self.assertIn(".home-continue", css)
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="home-continue"', html)
+        self.assertIn('id="home-continue-grid"', html)
+        self.assertIn("Continue watching", html)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")
