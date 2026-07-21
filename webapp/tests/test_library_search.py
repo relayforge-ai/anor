@@ -16,6 +16,8 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn('id="library-search"', HTML)
         self.assertIn('type="search"', HTML)
         self.assertIn("library-toolbar", HTML)
+        self.assertIn('id="library-era-jumps"', HTML)
+        self.assertIn("Jump to era in library", HTML)
 
     def test_js_exports_filter_with_query(self):
         self.assertIn("function filterLibraryVideos", JS)
@@ -38,10 +40,14 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("function eraSortKey", JS)
         self.assertIn("videosChronological(", JS)
         self.assertIn("chronological", JS)
-        # Era section heads in chronological library
+        # Era section heads + jump chips in chronological library
         self.assertIn("function libraryGridHtml", JS)
         self.assertIn("library-era-head", JS)
         self.assertIn("groupByEra", JS)
+        self.assertIn("paintLibraryEraJumps", JS)
+        self.assertIn("eraSectionId", JS)
+        self.assertIn("library-era-jump", JS)
+        self.assertIn("data-era-jump", JS)
         # Daily rotating freemium hero
         self.assertIn("function pickFeaturedOfDay", JS)
         self.assertIn("Featured today", JS)
@@ -65,6 +71,9 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn(".video-card-tags", CSS)
         self.assertIn(".library-era-head", CSS)
         self.assertIn(".library-era-title", CSS)
+        self.assertIn(".library-era-jumps", CSS)
+        self.assertIn(".library-era-jump", CSS)
+        self.assertIn(".library-era-head-flash", CSS)
 
     def test_video_tags_click_to_search(self):
         self.assertIn("videoCardTagsHtml", JS)

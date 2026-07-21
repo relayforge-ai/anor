@@ -780,6 +780,19 @@ textarea {
   letter-spacing: 0.02em;
   color: var(--ink-dim);
 }
+.library-era-jumps[hidden] {
+  display: none !important;
+}
+.library-era-jump {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.library-era-head-flash {
+  outline: 1px solid rgba(212, 168, 75, 0.55);
+  outline-offset: 4px;
+  border-radius: 6px;
+  transition: outline-color 0.4s ease;
+}
 
 /* ——— Player ——— */
 .player-layout {

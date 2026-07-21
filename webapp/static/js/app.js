@@ -813,6 +813,14 @@
     });
   }
 
+  function eraSectionId(era) {
+    const slug = String(era || "undated")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return "lib-era-" + (slug || "undated");
+  }
+
   /**
    * Museum library grid: era section heads between chronological groups.
    * Skip era heads for in_progress (recency order, not timeline).
@@ -828,8 +836,9 @@
       const era = String((v && v.era) || "Undated").trim() || "Undated";
       if (era !== lastEra) {
         lastEra = era;
+        const sid = eraSectionId(era);
         parts.push(
-          `<div class="library-era-head" role="presentation" style="grid-column:1/-1">
+          `<div class="library-era-head" id="${escapeHtml(sid)}" role="presentation" style="grid-column:1/-1">
             <h3 class="library-era-title">${escapeHtml(era)}</h3>
           </div>`
         );
@@ -837,6 +846,62 @@
       parts.push(videoCardHtml(v));
     }
     return parts.join("");
+  }
+
+  function uniqueErasInOrder(videos) {
+    const eras = [];
+    const seen = new Set();
+    for (const v of videos || []) {
+      const era = String((v && v.era) || "Undated").trim() || "Undated";
+      if (!seen.has(era)) {
+        seen.add(era);
+        eras.push(era);
+      }
+    }
+    return eras;
+  }
+
+  function paintLibraryEraJumps(videos, { groupByEra } = {}) {
+    const bar = $("#library-era-jumps");
+    if (!bar) return;
+    if (!groupByEra) {
+      bar.hidden = true;
+      bar.innerHTML = "";
+      return;
+    }
+    const eras = uniqueErasInOrder(videos);
+    if (eras.length < 2) {
+      bar.hidden = true;
+      bar.innerHTML = "";
+      return;
+    }
+    bar.hidden = false;
+    bar.innerHTML = eras
+      .map(
+        (era) =>
+          `<button type="button" class="btn btn-ghost btn-sm library-era-jump" data-era-jump="${escapeHtml(
+            era
+          )}" title="Jump to ${escapeHtml(era)}">${escapeHtml(era)}</button>`
+      )
+      .join("");
+    if (bar.dataset.bound !== "1") {
+      bar.dataset.bound = "1";
+      bar.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-era-jump]");
+        if (!btn) return;
+        const era = btn.getAttribute("data-era-jump") || "";
+        const target = document.getElementById(eraSectionId(era));
+        if (!target) return;
+        try {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (_) {
+          target.scrollIntoView(true);
+        }
+        // Brief focus ring for keyboard/a11y orientation
+        target.classList.add("library-era-head-flash");
+        setTimeout(() => target.classList.remove("library-era-head-flash"), 900);
+      });
+    }
   }
 
   function renderLibrary() {
@@ -893,10 +958,12 @@
       status.textContent = `${labels[state.libraryFilter] || labels.all}${orderNote}${qNote} · ${videos.length} of ${all.length}`;
     }
     if (!all.length) {
+      paintLibraryEraJumps([], { groupByEra: false });
       grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");
       return;
     }
     if (!videos.length) {
+      paintLibraryEraJumps([], { groupByEra: false });
       const hasQuery = !!normalizeLibraryQuery(state.libraryQuery);
       const f = state.libraryFilter || "all";
       let emptyHint =
@@ -924,6 +991,7 @@
     }
     const anyAvailable = videos.some((v) => v.available !== false);
     const groupByEra = state.libraryFilter !== "in_progress";
+    paintLibraryEraJumps(videos, { groupByEra });
     grid.innerHTML =
       libraryGridHtml(videos, { groupByEra }) +
       (anyAvailable

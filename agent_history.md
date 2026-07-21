@@ -3027,3 +3027,26 @@ Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Studio shows when a render reused stills/TTS/Ken Burns work; home episodes read as a museum timeline matching Library.
+
+---
+
+## Iteration 113 — 2026-07-21
+
+### OBSERVE
+Main green after cost-ladder Studio feedback. Chronological library had era section heads but no jump navigation — long museum lists still required manual scrolling through 12 eras / 36 cuts.
+
+### PLAN
+**One high-impact change:** era jump chips that scroll to library era sections.
+
+### EXECUTE
+- `eraSectionId` on `.library-era-head` anchors
+- `#library-era-jumps` chip bar (hidden when &lt;2 eras or In progress)
+- Smooth scroll + flash highlight; CSS + library tests
+
+### TEST
+```
+Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can jump 216 BC → 1815 → 1962 without scrubbing the full freemium catalog.
