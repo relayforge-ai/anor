@@ -2865,3 +2865,26 @@ Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers reopen Studio on the same decision pack across visits without accounts — device-only, no analytics.
+
+---
+
+## Iteration 106 — 2026-07-21
+
+### OBSERVE
+Main green after last Studio pack recall. Reopening a pack still defaulted to the historical branch unless a session fork/job restored a choice — Explorers lost their last counterfactual selection across visits.
+
+### PLAN
+**One high-impact change:** remember last Studio choice per pack in localStorage.
+
+### EXECUTE
+- `saveLastStudioChoice` / `loadLastStudioChoice` map (`fh:lastStudioChoices`)
+- Restore remembered choice when opening a pack; save on every `selectChoice`
+- Still overridden by last-fork / active video job when present; static needles
+
+### TEST
+```
+Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Studio restores both pack and branch on freemium return visits — device-only, no analytics.

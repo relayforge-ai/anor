@@ -21,6 +21,9 @@
   const LAST_FORK_KEY = "fh:lastFork";
   /** localStorage — last Studio pack for freemium return visits (device-only) */
   const LAST_STUDIO_KEY = "fh:lastStudioScenario";
+  /** localStorage map scenario_id → last choice_id (device-only) */
+  const LAST_STUDIO_CHOICES_KEY = "fh:lastStudioChoices";
+  const LAST_STUDIO_CHOICES_MAX = 32;
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
   /** Active rate-limit countdown timer (studio) */
@@ -111,6 +114,50 @@
       (packs[0] && packs[0].scenario_id) ||
       null
     );
+  }
+
+  function _readStudioChoiceMap() {
+    try {
+      const raw = localStorage.getItem(LAST_STUDIO_CHOICES_KEY);
+      if (!raw) return {};
+      const map = JSON.parse(raw);
+      if (!map || typeof map !== "object" || Array.isArray(map)) return {};
+      return map;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveLastStudioChoice(scenarioId, choiceId) {
+    const sid = String(scenarioId || "").trim();
+    const cid = String(choiceId || "").trim();
+    if (!sid || !cid || sid.length > 64 || cid.length > 64) return;
+    if (sid.includes("/") || sid.includes("..") || cid.includes("/") || cid.includes(".."))
+      return;
+    try {
+      const map = _readStudioChoiceMap();
+      map[sid] = cid;
+      // Cap map size (keep most recently written last — rebuild ordered by insertion)
+      const keys = Object.keys(map);
+      if (keys.length > LAST_STUDIO_CHOICES_MAX) {
+        const drop = keys.slice(0, keys.length - LAST_STUDIO_CHOICES_MAX);
+        drop.forEach((k) => delete map[k]);
+      }
+      localStorage.setItem(LAST_STUDIO_CHOICES_KEY, JSON.stringify(map));
+    } catch (_) {}
+  }
+
+  function loadLastStudioChoice(scenarioId) {
+    const sid = String(scenarioId || "").trim();
+    if (!sid) return null;
+    try {
+      const map = _readStudioChoiceMap();
+      const cid = String(map[sid] || "").trim();
+      if (!cid || cid.length > 64 || cid.includes("/") || cid.includes("..")) return null;
+      return cid;
+    } catch (_) {
+      return null;
+    }
   }
 
   function parseRetryAfter(response) {
@@ -1318,10 +1365,19 @@
     });
 
     if (!state.choiceId || !choices.find((c) => c.id === state.choiceId)) {
-      state.choiceId = choices.find((c) => c.is_historical)?.id || choices[0]?.id;
+      // Prefer last device choice for this pack, else historical baseline
+      const remembered = loadLastStudioChoice(scenarioId);
+      const rememberedOk =
+        remembered && choices.some((c) => c && c.id === remembered) ? remembered : null;
+      state.choiceId =
+        rememberedOk ||
+        choices.find((c) => c.is_historical)?.id ||
+        choices[0]?.id;
       const el = list.querySelector(`[data-choice="${state.choiceId}"]`);
       el?.classList.add("selected");
       el?.setAttribute("aria-pressed", "true");
+      el?.setAttribute("aria-checked", "true");
+      if (state.choiceId) saveLastStudioChoice(scenarioId, state.choiceId);
     }
 
     paintStudioMediaStrip();
@@ -1460,6 +1516,9 @@
 
   function selectChoice(btn, allBtns) {
     state.choiceId = btn.dataset.choice;
+    if (state.scenarioId && state.choiceId) {
+      saveLastStudioChoice(state.scenarioId, state.choiceId);
+    }
     allBtns.forEach((c) => {
       c.classList.remove("selected");
       c.setAttribute("aria-pressed", "false");
