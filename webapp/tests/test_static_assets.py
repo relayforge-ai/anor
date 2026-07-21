@@ -163,6 +163,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "goAdjacentEpisode",
             "paintWatchAdjacent",
             "handleWatchEpisodeEnded",
+            "preferAvailable",
+            "Skipped missing media",
             "AUTO_NEXT_KEY",
             "fh:autoNextEpisode",
             "watch-auto-next",

@@ -35,6 +35,11 @@ class TestRelatedEpisodes(unittest.TestCase):
         self.assertIn("function handleWatchEpisodeEnded", JS)
         self.assertIn("fh:autoNextEpisode", JS)
         self.assertIn("videosChronological", JS)
+        # Partial host inventories: binge skips unavailable media
+        self.assertIn("preferAvailable", JS)
+        self.assertIn("cand.available === false", JS)
+        self.assertIn("Skipped missing media", JS)
+        self.assertIn("on-host binge", JS)
         self.assertIn('id="watch-adjacent"', HTML)
         self.assertIn('id="watch-prev"', HTML)
         self.assertIn('id="watch-next"', HTML)

@@ -3358,3 +3358,27 @@ Full local CI → 304 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Watch/studio/library routes emit absolute deep-link URLs in share meta without secrets or path leaks.
+
+---
+
+## Iteration 127 — 2026-07-21
+
+### OBSERVE
+Main green after 349d339 (og:url/canonical). Binge next/prev walked strict chronological neighbors — on partial grind hosts that landed Explorers on "not on host" dead ends and stalled auto-next.
+
+### PLAN
+**One high-impact change:** binge adjacent nav prefers playable on-host cuts (skip missing media).
+
+### EXECUTE
+- `adjacentEpisodes({ preferAvailable })` walks past `available === false`
+- Next/prev/auto-next use on-host binge; toast when skips occur
+- Position label notes "on-host binge" when inventory is mixed
+- Related + static contract tests
+
+### TEST
+```
+Full local CI → 304 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Partial host inventories binge onto ready media instead of dead "not on host" stops.

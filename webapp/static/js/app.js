@@ -1160,18 +1160,39 @@
 
   /**
    * Prev/next cut in museum chronological order (era → pack → documented → on-host).
-   * Freemium binge path without leaving the public catalog.
+   * When preferAvailable (default), skip "not on host" rows so partial grind
+   * inventories binge onto playable media without dead ends.
    */
-  function adjacentEpisodes(video) {
+  function adjacentEpisodes(video, opts) {
+    const preferAvailable = !opts || opts.preferAvailable !== false;
     const list = videosChronological((state.catalog && state.catalog.videos) || []);
     if (!video || !list.length) return { prev: null, next: null, index: -1, total: 0 };
     const idx = list.findIndex((v) => v && v.id === video.id);
     if (idx < 0) return { prev: null, next: null, index: -1, total: list.length };
+
+    const walk = (from, dir) => {
+      let i = from + dir;
+      while (i >= 0 && i < list.length) {
+        const cand = list[i];
+        if (!cand) {
+          i += dir;
+          continue;
+        }
+        if (preferAvailable && cand.available === false) {
+          i += dir;
+          continue;
+        }
+        return cand;
+      }
+      return null;
+    };
+
     return {
-      prev: idx > 0 ? list[idx - 1] : null,
-      next: idx < list.length - 1 ? list[idx + 1] : null,
+      prev: walk(idx, -1),
+      next: walk(idx, 1),
       index: idx,
       total: list.length,
+      skippedUnavailable: preferAvailable,
     };
   }
 
@@ -1179,12 +1200,29 @@
     if (state.route !== "watch" || !state.videoId || !state.catalog) return false;
     const video = (state.catalog.videos || []).find((v) => v.id === state.videoId);
     if (!video) return false;
-    const { prev, next } = adjacentEpisodes(video);
+    const { prev, next } = adjacentEpisodes(video, { preferAvailable: true });
     const target = dir < 0 ? prev : next;
     if (!target || !target.id) {
-      toast(dir < 0 ? "Already at the earliest cut in the library" : "Already at the latest cut in the library");
+      toast(
+        dir < 0
+          ? "No earlier playable cut on this host"
+          : "No later playable cut on this host"
+      );
       return false;
     }
+    // Note when binge skipped missing renders
+    try {
+      const list = videosChronological((state.catalog && state.catalog.videos) || []);
+      const cur = list.findIndex((v) => v && v.id === video.id);
+      const tgt = list.findIndex((v) => v && v.id === target.id);
+      if (cur >= 0 && tgt >= 0 && Math.abs(tgt - cur) > 1) {
+        toast(
+          dir > 0
+            ? `Skipped missing media → ${target.title || target.id}`
+            : `Skipped missing media ← ${target.title || target.id}`
+        );
+      }
+    } catch (_) {}
     navigate("watch/" + target.id);
     return true;
   }
@@ -1290,9 +1328,15 @@
     const pos = $("#watch-adjacent-pos");
     const autoToggle = $("#watch-auto-next");
     if (pos) {
+      const mix =
+        Array.isArray(state.catalog?.videos) &&
+        state.catalog.videos.some((x) => x && x.available === false) &&
+        state.catalog.videos.some((x) => x && x.available !== false);
       pos.textContent =
         index >= 0 && total > 0
-          ? `${index + 1} / ${total} · chronological`
+          ? mix
+            ? `${index + 1} / ${total} · chronological · on-host binge`
+            : `${index + 1} / ${total} · chronological`
           : "Catalog order";
     }
     if (prevBtn) {
