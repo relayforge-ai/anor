@@ -2339,3 +2339,26 @@ Full local CI → OK
 
 ### RESULT
 Default path stays cache-cheap; deliberate re-renders available after confirm.
+
+---
+
+## Iteration 83 — 2026-07-21
+
+### OBSERVE
+Main green. Library had speculation/availability chips but no text search — weak freemium browse as catalog grows.
+
+### PLAN
+**One high-impact change:** library free-text search (title/era/id) + `/` focus + Esc clear.
+
+### EXECUTE
+- `filterLibraryVideos(videos, filter, query)` multi-token AND
+- `#library-search` toolbar, CSS, `/` keyboard, empty-state copy
+- Tests: `test_library_search`; CI module list
+
+### TEST
+```
+Full local CI → OK
+```
+
+### RESULT
+Explorers can find packs by era/title without scrolling the full grid.

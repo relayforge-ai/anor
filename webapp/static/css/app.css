@@ -596,6 +596,47 @@ textarea {
   font-size: 0.9rem;
 }
 
+/* Library search + filter toolbar */
+.library-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.library-search-label {
+  margin: 0;
+  max-width: 28rem;
+}
+.library-search {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  outline: none;
+}
+.library-search::placeholder {
+  color: var(--muted);
+}
+.library-search:focus {
+  border-color: rgba(212, 179, 90, 0.55);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+@media (min-width: 720px) {
+  .library-toolbar {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .library-search-label {
+    flex: 1;
+    max-width: 22rem;
+  }
+}
+
 .video-card {
   overflow: hidden;
   display: flex;

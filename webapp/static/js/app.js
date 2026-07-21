@@ -13,6 +13,7 @@
     scenarioDetail: null,
     lastFork: null,
     libraryFilter: "all",
+    libraryQuery: "",
   };
 
   /** sessionStorage keys — survive tab refresh within the browser session */
@@ -433,16 +434,44 @@
     });
   }
 
-  function filterLibraryVideos(videos, filter) {
+  function normalizeLibraryQuery(q) {
+    return String(q || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  /**
+   * Filter library catalog entries by speculation/availability chip and free-text query.
+   * Query matches title, subtitle, blurb, era, id, scenario_id (case-insensitive).
+   */
+  function filterLibraryVideos(videos, filter, query) {
     const f = filter || "all";
-    if (f === "documented") return videos.filter((v) => v.speculation === "documented");
-    if (f === "simulated") {
-      return videos.filter(
+    let list = videos || [];
+    if (f === "documented") list = list.filter((v) => v.speculation === "documented");
+    else if (f === "simulated") {
+      list = list.filter(
         (v) => v.speculation === "simulated" || v.speculation === "dramatized"
       );
-    }
-    if (f === "available") return videos.filter((v) => v.available !== false);
-    return videos;
+    } else if (f === "available") list = list.filter((v) => v.available !== false);
+
+    const q = normalizeLibraryQuery(query);
+    if (!q) return list;
+    const tokens = q.split(" ").filter(Boolean);
+    return list.filter((v) => {
+      const hay = [
+        v.id,
+        v.scenario_id,
+        v.title,
+        v.subtitle,
+        v.blurb,
+        v.era,
+        v.speculation,
+      ]
+        .map((x) => String(x || "").toLowerCase())
+        .join(" ");
+      return tokens.every((t) => hay.includes(t));
+    });
   }
 
   function bindLibraryFilters() {
@@ -458,6 +487,29 @@
     });
   }
 
+  function bindLibrarySearch() {
+    const input = $("#library-search");
+    if (!input || input.dataset.bound === "1") return;
+    input.dataset.bound = "1";
+    if (state.libraryQuery) input.value = state.libraryQuery;
+    input.addEventListener("input", () => {
+      state.libraryQuery = input.value || "";
+      renderLibrary();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (input.value) {
+          e.preventDefault();
+          input.value = "";
+          state.libraryQuery = "";
+          renderLibrary();
+        } else {
+          input.blur();
+        }
+      }
+    });
+  }
+
   function paintLibraryFilterBar() {
     $$("#library-filters [data-lib-filter]").forEach((btn) => {
       const on = btn.getAttribute("data-lib-filter") === state.libraryFilter;
@@ -470,9 +522,15 @@
     showPage("library");
     setActiveNav("library");
     bindLibraryFilters();
+    bindLibrarySearch();
     paintLibraryFilterBar();
+    const searchInput = $("#library-search");
+    if (searchInput && searchInput.value !== (state.libraryQuery || "")) {
+      // Keep input stable while typing (renderLibrary re-enters on each keystroke)
+      // only sync if state was cleared programmatically
+    }
     const all = state.catalog.videos || [];
-    const videos = filterLibraryVideos(all, state.libraryFilter);
+    const videos = filterLibraryVideos(all, state.libraryFilter, state.libraryQuery);
     const grid = $("#library-grid");
     const status = $("#library-filter-status");
     if (status) {
@@ -482,18 +540,25 @@
         simulated: "Showing 🧪 simulated / dramatized forks only",
         available: "Showing episodes with media on this host",
       };
-      status.textContent = `${labels[state.libraryFilter] || labels.all} · ${videos.length} of ${all.length}`;
+      const q = normalizeLibraryQuery(state.libraryQuery);
+      const qNote = q ? ` · search “${q}”` : "";
+      status.textContent = `${labels[state.libraryFilter] || labels.all}${qNote} · ${videos.length} of ${all.length}`;
     }
     if (!all.length) {
       grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");
       return;
     }
     if (!videos.length) {
+      const hasQuery = !!normalizeLibraryQuery(state.libraryQuery);
       grid.innerHTML = `
         <div class="card side-panel library-empty" style="grid-column:1/-1">
-          <p class="eyebrow">Filter</p>
-          <h3 class="h3" style="margin-top:0">No episodes match this filter</h3>
-          <p class="lede-sm">Try <strong>All</strong> or another speculation label. Documented and simulated cuts stay separate on purpose.</p>
+          <p class="eyebrow">${hasQuery ? "Search" : "Filter"}</p>
+          <h3 class="h3" style="margin-top:0">No episodes match</h3>
+          <p class="lede-sm">${
+            hasQuery
+              ? "Try another word (era, title, or pack id), clear the search box, or switch filter chips."
+              : "Try <strong>All</strong> or another speculation label. Documented and simulated cuts stay separate on purpose."
+          }</p>
         </div>`;
       return;
     }
@@ -2203,6 +2268,27 @@
       // Paywall trap handles Escape first (capture). Nav only when modal closed.
       if (e.key === "Escape" && !$("#paywall")?.classList.contains("open")) {
         closeNav();
+      }
+      // "/" focuses library search when browsing the catalog (not in inputs)
+      if (
+        e.key === "/" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        state.route === "library" &&
+        !$("#paywall")?.classList.contains("open")
+      ) {
+        const t = e.target;
+        const tag = (t && t.tagName) || "";
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) {
+          return;
+        }
+        const search = $("#library-search");
+        if (search) {
+          e.preventDefault();
+          search.focus();
+          search.select?.();
+        }
       }
     });
     window.addEventListener("resize", () => {

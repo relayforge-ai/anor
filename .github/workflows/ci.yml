@@ -65,6 +65,7 @@ jobs:
             webapp.tests.test_security \
             webapp.tests.test_security_headers \
             webapp.tests.test_static_assets \
+            webapp.tests.test_library_search \
             webapp.tests.test_video_jobs \
             webapp.tests.test_paths_and_media \
             webapp.tests.test_membership \

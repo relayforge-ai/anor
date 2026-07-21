@@ -166,25 +166,39 @@
         <p class="eyebrow">Library</p>
         <h1 class="h-display h2">Episodes with receipts</h1>
         <p class="lede">Every claim carries a provenance tag. Counterfactuals never pretend to be facts.</p>
-        <div
-          class="library-filters row"
-          id="library-filters"
-          role="toolbar"
-          aria-label="Filter episodes by speculation label"
-          style="margin-top:1.1rem;flex-wrap:wrap;gap:0.45rem"
-        >
-          <button type="button" class="btn btn-ghost btn-sm library-filter active" data-lib-filter="all" aria-pressed="true">
-            All
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="documented" aria-pressed="false">
-            📗 Documented
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="simulated" aria-pressed="false">
-            🧪 Simulated
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="available" aria-pressed="false">
-            On this host
-          </button>
+        <div class="library-toolbar" style="margin-top:1.1rem">
+          <label class="library-search-label field" for="library-search">
+            <span class="note" style="display:block;margin-bottom:0.35rem;letter-spacing:0.06em;text-transform:uppercase;font-family:var(--font-ui);font-size:0.72rem">Search</span>
+            <input
+              type="search"
+              id="library-search"
+              class="library-search"
+              placeholder="Era, title, pack id… (Esc clears)"
+              autocomplete="off"
+              enterkeyhint="search"
+              aria-controls="library-grid"
+            />
+          </label>
+          <div
+            class="library-filters row"
+            id="library-filters"
+            role="toolbar"
+            aria-label="Filter episodes by speculation label"
+            style="flex-wrap:wrap;gap:0.45rem"
+          >
+            <button type="button" class="btn btn-ghost btn-sm library-filter active" data-lib-filter="all" aria-pressed="true">
+              All
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="documented" aria-pressed="false">
+              📗 Documented
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="simulated" aria-pressed="false">
+              🧪 Simulated
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="available" aria-pressed="false">
+              On this host
+            </button>
+          </div>
         </div>
         <p class="note" id="library-filter-status" aria-live="polite" style="margin-top:0.65rem"></p>
         <div class="grid grid-3" id="library-grid" style="margin-top:0.75rem"></div>
