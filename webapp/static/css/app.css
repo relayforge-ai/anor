@@ -329,6 +329,14 @@ textarea {
   border-color: rgba(224, 160, 74, 0.35);
   background: rgba(224, 160, 74, 0.08);
 }
+.pill-new {
+  color: var(--gold);
+  border-color: rgba(212, 179, 90, 0.4);
+  background: var(--gold-soft);
+}
+.video-card-new {
+  border-color: rgba(212, 179, 90, 0.3);
+}
 
 .card {
   background: var(--panel);

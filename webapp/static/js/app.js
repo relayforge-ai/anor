@@ -794,6 +794,12 @@
         hostPill = `<span class="pill pill-doc video-card-on-host" title="Narrated cut is on this host">on host</span>`;
       }
     }
+    // Optional catalog badge (e.g. "new") for freshly shipped packs — freemium discovery
+    const badgeRaw = String((v && (v.badge || v.fresh_badge)) || "").trim().toLowerCase();
+    const newPill =
+      badgeRaw === "new" || v.fresh === true
+        ? `<span class="pill pill-new" title="Recently added to the public catalog">New</span>`
+        : "";
     const resumePill = unavailable ? "" : resumePillHtml(v.id);
     const spec =
       v.speculation === "documented"
@@ -802,14 +808,14 @@
     return `
       <article class="card video-card ${unavailable ? "video-card-unavailable" : ""}${
         resumePill ? " video-card-has-resume" : ""
-      }" data-video="${escapeHtml(
+      }${newPill ? " video-card-new" : ""}" data-video="${escapeHtml(
         v.id
       )}" data-available="${unavailable ? "0" : "1"}">
         <div class="video-card-art" style="background:linear-gradient(145deg,${v.poster_gradient[0]},${v.poster_gradient[1]})">
           <div class="video-card-play">${unavailable ? "·" : "▶"}</div>
         </div>
         <div class="video-card-body">
-          <div class="video-card-meta">${spec}${hostPill}${gatePill}${resumePill}<span class="pill">${escapeHtml(v.era)}</span></div>
+          <div class="video-card-meta">${newPill}${spec}${hostPill}${gatePill}${resumePill}<span class="pill">${escapeHtml(v.era)}</span></div>
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
           ${videoCardTagsHtml(v)}

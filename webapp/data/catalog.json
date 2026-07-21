@@ -1041,7 +1041,8 @@
       ],
       "speculation": "documented",
       "featured": true,
-      "blurb": "Documented baseline: U.S. carriers spring the Midway ambush; four Japanese fleet carriers are lost and the Central Pacific carrier balance turns."
+      "blurb": "Documented baseline: U.S. carriers spring the Midway ambush; four Japanese fleet carriers are lost and the Central Pacific carrier balance turns.",
+      "badge": "new"
     },
     {
       "id": "ELO-016-wait_confirm",
@@ -1063,7 +1064,8 @@
       ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "SPECULATION: hold the launch for cleaner tactical confirmation. Hours reorder risk — they do not invent perfect information."
+      "blurb": "SPECULATION: hold the launch for cleaner tactical confirmation. Hours reorder risk — they do not invent perfect information.",
+      "badge": "new"
     },
     {
       "id": "ELO-016-disperse",
@@ -1085,7 +1087,8 @@
       ],
       "speculation": "dramatized",
       "featured": false,
-      "blurb": "DRAMATIZED process: refuse concentration — may save decks or surrender the only geometry that can break the Japanese carrier force."
+      "blurb": "DRAMATIZED process: refuse concentration — may save decks or surrender the only geometry that can break the Japanese carrier force.",
+      "badge": "new"
     }
   ]
 }
