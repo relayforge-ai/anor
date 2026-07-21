@@ -218,6 +218,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "scenariosForDiscovery",
             "packIdsWithHostMedia",
             "videosForHomeGrid",
+            "paintHomeInventoryNote",
+            "home-inventory-note",
             "videosChronological",
             "pickFeaturedOfDay",
             "Featured today",

@@ -70,6 +70,11 @@ class TestLibrarySearchSurface(unittest.TestCase):
         # Home episode wall filters to on-host when inventory is mixed
         self.assertIn("function videosForHomeGrid", JS)
         self.assertIn("videosForHomeGrid(", JS)
+        self.assertIn("function paintHomeInventoryNote", JS)
+        self.assertIn("paintHomeInventoryNote(", JS)
+        self.assertIn("with media on this host", JS)
+        self.assertIn('id="home-inventory-note"', HTML)
+        self.assertIn(".home-inventory-note", CSS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)

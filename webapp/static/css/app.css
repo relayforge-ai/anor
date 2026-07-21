@@ -606,6 +606,19 @@ textarea {
 .home-continue .section-head {
   margin-top: 1.5rem;
 }
+/* Home: partial host inventory explanation under Episodes head */
+.home-inventory-note {
+  margin: -0.35rem 0 1rem;
+  color: var(--ink-dim);
+}
+.home-inventory-note[hidden] {
+  display: none !important;
+}
+.home-inventory-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
 
 /* Watch: related cuts */
 .watch-related[hidden] {

@@ -676,7 +676,9 @@
     const grid = $("#home-video-grid");
     // Partial grind hosts: show playable host inventory first (same spirit as
     // Library smart default). Full or empty hosts keep the full catalog grid.
-    const homeVids = videosForHomeGrid(state.catalog.videos || []);
+    const allHome = state.catalog.videos || [];
+    const homeVids = videosForHomeGrid(allHome);
+    paintHomeInventoryNote(allHome, homeVids);
     grid.innerHTML = libraryGridHtml(homeVids, {
       groupByEra: true,
     });
@@ -986,6 +988,24 @@
         ? all.filter((v) => v && v.available !== false)
         : all;
     return videosChronological(source);
+  }
+
+  /**
+   * Explain when Home filters to on-host media so Explorers know the full
+   * catalog still lives in Library / Studio (no silent truncation).
+   */
+  function paintHomeInventoryNote(allVideos, homeVideos) {
+    const note = $("#home-inventory-note");
+    if (!note) return;
+    const total = (allVideos || []).length;
+    const shown = (homeVideos || []).length;
+    if (total > 0 && shown > 0 && shown < total) {
+      note.hidden = false;
+      note.innerHTML = `Showing <strong>${shown}</strong> of ${total} cuts with media on this host. <a href="#/library">Library</a> lists every branch — open Studio to queue missing renders.`;
+    } else {
+      note.hidden = true;
+      note.textContent = "";
+    }
   }
 
   /**

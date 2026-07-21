@@ -3849,3 +3849,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Home episode grid matches freemium "watchable first" discipline on partial fleets.
+
+---
+
+## Iteration 148 — 2026-07-21
+
+### OBSERVE
+Main green after cd2586a (home grid on-host filter). ELO-015 already shipped. Home silently shortened the episode wall on partial hosts with no explanation — Explorers could think the catalog was incomplete.
+
+### PLAN
+**One high-impact change:** home inventory note when the episode wall is filtered to on-host media.
+
+### EXECUTE
+- `#home-inventory-note` + `paintHomeInventoryNote(all, shown)`
+- Copy: N of M on host · Library link · Studio for missing
+- CSS + static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Partial-host Home filtering is transparent; full catalog path stays Library/Studio.
