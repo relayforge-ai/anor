@@ -152,6 +152,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "bindLibraryFilters",
             "scenariosChronological",
             "videosChronological",
+            "pickFeaturedOfDay",
+            "Featured today",
             "eraSortKey",
             "data-lib-filter",
             "function compareBranches",

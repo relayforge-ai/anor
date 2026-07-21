@@ -2751,3 +2751,25 @@ Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Still cache remains a GPU cost saver for identical prompts, without serving wrong quality after knob changes.
+
+---
+
+## Iteration 101 — 2026-07-21
+
+### OBSERVE
+Main green after still-cache quality keys. Home hero always took `featured[0]` (catalog insertion order) — freemium discovery stuck on the same pack every visit despite 11 featured historical cuts.
+
+### PLAN
+**One high-impact change:** daily rotating featured hero (`pickFeaturedOfDay`).
+
+### EXECUTE
+- UTC date hash over chronological featured pool
+- Hero badge "Featured today"; static/library needles
+
+### TEST
+```
+Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers see a different featured decision each day without server state or analytics — broader freemium discovery of the public catalog.

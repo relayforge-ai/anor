@@ -36,6 +36,9 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("function eraSortKey", JS)
         self.assertIn("videosChronological(", JS)
         self.assertIn("chronological", JS)
+        # Daily rotating freemium hero
+        self.assertIn("function pickFeaturedOfDay", JS)
+        self.assertIn("Featured today", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)

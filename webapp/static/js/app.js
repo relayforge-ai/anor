@@ -352,17 +352,42 @@
     }
   }
 
+  /**
+   * Stable daily featured pick for freemium discovery.
+   * Rotates across featured catalog cuts (chronological pool) by UTC date —
+   * no server state, no analytics. Falls back to full catalog if none featured.
+   */
+  function pickFeaturedOfDay(videos, when) {
+    const all = videos || [];
+    const featured = videosChronological(all.filter((v) => v && v.featured));
+    const pool = featured.length ? featured : videosChronological(all);
+    if (!pool.length) return null;
+    const d = when instanceof Date ? when : new Date();
+    const key = d.toISOString().slice(0, 10); // UTC YYYY-MM-DD
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i++) {
+      h ^= key.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return pool[h % pool.length];
+  }
+
   function renderHome() {
     showPage("home");
     setActiveNav("home");
-    const featured = (state.catalog.videos || []).filter((v) => v.featured);
-    const pick = featured[0] || state.catalog.videos[0];
+    const pick = pickFeaturedOfDay(state.catalog.videos || []);
     const art = $("#hero-art");
+    const badge = $("#hero-feature-badge");
     if (pick) {
       art.style.background = `linear-gradient(145deg, ${pick.poster_gradient[0]}, ${pick.poster_gradient[1]})`;
       $("#hero-feature-title").textContent = pick.title;
       $("#hero-feature-blurb").textContent = pick.blurb;
       $("#hero-watch").onclick = () => navigate("watch/" + pick.id);
+      if (badge) {
+        badge.textContent = "Featured today";
+        badge.title =
+          "Rotates daily across featured episodes (UTC) so Explorers discover more packs.";
+      }
     }
     paintHomeContinue();
     const grid = $("#home-video-grid");
