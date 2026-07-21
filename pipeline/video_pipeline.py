@@ -6,6 +6,7 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -22,6 +23,7 @@ ProgressCb = Callable[[str, float, str], None]  # stage, pct 0-100, message
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "outputs" / "videos"
+_CLIP_CACHE_MIN_BYTES = 500
 
 
 def _keep_work() -> bool:
@@ -134,10 +136,101 @@ def ken_burns_filter(
     return vf
 
 
+def clip_cache_enabled() -> bool:
+    """Reuse Ken Burns mux when still+audio+frame geometry match (default on)."""
+    raw = (os.environ.get("ANOR_CLIP_CACHE") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def clip_cache_dir() -> Path:
+    raw = (os.environ.get("ANOR_CLIP_CACHE_DIR") or "").strip()
+    if raw:
+        return Path(raw).expanduser()
+    return REPO_ROOT / "outputs" / "clip_cache"
+
+
+def _file_fingerprint(path: Path) -> str:
+    """Compact content fingerprint (size + mtime + head sample)."""
+    st = path.stat()
+    h = hashlib.sha256()
+    h.update(f"{st.st_size}:{st.st_mtime_ns}".encode("ascii"))
+    with open(path, "rb") as f:
+        h.update(f.read(8192))
+    return h.hexdigest()[:24]
+
+
+def clip_cache_key(
+    image: Path,
+    audio: Path,
+    *,
+    duration_s: float,
+    width: int,
+    height: int,
+    fps: int = 30,
+) -> str:
+    material = "|".join(
+        [
+            _file_fingerprint(Path(image)),
+            _file_fingerprint(Path(audio)),
+            f"{float(duration_s):.2f}",
+            f"{int(width)}x{int(height)}",
+            str(int(fps)),
+        ]
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:28]
+
+
+def _try_clip_cache_hit(key: str, out_clip: Path) -> Optional[Path]:
+    src = clip_cache_dir() / f"{key}.mp4"
+    try:
+        if not src.is_file() or src.stat().st_size < _CLIP_CACHE_MIN_BYTES:
+            return None
+        out_clip = Path(out_clip)
+        out_clip.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, out_clip)
+        out_clip.with_suffix(".cache.txt").write_text(
+            f"clip_cache_hit key={key}\n", encoding="utf-8"
+        )
+        return out_clip
+    except OSError:
+        return None
+
+
+def _store_clip_cache(key: str, out_clip: Path) -> None:
+    try:
+        out_clip = Path(out_clip)
+        if not out_clip.is_file() or out_clip.stat().st_size < _CLIP_CACHE_MIN_BYTES:
+            return
+        dest = clip_cache_dir() / f"{key}.mp4"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp = dest.with_suffix(".tmp")
+        shutil.copy2(out_clip, tmp)
+        tmp.replace(dest)
+    except OSError:
+        pass
+
+
 def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -> Path:
     """Slow zoom pan over a still, muxed with narration audio (1080p default)."""
+    image = Path(image)
+    audio = Path(audio)
+    out_clip = Path(out_clip)
+    out_clip.parent.mkdir(parents=True, exist_ok=True)
     dur = max(duration, _ffprobe_duration(audio))
     w, h = video_frame_size()
+    cache_on = clip_cache_enabled()
+    cache_key = ""
+    if cache_on:
+        try:
+            cache_key = clip_cache_key(
+                image, audio, duration_s=dur, width=w, height=h
+            )
+            hit = _try_clip_cache_hit(cache_key, out_clip)
+            if hit is not None:
+                return hit
+        except OSError:
+            cache_key = ""
+
     vf = ken_burns_filter(dur, width=w, height=h)
     cmd = [
         "ffmpeg",
@@ -166,6 +259,8 @@ def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -
         str(out_clip),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
+    if cache_on and cache_key:
+        _store_clip_cache(cache_key, out_clip)
     return out_clip
 
 

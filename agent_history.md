@@ -2541,3 +2541,27 @@ Full local CI → 271 OK + pip-audit clean
 
 ### RESULT
 Identical narration clips skip remote/system TTS on subsequent video jobs.
+
+---
+
+## Iteration 92 — 2026-07-21
+
+### OBSERVE
+Main green at 93f465b (TTS cache). Mid-flight Ken Burns clip cache was already in `pipeline/video_pipeline.py` + `.env.example` but untested/uncommitted — re-mux cost still paid on identical still+audio re-renders.
+
+### PLAN
+**One high-impact change:** finish content-addressed Ken Burns clip cache — unit tests, health flag, full CI, ship.
+
+### EXECUTE
+- Kept `clip_cache_key` / hit-store under `outputs/clip_cache` (size+mtime+head fingerprint of still+audio + frame geometry)
+- Default on via `ANOR_CLIP_CACHE=1`; dir override documented in `.env.example`
+- Health detail reports `clip_cache`
+- Tests: key stability, hit skips ffmpeg encode (sidecar + no `-vf` encode), disabled path encodes without storing
+
+### TEST
+```
+Full local CI → 274 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Identical Ken Burns muxes skip ffmpeg zoompan on subsequent video jobs when still+audio fingerprints match — completes the still → TTS → clip cost ladder.

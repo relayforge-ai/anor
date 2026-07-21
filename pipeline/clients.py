@@ -987,11 +987,13 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
     still_w, still_h = ImageClient.still_size()
     # Lazy import keeps clients import light for pure unit tests
     try:
-        from .video_pipeline import video_frame_size
+        from .video_pipeline import clip_cache_enabled, video_frame_size
 
         frame_w, frame_h = video_frame_size()
+        clip_cache_on = clip_cache_enabled()
     except Exception:
         frame_w, frame_h = 1920, 1080
+        clip_cache_on = True
     return {
         "config": cfg.describe(),
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
@@ -1009,6 +1011,7 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
             backend=img._backend()
         ),
         "video_frame_size": [frame_w, frame_h],
+        "clip_cache": clip_cache_on,
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),
         "tts_fallback_mock": TTSClient.mock_fallback_enabled(),

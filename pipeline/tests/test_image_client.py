@@ -171,6 +171,7 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertIn("image_upscale", h)
         self.assertIn("video_frame_size", h)
         self.assertEqual(h["video_frame_size"], [1920, 1080])
+        self.assertIn("clip_cache", h)
         # No secrets
         blob = str(h)
         self.assertNotIn("sk-", blob)
@@ -457,6 +458,164 @@ class TestKenBurns(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(probe.stdout.strip(), "640,360")
+
+
+class TestClipCache(unittest.TestCase):
+    """Content-addressed Ken Burns mux cache (skip ffmpeg on still+audio match)."""
+
+    def _make_still_audio(self, td: Path) -> tuple[Path, Path]:
+        import subprocess
+
+        still = td / "still.png"
+        audio = td / "vo.wav"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=0x3a2a1a:s=640x360:d=1",
+                "-frames:v",
+                "1",
+                str(still),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=r=44100:cl=mono",
+                "-t",
+                "0.5",
+                str(audio),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        return still, audio
+
+    def test_clip_cache_key_stable(self):
+        from pipeline.video_pipeline import clip_cache_key
+
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            still, audio = self._make_still_audio(td_path)
+            k1 = clip_cache_key(
+                still, audio, duration_s=0.5, width=640, height=360
+            )
+            k2 = clip_cache_key(
+                still, audio, duration_s=0.5, width=640, height=360
+            )
+            k3 = clip_cache_key(
+                still, audio, duration_s=1.0, width=640, height=360
+            )
+            self.assertEqual(k1, k2)
+            self.assertNotEqual(k1, k3)
+            self.assertEqual(len(k1), 28)
+
+    def test_clip_cache_hit_skips_ffmpeg(self):
+        from pipeline.video_pipeline import _ken_burns_clip
+
+        prev = {
+            k: os.environ.get(k)
+            for k in (
+                "ANOR_CLIP_CACHE",
+                "ANOR_CLIP_CACHE_DIR",
+                "ANOR_VIDEO_WIDTH",
+                "ANOR_VIDEO_HEIGHT",
+            )
+        }
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            cache_dir = td_path / "ccache"
+            still, audio = self._make_still_audio(td_path)
+            os.environ["ANOR_CLIP_CACHE"] = "1"
+            os.environ["ANOR_CLIP_CACHE_DIR"] = str(cache_dir)
+            os.environ["ANOR_VIDEO_WIDTH"] = "320"
+            os.environ["ANOR_VIDEO_HEIGHT"] = "180"
+            try:
+                out1 = td_path / "a" / "clip.mp4"
+                out2 = td_path / "b" / "clip.mp4"
+                p1 = _ken_burns_clip(still, audio, out1, duration=0.5)
+                self.assertTrue(p1.is_file())
+                self.assertGreater(p1.stat().st_size, 500)
+                self.assertEqual(len(list(cache_dir.glob("*.mp4"))), 1)
+                # First encode should not write a hit sidecar
+                self.assertFalse(out1.with_suffix(".cache.txt").is_file())
+
+                # Second call: still+audio fingerprint match → copy from cache
+                # (prove via sidecar; also guard that ffmpeg encode is not re-run)
+                import subprocess as _sp
+
+                real_run = _sp.run
+                encode_calls: list[list] = []
+
+                def _track(*args, **kwargs):
+                    cmd = list(args[0]) if args else list(kwargs.get("args") or [])
+                    if cmd and Path(str(cmd[0])).name == "ffmpeg":
+                        # Only count encode (has -vf / zoompan path), not still/audio gens
+                        if any(a == "-vf" for a in cmd):
+                            encode_calls.append(cmd)
+                            raise AssertionError(
+                                "ffmpeg encode must not run on clip cache hit"
+                            )
+                    return real_run(*args, **kwargs)
+
+                with patch(
+                    "pipeline.video_pipeline.subprocess.run",
+                    side_effect=_track,
+                ):
+                    p2 = _ken_burns_clip(still, audio, out2, duration=0.5)
+                self.assertTrue(p2.is_file())
+                self.assertEqual(p1.read_bytes(), p2.read_bytes())
+                self.assertTrue(out2.with_suffix(".cache.txt").is_file())
+                note = out2.with_suffix(".cache.txt").read_text(encoding="utf-8")
+                self.assertIn("clip_cache_hit", note)
+                self.assertEqual(encode_calls, [])
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+    def test_clip_cache_disabled_encodes(self):
+        from pipeline.video_pipeline import _ken_burns_clip
+
+        prev = {
+            k: os.environ.get(k)
+            for k in (
+                "ANOR_CLIP_CACHE",
+                "ANOR_CLIP_CACHE_DIR",
+                "ANOR_VIDEO_WIDTH",
+                "ANOR_VIDEO_HEIGHT",
+            )
+        }
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            cache_dir = td_path / "ccache"
+            still, audio = self._make_still_audio(td_path)
+            os.environ["ANOR_CLIP_CACHE"] = "0"
+            os.environ["ANOR_CLIP_CACHE_DIR"] = str(cache_dir)
+            os.environ["ANOR_VIDEO_WIDTH"] = "320"
+            os.environ["ANOR_VIDEO_HEIGHT"] = "180"
+            try:
+                out = td_path / "clip.mp4"
+                p = _ken_burns_clip(still, audio, out, duration=0.5)
+                self.assertTrue(p.is_file())
+                self.assertEqual(len(list(cache_dir.glob("*.mp4"))), 0)
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
 
 
 if __name__ == "__main__":
