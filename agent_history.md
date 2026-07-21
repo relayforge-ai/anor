@@ -3192,3 +3192,27 @@ Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Operators see cost-ladder disk usage vs soft caps on detailed health without path leaks or public recon expansion.
+
+---
+
+## Iteration 120 — 2026-07-21
+
+### OBSERVE
+Main green after f76e3ee (cache usage on health). Freemium library kept museum chronological order but mixed host inventories buried playable cuts among "not on host" cards — Explorers on grind fleets with partial renders scrolled past ready media.
+
+### PLAN
+**One high-impact change:** prefer on-host media within chronological library/home order; mark ready cuts when inventory is mixed.
+
+### EXECUTE
+- `videosChronological`: available before missing (after era → pack → documented)
+- Library status: "chronological (on-host first within era)"
+- `video-card-on-host` pill only when catalog mixes available/unavailable
+- Static + library contract tests
+
+### TEST
+```
+Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Partial host inventories surface playable cuts first within each era without breaking the museum timeline.

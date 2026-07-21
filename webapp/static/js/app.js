@@ -599,6 +599,17 @@
       : access.mode === "full" || access.mode === "claimable_full"
         ? `<span class="pill pill-doc">${access.mode === "claimable_full" ? "Free full" : "Unlocked"}</span>`
         : `<span class="pill pill-warn">${Math.round(access.previewFraction * 100)}% preview</span>`;
+    // Ready-to-play signal only when inventory is mixed (partial host renders)
+    let hostPill = "";
+    if (!unavailable && state.catalog && Array.isArray(state.catalog.videos)) {
+      const vids = state.catalog.videos;
+      const mixed =
+        vids.some((x) => x && x.available === false) &&
+        vids.some((x) => x && x.available !== false);
+      if (mixed) {
+        hostPill = `<span class="pill pill-doc video-card-on-host" title="Narrated cut is on this host">on host</span>`;
+      }
+    }
     const resumePill = unavailable ? "" : resumePillHtml(v.id);
     const spec =
       v.speculation === "documented"
@@ -614,7 +625,7 @@
           <div class="video-card-play">${unavailable ? "·" : "▶"}</div>
         </div>
         <div class="video-card-body">
-          <div class="video-card-meta">${spec}${gatePill}${resumePill}<span class="pill">${escapeHtml(v.era)}</span></div>
+          <div class="video-card-meta">${spec}${hostPill}${gatePill}${resumePill}<span class="pill">${escapeHtml(v.era)}</span></div>
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
           ${videoCardTagsHtml(v)}
@@ -715,8 +726,10 @@
   }
 
   /**
-   * Museum order for catalog cuts: era → pack → documented baseline first → id.
-   * Keeps freemium library/home coherent instead of catalog-file insertion order.
+   * Museum order for catalog cuts: era → pack → documented baseline first →
+   * on-host media before missing renders → id.
+   * Keeps freemium library/home coherent and surfaces playable cuts first
+   * within each era (partial host inventories are common on grind fleets).
    */
   function videosChronological(list) {
     return [...(list || [])].sort((a, b) => {
@@ -727,6 +740,10 @@
       const ad = a.speculation === "documented" ? 0 : 1;
       const bd = b.speculation === "documented" ? 0 : 1;
       if (ad !== bd) return ad - bd;
+      // Prefer playable host media within the same pack branch set
+      const aa = a.available === false ? 1 : 0;
+      const bb = b.available === false ? 1 : 0;
+      if (aa !== bb) return aa - bb;
       return String(a.id || "").localeCompare(String(b.id || ""));
     });
   }
@@ -981,7 +998,7 @@
       const orderNote =
         state.libraryFilter === "in_progress"
           ? " · most recent first"
-          : " · chronological";
+          : " · chronological (on-host first within era)";
       status.textContent = `${labels[state.libraryFilter] || labels.all}${orderNote}${qNote} · ${videos.length} of ${all.length}`;
     }
     if (!all.length) {

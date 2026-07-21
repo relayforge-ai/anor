@@ -136,6 +136,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "persistWatchPos",
             "resumePillHtml",
             "video-card-resume",
+            "video-card-on-host",
+            "on-host first within era",
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
