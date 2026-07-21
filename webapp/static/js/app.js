@@ -24,6 +24,8 @@
   /** localStorage map scenario_id → last choice_id (device-only) */
   const LAST_STUDIO_CHOICES_KEY = "fh:lastStudioChoices";
   const LAST_STUDIO_CHOICES_MAX = 32;
+  /** sessionStorage: arrived from missing-media CTA — pulse Queue video once */
+  const INTENT_QUEUE_VIDEO_KEY = "fh:intentQueueVideo";
   /** localStorage playback rate for watch player (device-only freemium UX) */
   const PLAYBACK_RATE_KEY = "fh:playbackRate";
   const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5];
@@ -222,8 +224,9 @@
   /**
    * Open Studio with pack + branch preselected (deep link for missing media → render).
    * Hash form: #/studio/{scenario_id}/{choice_id}
+   * opts.queueIntent: pulse Queue video after paint (session-only, one shot).
    */
-  function openStudioForCut(scenarioId, choiceId) {
+  function openStudioForCut(scenarioId, choiceId, opts) {
     const sid = String(scenarioId || "").trim();
     const cid = String(choiceId || "").trim();
     if (!sid || sid.includes("..") || sid.includes("/")) return false;
@@ -233,10 +236,57 @@
       saveLastStudioChoice(sid, cid);
       state.choiceId = cid;
     }
+    if (opts && opts.queueIntent) {
+      try {
+        sessionStorage.setItem(INTENT_QUEUE_VIDEO_KEY, "1");
+      } catch (_) {}
+    }
     const path = cid
       ? "studio/" + encodeURIComponent(sid) + "/" + encodeURIComponent(cid)
       : "studio/" + encodeURIComponent(sid);
     navigate(path);
+    return true;
+  }
+
+  function consumeQueueVideoIntent() {
+    try {
+      if (sessionStorage.getItem(INTENT_QUEUE_VIDEO_KEY) === "1") {
+        sessionStorage.removeItem(INTENT_QUEUE_VIDEO_KEY);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /**
+   * After a missing-media deep link, highlight Queue video so Scholars finish
+   * the render without hunting the control. Explorers still hit the paywall gate.
+   */
+  function applyQueueVideoIntent() {
+    if (!consumeQueueVideoIntent()) return false;
+    const vbtn = $("#btn-video");
+    const dock = $("#dock-video");
+    [vbtn, dock].forEach((el) => {
+      if (!el) return;
+      el.classList.add("pulse-cta");
+    });
+    const member = FHFreemium.isMember();
+    if (member && vbtn) {
+      try {
+        vbtn.focus({ preventScroll: true });
+      } catch (_) {
+        vbtn.focus();
+      }
+      toast("Branch ready — tap Queue video render");
+    } else if (!member) {
+      toast("Branch ready — Queue video is Scholar (demo unlock or membership)");
+    } else {
+      toast("Branch ready — queue a narrated render when ready");
+    }
+    // Clear pulse after a short window so Studio returns to normal chrome
+    setTimeout(() => {
+      [vbtn, dock].forEach((el) => el && el.classList.remove("pulse-cta"));
+    }, 12000);
     return true;
   }
 
@@ -751,9 +801,7 @@
         e.stopPropagation();
         const sid = btn.getAttribute("data-studio-scenario") || "";
         const cid = btn.getAttribute("data-studio-choice") || "";
-        if (openStudioForCut(sid, cid)) {
-          toast("Studio — pick Queue video when ready (branch preselected)");
-        }
+        openStudioForCut(sid, cid, { queueIntent: true });
       });
     });
     root.querySelectorAll("[data-video]").forEach((el) => {
@@ -1492,13 +1540,16 @@
       ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
     $("#watch-studio").onclick = () => {
-      openStudioForCut(video.scenario_id, video.choice_id);
+      openStudioForCut(video.scenario_id, video.choice_id, {
+        queueIntent: video.available === false,
+      });
     };
     if (video.available === false) {
       const studioBtn = $("#watch-studio");
       if (studioBtn) {
         studioBtn.textContent = "Queue this cut in Studio";
-        studioBtn.title = "Opens Studio with this branch selected — then queue a narrated render";
+        studioBtn.title =
+          "Opens Studio with this branch selected and highlights Queue video render";
       }
     } else {
       const studioBtn = $("#watch-studio");
@@ -1951,6 +2002,8 @@
     }
     paintStudioMediaStrip();
     renderStudioControls();
+    // Missing-media deep links set a one-shot queue intent
+    applyQueueVideoIntent();
   }
 
   function renderStudioSources(detail) {
@@ -2028,7 +2081,7 @@
     } else {
       el.innerHTML = `
         <span class="pill pill-warn">Media not on host</span>
-        <span> Scholar: Queue video render (or Force re-render after a first build).</span>`;
+        <span> Queue video render for this branch (Scholar control · cost ladder: still/TTS/clip caches).</span>`;
     }
     // Video button tooltip reflects availability
     const vbtn = $("#btn-video");

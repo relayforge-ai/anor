@@ -102,6 +102,10 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("data-studio-choice", JS)
         self.assertIn("Queue in Studio", JS)
         self.assertIn("studio/", JS)
+        # One-shot intent pulses Queue video after Studio paint
+        self.assertIn("queueIntent", JS)
+        self.assertIn("applyQueueVideoIntent", JS)
+        self.assertIn("fh:intentQueueVideo", JS)
         self.assertIn("applyLibraryTagSearch", JS)
         self.assertIn("fh:libraryPrefs", JS)
         self.assertIn("saveLibraryPrefs", JS)

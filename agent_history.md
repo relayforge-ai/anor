@@ -3453,3 +3453,27 @@ Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Missing media flows land in Studio on the right branch for one-click queue — lower friction for freemium partial inventories.
+
+---
+
+## Iteration 131 — 2026-07-21
+
+### OBSERVE
+Main green after c7365c5 (Studio deep links). Missing-media CTAs preselected the branch but left operators to hunt Queue video — friction on partial host inventories after landing in Studio.
+
+### PLAN
+**One high-impact change:** one-shot queue-video intent after missing-media deep links.
+
+### EXECUTE
+- `fh:intentQueueVideo` session flag from `openStudioForCut({ queueIntent })`
+- `applyQueueVideoIntent` pulses Queue video + dock, focuses for Scholars
+- Library/watch missing-media paths set queueIntent
+- Static + library contract tests
+
+### TEST
+```
+Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Missing-media → Studio flow ends on a highlighted Queue video control so Scholars can finish the render without re-finding the button.
