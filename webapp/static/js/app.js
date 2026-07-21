@@ -625,10 +625,16 @@
    * no server state, no analytics. Falls back to full catalog if none featured.
    */
   function pickFeaturedOfDay(videos, when) {
+    /**
+     * Deterministic daily pick from featured catalog rows.
+     * Prefer on-host media so partial grind inventories do not hero a dead cut.
+     */
     const all = videos || [];
     const featured = videosChronological(all.filter((v) => v && v.featured));
-    const pool = featured.length ? featured : videosChronological(all);
+    let pool = featured.length ? featured : videosChronological(all);
     if (!pool.length) return null;
+    const onHost = pool.filter((v) => v && v.available !== false);
+    if (onHost.length) pool = onHost;
     const d = when instanceof Date ? when : new Date();
     const key = d.toISOString().slice(0, 10); // UTC YYYY-MM-DD
     let h = 2166136261;

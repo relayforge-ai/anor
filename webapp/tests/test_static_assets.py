@@ -210,6 +210,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "videosChronological",
             "pickFeaturedOfDay",
             "Featured today",
+            "onHost.length",
             "eraSortKey",
             "data-lib-filter",
             'f === "in_progress"',

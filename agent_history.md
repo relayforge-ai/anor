@@ -3617,3 +3617,26 @@ Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Scholars see on-host deliverable cost in Studio before re-paying the cost ladder.
+
+---
+
+## Iteration 138 — 2026-07-21
+
+### OBSERVE
+Main green after e4d9205. Daily "Featured today" hero rotated over all featured rows including missing-media cuts — partial grind hosts could hero a dead "not on host" episode.
+
+### PLAN
+**One high-impact change:** prefer on-host media in pickFeaturedOfDay.
+
+### EXECUTE
+- Filter featured/pool to `available !== false` when any playable cuts exist
+- Deterministic daily hash unchanged within the filtered pool
+- Library + static contract tests
+
+### TEST
+```
+Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Home hero prefers playable host inventory while staying a stable daily rotation.

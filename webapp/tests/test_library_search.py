@@ -52,9 +52,11 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("eraSectionId", JS)
         self.assertIn("library-era-jump", JS)
         self.assertIn("data-era-jump", JS)
-        # Daily rotating freemium hero
+        # Daily rotating freemium hero (prefers on-host when inventory is mixed)
         self.assertIn("function pickFeaturedOfDay", JS)
         self.assertIn("Featured today", JS)
+        self.assertIn("v.available !== false", JS)
+        self.assertIn("onHost.length", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)
