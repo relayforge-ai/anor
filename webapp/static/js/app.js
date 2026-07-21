@@ -980,10 +980,12 @@
     list.setAttribute("aria-label", "Decision choices");
     list.innerHTML = choices
       .map((c) => {
+        const cat = findCatalogVideo(scenarioId, c.id);
+        const onHost = cat && cat.available !== false;
         return `
         <button type="button" class="choice ${state.choiceId === c.id ? "selected" : ""}" data-choice="${escapeHtml(
           c.id
-        )}" aria-pressed="${state.choiceId === c.id ? "true" : "false"}" aria-checked="${
+        )}" data-media="${onHost ? "1" : "0"}" aria-pressed="${state.choiceId === c.id ? "true" : "false"}" aria-checked="${
           state.choiceId === c.id ? "true" : "false"
         }">
           <span class="choice-label">${escapeHtml(c.label)}</span>
@@ -991,6 +993,7 @@
             ${c.is_historical ? "★ historical baseline · " : "counterfactual · "}
             ${escapeHtml(c.speculation_level || "")}
             ${!member && !c.is_historical ? " · free basic fork" : ""}
+            ${onHost ? " · <span class=\"choice-media-ok\">MP4 on host</span>" : ""}
           </span>
         </button>`;
       })
@@ -1023,6 +1026,7 @@
       el?.setAttribute("aria-pressed", "true");
     }
 
+    paintStudioMediaStrip();
     renderStudioControls();
     // Restore last fork narrative after refresh (same scenario only)
     if (!state.lastFork || state.lastFork.scenario_id !== scenarioId) {
@@ -1065,6 +1069,7 @@
         bindForkCopyButtons();
       }
     }
+    paintStudioMediaStrip();
     renderStudioControls();
   }
 
@@ -1108,6 +1113,53 @@
       <p class="note" style="margin-top:0.75rem">Public ANOR / ELOSTIRION packs only · no MANDOS master sources.</p>`;
   }
 
+  function findCatalogVideo(scenarioId, choiceId) {
+    const vids = (state.catalog && state.catalog.videos) || [];
+    return (
+      vids.find(
+        (v) =>
+          v.scenario_id === scenarioId &&
+          v.choice_id === choiceId
+      ) || null
+    );
+  }
+
+  function paintStudioMediaStrip() {
+    /** Show whether the selected pack/choice already has an MP4 on this host. */
+    const el = $("#studio-media-strip");
+    if (!el) return;
+    const sid = state.scenarioId;
+    const cid = state.choiceId;
+    if (!sid || !cid) {
+      el.innerHTML = "";
+      return;
+    }
+    const v = findCatalogVideo(sid, cid);
+    if (!v) {
+      el.innerHTML = `<span class="pill">No catalog episode for this branch</span>
+        <span> — queue a render after fork if you want a narrated cut.</span>`;
+      return;
+    }
+    if (v.available !== false) {
+      el.innerHTML = `
+        <span class="pill pill-doc">MP4 on this host</span>
+        <span> Cache hit will skip GPU for this branch.</span>
+        <a class="btn btn-ghost btn-sm" href="#/watch/${escapeHtml(v.id)}" style="margin-left:0.35rem">Open episode</a>`;
+    } else {
+      el.innerHTML = `
+        <span class="pill pill-warn">Media not on host</span>
+        <span> Scholar: Queue video render (or Force re-render after a first build).</span>`;
+    }
+    // Video button tooltip reflects availability
+    const vbtn = $("#btn-video");
+    if (vbtn) {
+      vbtn.title =
+        v.available !== false
+          ? "Queue video — existing MP4 will cache-hit unless Force re-render"
+          : "Queue async video render (script → TTS → stills → ffmpeg)";
+    }
+  }
+
   function selectChoice(btn, allBtns) {
     state.choiceId = btn.dataset.choice;
     allBtns.forEach((c) => {
@@ -1120,6 +1172,7 @@
     btn.setAttribute("aria-pressed", "true");
     btn.setAttribute("aria-checked", "true");
     btn.setAttribute("tabindex", "0");
+    paintStudioMediaStrip();
   }
 
   function renderStudioControls() {

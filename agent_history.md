@@ -2430,3 +2430,26 @@ Full local CI → 263 tests OK + pip-audit clean
 
 ### RESULT
 Studio/library gain a labeled 1961 Cold War decision pack; social drafts staged for Ryan only.
+
+---
+
+## Iteration 87 — 2026-07-21
+
+### OBSERVE
+Main green after ELO-010. Studio hid whether the selected branch already had an MP4 (cache hit vs full GPU). Operator health lacked still/upscale/frame sizes.
+
+### PLAN
+**One high-impact change:** studio media-on-host strip + choice badges; healthcheck still/upscale/frame fields.
+
+### EXECUTE
+- `paintStudioMediaStrip` / `findCatalogVideo`; choice meta "MP4 on host"
+- `healthcheck`: image_still_size, image_upscale(+model), video_frame_size
+- Tests: health fields; static needles
+
+### TEST
+```
+Full local CI → 263 OK + pip-audit clean
+```
+
+### RESULT
+Scholars see cache vs render cost before enqueue; operators see image pipeline geometry in health detail.

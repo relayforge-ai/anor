@@ -1444,6 +1444,18 @@ body.boot-failed .member-strip {
   color: var(--ink-dim);
 }
 
+.choice-media-ok {
+  color: var(--ok);
+  font-weight: 500;
+}
+.studio-media-strip {
+  line-height: 1.45;
+  min-height: 1.4rem;
+}
+.studio-media-strip .pill {
+  margin-right: 0.25rem;
+}
+
 /* Studio sources / provenance */
 .studio-sources {
   border: 1px solid rgba(255, 255, 255, 0.08);

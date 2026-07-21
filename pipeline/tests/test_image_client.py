@@ -163,6 +163,11 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertIn(h["image_backend"], ("mock", "openai_images", "comfy"))
         self.assertIn("image_fallback_mock", h)
         self.assertIn("tts_backend", h)
+        self.assertIn("image_still_size", h)
+        self.assertEqual(len(h["image_still_size"]), 2)
+        self.assertIn("image_upscale", h)
+        self.assertIn("video_frame_size", h)
+        self.assertEqual(h["video_frame_size"], [1920, 1080])
         # No secrets
         blob = str(h)
         self.assertNotIn("sk-", blob)

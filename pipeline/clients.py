@@ -773,12 +773,28 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
     """Report which endpoints are configured (not secret values)."""
     img = ImageClient(cfg)
     tts = TTSClient(cfg)
+    still_w, still_h = ImageClient.still_size()
+    # Lazy import keeps clients import light for pure unit tests
+    try:
+        from .video_pipeline import video_frame_size
+
+        frame_w, frame_h = video_frame_size()
+    except Exception:
+        frame_w, frame_h = 1920, 1080
     return {
         "config": cfg.describe(),
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
         "image": "ready" if (cfg.image_url and not cfg.mock_media) else "offline/mock",
         "image_backend": img._backend(),
         "image_fallback_mock": ImageClient.mock_fallback_enabled(),
+        "image_still_size": [still_w, still_h],
+        "image_upscale": ImageClient.comfy_upscale_enabled(),
+        "image_upscale_model": (
+            ImageClient.comfy_upscale_model()
+            if ImageClient.comfy_upscale_enabled()
+            else None
+        ),
+        "video_frame_size": [frame_w, frame_h],
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),
         "tts_fallback_mock": TTSClient.mock_fallback_enabled(),
