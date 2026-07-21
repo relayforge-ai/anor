@@ -158,6 +158,11 @@ class TestStaticProgressUI(unittest.TestCase):
             "adjacentEpisodes",
             "goAdjacentEpisode",
             "paintWatchAdjacent",
+            "handleWatchEpisodeEnded",
+            "AUTO_NEXT_KEY",
+            "fh:autoNextEpisode",
+            "watch-auto-next",
+            "watch-end-next",
             "watch-adjacent",
             'key === "["',
             'key === "]"',
@@ -270,8 +275,11 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn('id="watch-adjacent"', html)
         self.assertIn('id="watch-prev"', html)
         self.assertIn('id="watch-next"', html)
+        self.assertIn('id="watch-auto-next"', html)
+        self.assertIn("Auto-next", html)
         self.assertIn(".player-kbd-hint", css)
         self.assertIn(".watch-adjacent", css)
+        self.assertIn(".watch-auto-next", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

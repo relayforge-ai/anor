@@ -29,8 +29,11 @@
   const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5];
   /** localStorage mute preference for watch player (device-only) */
   const PLAYBACK_MUTE_KEY = "fh:playbackMuted";
+  /** localStorage: auto-advance to next chronological cut when an episode ends */
+  const AUTO_NEXT_KEY = "fh:autoNextEpisode";
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
+  let autoNextTimer = null;
   /** Active rate-limit countdown timer (studio) */
   let rateLimitTimer = null;
   let playerSpeedBound = false;
@@ -1112,6 +1115,7 @@
       previewTimer = null;
     }
     previewCeiling = null;
+    clearAutoNextTimer();
   }
 
   function setPlayerLoading(on, text) {
@@ -1185,13 +1189,106 @@
     return true;
   }
 
+  function loadAutoNextEpisode() {
+    try {
+      const raw = localStorage.getItem(AUTO_NEXT_KEY);
+      return raw === "1" || raw === "true";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function saveAutoNextEpisode(on) {
+    try {
+      localStorage.setItem(AUTO_NEXT_KEY, on ? "1" : "0");
+    } catch (_) {}
+  }
+
+  function clearAutoNextTimer() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  /**
+   * After a full playthrough (not Explorer preview), offer next cut and optionally
+   * auto-advance along museum chronological order (device preference).
+   */
+  function handleWatchEpisodeEnded(video, accessMode) {
+    clearAutoNextTimer();
+    if (accessMode === "preview") return;
+    const { next } = adjacentEpisodes(video);
+    const nextBtn = $("#watch-next");
+    if (nextBtn && next) {
+      nextBtn.classList.add("pulse-cta");
+      nextBtn.setAttribute("aria-keyshortcuts", "n ]");
+    }
+    const quota = $("#watch-quota");
+    if (quota) {
+      let note = quota.querySelector(".watch-end-note");
+      if (!note) {
+        note = document.createElement("p");
+        note.className = "note watch-end-note";
+        note.setAttribute("role", "status");
+        note.style.marginTop = "0.75rem";
+        quota.appendChild(note);
+      }
+      if (next) {
+        note.innerHTML = `You finished this cut. <button type="button" class="btn btn-ghost btn-sm" id="watch-end-next">Next: ${escapeHtml(
+          next.title || next.id
+        )}</button> · or open Studio to fork.`;
+        const endNext = $("#watch-end-next");
+        if (endNext) {
+          endNext.onclick = () => goAdjacentEpisode(1);
+        }
+      } else {
+        note.textContent =
+          "You finished the last cut in chronological order. Open Studio to fork — speculation stays labeled.";
+      }
+    }
+    // Device-local auto-advance (off by default; never for preview/paywall path)
+    if (next && loadAutoNextEpisode()) {
+      toast(`Next cut in 3s: ${next.title || next.id} (auto-next on)`);
+      autoNextTimer = setTimeout(() => {
+        autoNextTimer = null;
+        if (state.route === "watch" && state.videoId === video.id) {
+          goAdjacentEpisode(1);
+        }
+      }, 3000);
+    } else {
+      toast(
+        next
+          ? "Episode complete — Next cut ready, or open Studio to fork"
+          : "Episode complete — open Studio to fork this decision"
+      );
+    }
+    const cta = $("#watch-studio");
+    if (cta && !next) {
+      cta.classList.add("pulse-cta");
+      try {
+        cta.focus({ preventScroll: true });
+      } catch (_) {
+        cta.focus();
+      }
+    } else if (nextBtn && next && !loadAutoNextEpisode()) {
+      try {
+        nextBtn.focus({ preventScroll: true });
+      } catch (_) {
+        nextBtn.focus();
+      }
+    }
+  }
+
   function paintWatchAdjacent(video) {
     const bar = $("#watch-adjacent");
     if (!bar) return;
+    clearAutoNextTimer();
     const { prev, next, index, total } = adjacentEpisodes(video);
     const prevBtn = $("#watch-prev");
     const nextBtn = $("#watch-next");
     const pos = $("#watch-adjacent-pos");
+    const autoToggle = $("#watch-auto-next");
     if (pos) {
       pos.textContent =
         index >= 0 && total > 0
@@ -1200,6 +1297,7 @@
     }
     if (prevBtn) {
       prevBtn.disabled = !prev;
+      prevBtn.classList.remove("pulse-cta");
       prevBtn.title = prev
         ? `Previous: ${prev.title || prev.id}`
         : "No earlier cut in chronological library";
@@ -1207,10 +1305,22 @@
     }
     if (nextBtn) {
       nextBtn.disabled = !next;
+      nextBtn.classList.remove("pulse-cta");
       nextBtn.title = next
         ? `Next: ${next.title || next.id}`
         : "No later cut in chronological library";
       nextBtn.onclick = () => goAdjacentEpisode(1);
+    }
+    if (autoToggle) {
+      autoToggle.checked = loadAutoNextEpisode();
+      autoToggle.onchange = () => {
+        saveAutoNextEpisode(!!autoToggle.checked);
+        toast(
+          autoToggle.checked
+            ? "Auto-next on — after a full cut, advance in 3s (device only)"
+            : "Auto-next off"
+        );
+      };
     }
     bar.hidden = false;
   }
@@ -1342,7 +1452,7 @@
     };
     player.ontimeupdate = () => persistWatchPos(false);
     player.onpause = () => persistWatchPos(true);
-    // After a full playthrough, nudge viewers into the decision studio
+    // After a full playthrough: next-cut binge CTA and optional auto-advance
     player.onended = () => {
       try {
         FHFreemium.clearWatchPosition(videoId);
@@ -1352,26 +1462,7 @@
         gate.classList.add("open");
         return;
       }
-      toast("Episode complete — open Studio to fork this decision.");
-      const cta = $("#watch-studio");
-      if (cta) {
-        cta.classList.add("pulse-cta");
-        try {
-          cta.focus({ preventScroll: true });
-        } catch (_) {
-          cta.focus();
-        }
-      }
-      const quota = $("#watch-quota");
-      if (quota && !quota.querySelector(".watch-end-note")) {
-        const note = document.createElement("p");
-        note.className = "note watch-end-note";
-        note.setAttribute("role", "status");
-        note.style.marginTop = "0.75rem";
-        note.textContent =
-          "You finished this cut. Pull a different thread in Studio — speculation stays labeled.";
-        quota.appendChild(note);
-      }
+      handleWatchEpisodeEnded(video, access2.mode);
     };
 
     player.onloadedmetadata = () => {

@@ -32,11 +32,15 @@ class TestRelatedEpisodes(unittest.TestCase):
         self.assertIn("function adjacentEpisodes", JS)
         self.assertIn("function goAdjacentEpisode", JS)
         self.assertIn("function paintWatchAdjacent", JS)
+        self.assertIn("function handleWatchEpisodeEnded", JS)
+        self.assertIn("fh:autoNextEpisode", JS)
         self.assertIn("videosChronological", JS)
         self.assertIn('id="watch-adjacent"', HTML)
         self.assertIn('id="watch-prev"', HTML)
         self.assertIn('id="watch-next"', HTML)
+        self.assertIn('id="watch-auto-next"', HTML)
         self.assertIn(".watch-adjacent", CSS)
+        self.assertIn(".watch-auto-next", CSS)
 
 
 if __name__ == "__main__":

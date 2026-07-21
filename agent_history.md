@@ -3311,3 +3311,27 @@ Full local CI → 303 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can binge the freemium library in museum order without dumping back to the grid after each cut.
+
+---
+
+## Iteration 125 — 2026-07-21
+
+### OBSERVE
+Main green after 38e6433 (prev/next binge nav). Full playthrough still only pulsed Studio — no post-end next-cut CTA and no optional auto-advance, so binge flow stalled at episode end.
+
+### PLAN
+**One high-impact change:** end-of-episode next-cut CTA + optional device-local auto-next.
+
+### EXECUTE
+- `handleWatchEpisodeEnded` with next button in watch quota note
+- `fh:autoNextEpisode` checkbox (3s advance; off by default; never on Explorer preview)
+- Clear auto-next timer on route change; pulse Next when a cut finishes
+- Static + related contract tests
+
+### TEST
+```
+Full local CI → 303 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Full-access viewers can continue the museum timeline immediately after a cut ends, with optional hands-free auto-next on-device only.

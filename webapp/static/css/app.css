@@ -871,6 +871,21 @@ textarea {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.watch-auto-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  margin-left: auto;
+}
+.watch-auto-next input {
+  accent-color: var(--gold);
+}
+.watch-end-note .btn {
+  margin: 0 0.15rem;
+  vertical-align: baseline;
+}
 .player-stage {
   overflow: hidden;
   position: relative;
