@@ -356,6 +356,21 @@ class TestVideoPipeline(unittest.TestCase):
             self.assertFalse((out / "ELO-003-historical.txt").exists())
 
 
+class TestForkMockMedia(unittest.TestCase):
+    def test_run_fork_mock_media_never_hits_llm_http(self):
+        """use_llm=True + mock_media must stay authored and never call Ollama HTTP."""
+        cfg = _mock_cfg(llm_url="http://127.0.0.1:11434/v1")
+        with patch("pipeline.clients._request_json") as rj:
+            r = run_fork("ELO-015", "historical", cfg=cfg, use_llm=True)
+            rj.assert_not_called()
+        self.assertTrue(r.is_historical)
+        self.assertEqual(r.speculation_level, "documented")
+        self.assertEqual(r.source, "authored")
+        self.assertIn("generator:authored", r.provenance_ribbon)
+        self.assertIn("Appomattox", r.narrative + r.label)
+        self.assertGreater(len(r.narrative), 40)
+
+
 class TestConfig(unittest.TestCase):
     def test_no_hardcoded_hosts_in_describe(self):
         cfg = PipelineConfig.from_env()

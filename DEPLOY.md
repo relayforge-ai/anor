@@ -53,6 +53,23 @@ unless you are debugging.
 | Speculation labels | Unchanged product code; packs keep `speculation_level` |
 | Mock fallback | Default `ANOR_MOCK_MEDIA=1` until you flip it |
 | Non-root process | `USER anor` (10001) in Dockerfile + compose `user` |
+| Lowest cost / no paid cloud | Mock offline by default; fleet Ollama+Comfy+local TTS only |
+| SDXL / not Flux.1-dev | Set `IMAGE_MODEL=sd_xl_base_1.0.safetensors` on monetized path |
+
+## Cost ladder (still → TTS → Ken Burns)
+
+Content-addressed caches keep re-queues cheap on own hardware. Full operator table:
+[`PIPELINE.md` Cost flags](PIPELINE.md#cost-flags). Quick defaults:
+
+| Layer | Env | Notes |
+|-------|-----|--------|
+| Mock media | `ANOR_MOCK_MEDIA=1` | CI / first boot — never hits fleet HTTP |
+| Still cache | `ANOR_STILL_CACHE=1` | Skip re-pay SDXL+ESRGAN for identical prompts |
+| TTS cache | `ANOR_TTS_CACHE=1` | Skip re-pay VO for identical scripts |
+| Clip cache | `ANOR_CLIP_CACHE=1` | Skip ffmpeg zoompan when still+audio match |
+| Comfy serialize | in-process lock | Shared GPU with Ollama — do not hammer `/prompt` |
+
+See [`.env.example`](.env.example) for caps (`ANOR_*_CACHE_MAX_MB`) and Ken Burns knobs.
 
 ## Without Docker
 

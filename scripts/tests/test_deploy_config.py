@@ -80,6 +80,12 @@ class TestDeployConfig(unittest.TestCase):
         self.assertIn("non-root", doc.lower())
         # Guardrail language
         self.assertRegex(doc, re.compile(r"secret|never commit", re.I))
+        # Cost ladder pointer for sovereign deploys
+        self.assertIn("ANOR_STILL_CACHE", doc)
+        self.assertIn("ANOR_CLIP_CACHE", doc)
+        self.assertIn("ANOR_TTS_CACHE", doc)
+        self.assertIn("PIPELINE.md", doc)
+        self.assertIn("sd_xl_base", doc)
 
     def test_env_example_documents_urls(self):
         env = (ROOT / ".env.example").read_text(encoding="utf-8")

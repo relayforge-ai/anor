@@ -4058,3 +4058,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Partial-host Library auto-filter is transparent; All remains one tap away.
+
+---
+
+## Iteration 157 — 2026-07-21
+
+### OBSERVE
+Main green after fd44162 (smart library toast). Clip cache solid; mock image/TTS/render covered — fork path with use_llm=True could still theoretically call Ollama if mock_media were ignored. DEPLOY lacked cost-ladder pointers.
+
+### PLAN
+**One high-impact change:** assert mock_media blocks LLM HTTP on forks; document cost ladder in DEPLOY.
+
+### EXECUTE
+- `test_run_fork_mock_media_never_hits_llm_http` (ELO-015, use_llm=True, LLM_URL set)
+- DEPLOY.md cost ladder table + SDXL guardrail row
+- test_deploy_config needles for cache env + PIPELINE.md
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Studio forks stay authored offline under mock; deploy docs match lowest-cost ops.
