@@ -3570,3 +3570,26 @@ Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can share labeled episode deep links from any grid without entering watch first; social stays human-gated.
+
+---
+
+## Iteration 136 — 2026-07-21
+
+### OBSERVE
+Main green after fa64cd0 (card Share). Watch keyboard covered play/seek/mute/full/episode nav but not share — freemium deep-link sharing still required the Share episode button.
+
+### PLAN
+**One high-impact change:** S key shares the current watch episode deep link.
+
+### EXECUTE
+- `bindWatchKeyboardShortcuts`: S → `shareEpisode` (works with preview gate open)
+- Player kbd hint + watch-share title
+- Static + share tests
+
+### TEST
+```
+Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Watch keyboard suite includes share for freemium discovery without leaving the player.

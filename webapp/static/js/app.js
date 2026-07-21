@@ -2469,13 +2469,16 @@
   }
 
   function bindWatchKeyboardShortcuts() {
-    /** Space/K play; J/← L/→ seek; M mute; F full; [/] prev/next episode — watch only. */
+    /**
+     * Space/K play; J/← L/→ seek; M mute; F full; S share;
+     * [/]/p/n prev/next episode — watch only.
+     */
     if (document.documentElement.dataset.watchKbd === "1") return;
     document.documentElement.dataset.watchKbd = "1";
     document.addEventListener("keydown", (e) => {
       if (state.route !== "watch") return;
       if ($("#paywall")?.classList.contains("open")) return;
-      // Episode nav still works when gate is open (upgrade later, keep browsing)
+      // Episode nav + share still work when gate is open (upgrade later, keep browsing)
       const gateOpen = !!$("#player-gate")?.classList.contains("open");
       if (document.body.classList.contains("boot-failed")) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -2490,6 +2493,12 @@
       if (key === "]" || key === "n" || key === "N") {
         e.preventDefault();
         goAdjacentEpisode(1);
+        return;
+      }
+      // Share deep link (works with gate open — discovery without paywall block)
+      if (key === "s" || key === "S") {
+        e.preventDefault();
+        if (state.videoId) shareEpisode(state.videoId);
         return;
       }
       if (gateOpen) return;

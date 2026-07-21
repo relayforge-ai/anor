@@ -14,6 +14,7 @@ class TestShareEpisode(unittest.TestCase):
     def test_html_has_share_button(self):
         self.assertIn('id="watch-share"', HTML)
         self.assertIn("Share episode", HTML)
+        self.assertIn("<kbd>S</kbd> share", HTML)
         # Guardrail language: share page ≠ auto-publish social
         self.assertRegex(HTML, r"[Hh]uman.?gate")
         # Host deliverable when media is available

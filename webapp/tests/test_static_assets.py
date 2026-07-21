@@ -171,6 +171,8 @@ class TestStaticProgressUI(unittest.TestCase):
             'key === "ArrowLeft"',
             'key === "m"',
             'key === "f"',
+            'key === "s"',
+            "shareEpisode(state.videoId)",
             "adjacentEpisodes",
             "goAdjacentEpisode",
             "paintWatchAdjacent",
