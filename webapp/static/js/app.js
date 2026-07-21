@@ -674,7 +674,10 @@
     paintHomeStudioCta();
     paintHomeContinue();
     const grid = $("#home-video-grid");
-    grid.innerHTML = libraryGridHtml(videosChronological(state.catalog.videos || []), {
+    // Partial grind hosts: show playable host inventory first (same spirit as
+    // Library smart default). Full or empty hosts keep the full catalog grid.
+    const homeVids = videosForHomeGrid(state.catalog.videos || []);
+    grid.innerHTML = libraryGridHtml(homeVids, {
       groupByEra: true,
     });
     bindVideoCards(grid);
@@ -965,6 +968,24 @@
     }
     if (withHost.length && without.length) return withHost.concat(without);
     return ordered;
+  }
+
+  /**
+   * Home episode grid source list.
+   * When inventory is mixed (some on host, some missing), prefer playable cuts
+   * so the museum home wall is not a sea of "not on host" cards. Full-host and
+   * empty-host catalogs pass through unchanged.
+   */
+  function videosForHomeGrid(list) {
+    const all = list || [];
+    if (!all.length) return [];
+    const anyPlayable = all.some((v) => v && v.available !== false);
+    const anyMissing = all.some((v) => v && v.available === false);
+    const source =
+      anyPlayable && anyMissing
+        ? all.filter((v) => v && v.available !== false)
+        : all;
+    return videosChronological(source);
   }
 
   /**

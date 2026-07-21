@@ -67,6 +67,9 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("function packIdsWithHostMedia", JS)
         self.assertIn("scenariosForDiscovery(state.scenarios)", JS)
         self.assertIn("withHost.concat(without)", JS)
+        # Home episode wall filters to on-host when inventory is mixed
+        self.assertIn("function videosForHomeGrid", JS)
+        self.assertIn("videosForHomeGrid(", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)

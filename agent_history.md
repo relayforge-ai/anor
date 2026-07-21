@@ -3826,3 +3826,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Freemium pack discovery leads with renderable host inventory on partial fleets.
+
+---
+
+## Iteration 147 — 2026-07-21
+
+### OBSERVE
+Main green after b36866a (pack discovery on-host). Home episode wall still rendered the full catalog chronological list — early eras with missing media dominated partial grind homes despite Library smart default.
+
+### PLAN
+**One high-impact change:** `videosForHomeGrid` — on mixed inventory, home wall shows playable host cuts only.
+
+### EXECUTE
+- Filter to available when any playable + any missing; else full catalog
+- Museum chronological order on the filtered set
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Home episode grid matches freemium "watchable first" discipline on partial fleets.
