@@ -436,6 +436,33 @@
   }
 
   /**
+   * Home Studio CTA: deep-link to last device pack when known (freemium return).
+   */
+  function paintHomeStudioCta() {
+    const a = $("#hero-studio");
+    if (!a) return;
+    const packs = state.scenarios || [];
+    const known = new Set(
+      packs.map((s) => (s && s.scenario_id) || "").filter(Boolean)
+    );
+    const last = loadLastStudioScenario();
+    if (last && known.has(last)) {
+      const pack = packs.find((s) => s && s.scenario_id === last) || {};
+      const era = pack.era ? String(pack.era) + " · " : "";
+      const title = pack.title ? String(pack.title) : last;
+      a.setAttribute("href", "#/studio/" + encodeURIComponent(last));
+      a.textContent = "Resume Studio · " + last;
+      a.title = `Continue ${era}${title} (last pack on this device)`;
+      a.setAttribute("data-resume-pack", last);
+    } else {
+      a.setAttribute("href", "#/studio");
+      a.textContent = "Open the fork studio";
+      a.title = "Open ANOR Fork Studio";
+      a.removeAttribute("data-resume-pack");
+    }
+  }
+
+  /**
    * Stable daily featured pick for freemium discovery.
    * Rotates across featured catalog cuts (chronological pool) by UTC date —
    * no server state, no analytics. Falls back to full catalog if none featured.
@@ -472,6 +499,7 @@
           "Rotates daily across featured episodes (UTC) so Explorers discover more packs.";
       }
     }
+    paintHomeStudioCta();
     paintHomeContinue();
     const grid = $("#home-video-grid");
     grid.innerHTML = videosChronological(state.catalog.videos || [])

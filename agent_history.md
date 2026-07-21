@@ -2934,3 +2934,25 @@ Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Clip cache stays correct across encode-quality tuning; operators can read motion+encode fingerprint from health detail.
+
+---
+
+## Iteration 109 — 2026-07-21
+
+### OBSERVE
+Main green after encode quality in clip cache. Home Studio CTA always said "Open the fork studio" → bare `#/studio` even when a last pack was stored — freemium return path required remembering the pack id.
+
+### PLAN
+**One high-impact change:** home hero Studio button resumes last pack when present.
+
+### EXECUTE
+- `paintHomeStudioCta` — `#hero-studio` deep-links to `#/studio/{last}` with "Resume Studio · {id}"
+- Falls back to open Studio when no last pack; static needles
+
+### TEST
+```
+Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Home hero surfaces device Studio continuity next to Continue watching / featured rotation.
