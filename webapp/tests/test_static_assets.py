@@ -148,6 +148,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "paintHomeContinue",
             "home-continue",
             "home-continue-grid",
+            "playable.concat(missing)",
             "recordWatch",
             "recentWatches",
             "saveWatchPosition",

@@ -3640,3 +3640,25 @@ Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Home hero prefers playable host inventory while staying a stable daily rotation.
+
+---
+
+## Iteration 139 — 2026-07-21
+
+### OBSERVE
+Main green after 21546d3 (featured on-host). Continue watching kept pure recency — missing-media cuts could lead the home strip on partial grind hosts.
+
+### PLAN
+**One high-impact change:** prefer on-host playable cuts first in Continue watching.
+
+### EXECUTE
+- `paintHomeContinue` splits playable vs missing; playable first, recency within each bucket
+- Static contract needle for ordering helper
+
+### TEST
+```
+Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Home continue strip leads with resume-able host media; missing cuts stay available via Queue in Studio.

@@ -579,8 +579,17 @@
       grid.innerHTML = "";
       return;
     }
+    // Prefer on-host playable first; keep recency within each bucket so
+    // partial grind inventories don't lead with "not on host" dead cuts.
+    const playable = [];
+    const missing = [];
+    for (const v of videos) {
+      if (v && v.available === false) missing.push(v);
+      else playable.push(v);
+    }
+    const ordered = playable.length ? playable.concat(missing) : videos;
     wrap.hidden = false;
-    grid.innerHTML = videos.map((v) => videoCardHtml(v)).join("");
+    grid.innerHTML = ordered.map((v) => videoCardHtml(v)).join("");
     bindVideoCards(grid);
     if (clearBtn && clearBtn.dataset.bound !== "1") {
       clearBtn.dataset.bound = "1";
