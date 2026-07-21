@@ -3989,3 +3989,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Explorers can speed binge cuts without leaving the keyboard.
+
+---
+
+## Iteration 154 — 2026-07-21
+
+### OBSERVE
+Main green after c783052 (speed keyboard). ELO-015 pack/catalog/drafts already shipped; CI mocked client-level network only — no end-to-end mock render of Appomattox with fleet URLs patched.
+
+### PLAN
+**One high-impact change:** E2E mock render of ELO-015 historical that asserts zero HTTP; core pack set includes ELO-014/015.
+
+### EXECUTE
+- `_mock_cfg` helper + `test_render_elo015_mock_never_hits_network`
+- Patches on `_request_json` / `_request_bytes` / `safe_get_bytes` with IMAGE_URL/TTS_URL set
+- `test_core_packs_present` includes ELO-014 and ELO-015
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Civil War pack ships offline end-to-end under mock_media; fleet URLs cannot leak into CI renders.

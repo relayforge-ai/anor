@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -21,6 +22,27 @@ os.environ.pop("TTS_URL", None)
 from pipeline.config import PipelineConfig
 from pipeline.fork_engine import list_scenarios, run_fork, scenario_payload, load_scenario
 from pipeline.video_pipeline import build_script, render_video
+
+
+def _mock_cfg(**kwargs) -> PipelineConfig:
+    """PipelineConfig with mock_media forced on (fleet URLs may still be set)."""
+    base = dict(
+        llm_url=None,
+        image_url=None,
+        tts_url=None,
+        llm_api_key=None,
+        image_api_key=None,
+        tts_api_key=None,
+        llm_model="m",
+        image_model="sd_xl_base_1.0.safetensors",
+        tts_model="m",
+        image_backend="auto",
+        tts_backend="auto",
+        mock_media=True,
+        style_prefix="STYLE:",
+    )
+    base.update(kwargs)
+    return PipelineConfig(**base)
 
 
 class TestPublicPacks(unittest.TestCase):
@@ -38,6 +60,8 @@ class TestPublicPacks(unittest.TestCase):
                 "ELO-009",
                 "ELO-010",
                 "ELO-013",
+                "ELO-014",
+                "ELO-015",
             }.issubset(ids),
             f"missing core packs; have {sorted(ids)}",
         )
@@ -217,6 +241,65 @@ class TestVideoPipeline(unittest.TestCase):
                 self.assertIsInstance(seg["still_cache_hit"], bool)
                 self.assertIsInstance(seg["tts_cache_hit"], bool)
                 self.assertIsInstance(seg["clip_cache_hit"], bool)
+
+    def test_render_elo015_mock_never_hits_network(self):
+        """ELO-015 Appomattox + fleet URLs still must not open Comfy/TTS/LLM HTTP in mock.
+
+        End-to-end offline guarantee for the Civil War pack social drafts target
+        (batch-013): still → TTS → Ken Burns → mux with ANOR_MOCK_MEDIA discipline.
+        """
+        os.environ.pop("ANOR_KEEP_VIDEO_WORK", None)
+        # Disable still/clip caches so generate always runs the mock path under patch
+        prev_still = os.environ.get("ANOR_STILL_CACHE")
+        prev_clip = os.environ.get("ANOR_CLIP_CACHE")
+        prev_tts = os.environ.get("ANOR_TTS_CACHE")
+        os.environ["ANOR_STILL_CACHE"] = "0"
+        os.environ["ANOR_CLIP_CACHE"] = "0"
+        os.environ["ANOR_TTS_CACHE"] = "0"
+        cfg = _mock_cfg(
+            llm_url="http://127.0.0.1:11434/v1",
+            image_url="http://192.168.4.27:8188",
+            tts_url="http://127.0.0.1:8880/v1",
+            image_backend="comfy",
+            tts_backend="openai_audio",
+        )
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                out = Path(td) / "elo015"
+                with (
+                    patch("pipeline.clients._request_json") as rj,
+                    patch("pipeline.clients._request_bytes") as rb,
+                    patch("pipeline.clients.safe_get_bytes") as sg,
+                ):
+                    result = render_video(
+                        "ELO-015",
+                        choice_id="historical",
+                        out_dir=out,
+                        cfg=cfg,
+                        use_llm=False,
+                    )
+                    rj.assert_not_called()
+                    rb.assert_not_called()
+                    sg.assert_not_called()
+                self.assertTrue(result.out_mp4.is_file())
+                self.assertGreater(result.out_mp4.stat().st_size, 1000)
+                meta = json.loads((out / "build.json").read_text(encoding="utf-8"))
+                self.assertEqual(meta["scenario_id"], "ELO-015")
+                self.assertEqual(meta.get("choice_id"), "historical")
+                self.assertTrue(meta.get("mock_media") or cfg.mock_media)
+        finally:
+            if prev_still is None:
+                os.environ.pop("ANOR_STILL_CACHE", None)
+            else:
+                os.environ["ANOR_STILL_CACHE"] = prev_still
+            if prev_clip is None:
+                os.environ.pop("ANOR_CLIP_CACHE", None)
+            else:
+                os.environ["ANOR_CLIP_CACHE"] = prev_clip
+            if prev_tts is None:
+                os.environ.pop("ANOR_TTS_CACHE", None)
+            else:
+                os.environ["ANOR_TTS_CACHE"] = prev_tts
 
     def test_render_keep_work_when_flagged(self):
         cfg = PipelineConfig.from_env()
