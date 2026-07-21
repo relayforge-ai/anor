@@ -4130,3 +4130,7 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Midway decision pack live for library/Studio + draft social. Public ELO only; no auto-publish.
+
+### CI FIX (same iteration)
+GitHub failed `test_no_secrets_in_draft_tree` on false positive `sk-` inside `risk-spreading`.
+Reworded to `spreading risk` in drafts/catalog/pack.

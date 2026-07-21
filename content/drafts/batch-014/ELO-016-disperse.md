@@ -13,7 +13,7 @@ DRAMATIZED: What if U.S. carriers dispersed instead of concentrating at Midway?
 
 What if the carriers refuse concentration and spread risk? Dispersion may save decks from a single catastrophe — or surrender the only geometry that can break the Japanese carrier force.
 
-We study concentration versus risk-spreading under incomplete intelligence. Speculation stays labeled.
+We study concentration versus spreading risk under incomplete intelligence. Speculation stays labeled.
 
 Series: ANOR Fork / ELOSTIRION
 
