@@ -178,6 +178,7 @@ class TestStaticProgressUI(unittest.TestCase):
             'key === "m"',
             'key === "f"',
             'key === "s"',
+            'key === "a"',
             "shareEpisode(state.videoId)",
             "adjacentEpisodes",
             "goAdjacentEpisode",
@@ -196,6 +197,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "watch-adjacent",
             'key === "["',
             'key === "]"',
+            "Auto-next on — after a full cut, advance in 3s",
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
@@ -318,6 +320,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("−10s", html)
         self.assertIn("mute", html)
         self.assertIn("full", html)
+        self.assertIn("<kbd>A</kbd> auto-next", html)
+        self.assertIn("<kbd>P</kbd>/<kbd>N</kbd>", html)
         self.assertIn('id="watch-adjacent"', html)
         self.assertIn('id="watch-prev"', html)
         self.assertIn('id="watch-next"', html)

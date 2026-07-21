@@ -2705,7 +2705,7 @@
   function bindWatchKeyboardShortcuts() {
     /**
      * Space/K play; J/← L/→ seek; M mute; F full; S share;
-     * [/]/p/n prev/next episode — watch only.
+     * [/]/p/n prev/next episode; A toggle auto-next — watch only.
      */
     if (document.documentElement.dataset.watchKbd === "1") return;
     document.documentElement.dataset.watchKbd = "1";
@@ -2733,6 +2733,20 @@
       if (key === "s" || key === "S") {
         e.preventDefault();
         if (state.videoId) shareEpisode(state.videoId);
+        return;
+      }
+      // Toggle binge auto-next (device preference; same as checkbox)
+      if (key === "a" || key === "A") {
+        e.preventDefault();
+        const on = !loadAutoNextEpisode();
+        saveAutoNextEpisode(on);
+        const autoToggle = $("#watch-auto-next");
+        if (autoToggle) autoToggle.checked = on;
+        toast(
+          on
+            ? "Auto-next on — after a full cut, advance in 3s (device only)"
+            : "Auto-next off"
+        );
         return;
       }
       if (gateOpen) return;

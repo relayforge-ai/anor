@@ -3942,3 +3942,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Operators can run lowest-cost re-renders from docs without reading client source.
+
+---
+
+## Iteration 152 — 2026-07-21
+
+### OBSERVE
+Main green after 64e1f30 (cost ladder docs). Watch keyboard had P/N for episode binge but the on-screen hint only showed brackets; auto-next was checkbox-only — freemium binge power users lacked a one-key toggle.
+
+### PLAN
+**One high-impact change:** A toggles auto-next; keyboard hint lists P/N and A.
+
+### EXECUTE
+- bindWatchKeyboardShortcuts: A/a flips load/saveAutoNextEpisode + checkbox + toast
+- player-kbd-hint: P/N or [/] episode · A auto-next
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Watch binge keyboard surface matches behavior; auto-next is one key away for Explorers.
