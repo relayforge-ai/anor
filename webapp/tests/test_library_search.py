@@ -93,6 +93,15 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("videoRuntimeLabel(video)", JS)
         # Falls back to authored estimate when no measured duration
         self.assertIn("runtime_label", JS)
+
+    def test_unavailable_card_deep_links_studio_cut(self):
+        """Missing media cards offer Queue in Studio with scenario+choice."""
+        self.assertIn("function openStudioForCut", JS)
+        self.assertIn("video-card-queue-studio", JS)
+        self.assertIn("data-studio-scenario", JS)
+        self.assertIn("data-studio-choice", JS)
+        self.assertIn("Queue in Studio", JS)
+        self.assertIn("studio/", JS)
         self.assertIn("applyLibraryTagSearch", JS)
         self.assertIn("fh:libraryPrefs", JS)
         self.assertIn("saveLibraryPrefs", JS)

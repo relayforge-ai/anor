@@ -757,6 +757,9 @@ textarea {
   font-size: 1.4rem;
   opacity: 0.7;
 }
+.video-card-queue-studio {
+  margin-top: 0.15rem;
+}
 .library-empty {
   text-align: left;
   border-style: dashed;

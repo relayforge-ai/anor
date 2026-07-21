@@ -3428,3 +3428,28 @@ Full local CI → 307 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Public library gains a labeled Gettysburg decision point with draft-only social captions; no MANDOS, no auto-publish.
+
+---
+
+## Iteration 130 — 2026-07-21
+
+### OBSERVE
+Main green after 5f53780 (ELO-014). Partial host inventories left "not on host" cards and watch pages with a vague Studio CTA — no deep link to the exact branch, so operators re-picked choice before queueing a render.
+
+### PLAN
+**One high-impact change:** Studio deep links with scenario + choice from missing-media surfaces.
+
+### EXECUTE
+- `openStudioForCut` → `#/studio/{scenario}/{choice}`
+- Library unavailable cards: "Queue in Studio" button (preselects branch)
+- Watch unavailable: Studio button becomes "Queue this cut in Studio"
+- `renderStudio` accepts choice hash segment; route/SEO share meta include choice
+- Tests for queue CTA + static needles
+
+### TEST
+```
+Full local CI → 308 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Missing media flows land in Studio on the right branch for one-click queue — lower friction for freemium partial inventories.

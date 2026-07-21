@@ -219,6 +219,27 @@
     }
   }
 
+  /**
+   * Open Studio with pack + branch preselected (deep link for missing media → render).
+   * Hash form: #/studio/{scenario_id}/{choice_id}
+   */
+  function openStudioForCut(scenarioId, choiceId) {
+    const sid = String(scenarioId || "").trim();
+    const cid = String(choiceId || "").trim();
+    if (!sid || sid.includes("..") || sid.includes("/")) return false;
+    if (cid && (cid.includes("..") || cid.includes("/"))) return false;
+    saveLastStudioScenario(sid);
+    if (cid) {
+      saveLastStudioChoice(sid, cid);
+      state.choiceId = cid;
+    }
+    const path = cid
+      ? "studio/" + encodeURIComponent(sid) + "/" + encodeURIComponent(cid)
+      : "studio/" + encodeURIComponent(sid);
+    navigate(path);
+    return true;
+  }
+
   function parseRetryAfter(response) {
     if (!response || !response.headers) return 0;
     const raw = response.headers.get("Retry-After");
@@ -690,7 +711,11 @@
           ${videoCardTagsHtml(v)}
           <div class="note">${
             unavailable
-              ? "Media missing — open Studio and queue a render"
+              ? `<button type="button" class="btn btn-ghost btn-sm video-card-queue-studio" data-studio-scenario="${escapeHtml(
+                  v.scenario_id || ""
+                )}" data-studio-choice="${escapeHtml(
+                  v.choice_id || ""
+                )}" title="Open Studio with this branch selected — queue a narrated render">Queue in Studio</button>`
               : escapeHtml(videoRuntimeLabel(v))
           }</div>
         </div>
@@ -718,6 +743,17 @@
         e.preventDefault();
         e.stopPropagation();
         applyLibraryTagSearch(btn.getAttribute("data-lib-tag") || "");
+      });
+    });
+    root.querySelectorAll(".video-card-queue-studio").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const sid = btn.getAttribute("data-studio-scenario") || "";
+        const cid = btn.getAttribute("data-studio-choice") || "";
+        if (openStudioForCut(sid, cid)) {
+          toast("Studio — pick Queue video when ready (branch preselected)");
+        }
       });
     });
     root.querySelectorAll("[data-video]").forEach((el) => {
@@ -1455,7 +1491,22 @@
       }
       ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
-    $("#watch-studio").onclick = () => navigate("studio/" + video.scenario_id);
+    $("#watch-studio").onclick = () => {
+      openStudioForCut(video.scenario_id, video.choice_id);
+    };
+    if (video.available === false) {
+      const studioBtn = $("#watch-studio");
+      if (studioBtn) {
+        studioBtn.textContent = "Queue this cut in Studio";
+        studioBtn.title = "Opens Studio with this branch selected — then queue a narrated render";
+      }
+    } else {
+      const studioBtn = $("#watch-studio");
+      if (studioBtn) {
+        studioBtn.textContent = "Manipulate this decision in Studio";
+        studioBtn.title = "";
+      }
+    }
     // Host deliverable link — only when media is present (no secrets; public /media path)
     paintWatchOpenMp4(video);
     const shareBtn = $("#watch-share");
@@ -1488,14 +1539,18 @@
     const access2 = FHFreemium.videoAccess(videoId, state.catalog);
 
     if (!video.file || video.available === false) {
-      setPlayerLoading(true, "Episode media not on this host yet — queue a render in Studio.");
+      setPlayerLoading(
+        true,
+        "Episode media not on this host yet — use Queue this cut in Studio to preselect the branch and render."
+      );
       // side quota still useful when media missing
       const st0 = FHFreemium.statusSummary(state.catalog);
       $("#watch-quota").innerHTML = st0.isMember
-        ? `<strong>Scholar</strong> — full access`
+        ? `<strong>Scholar</strong> — full access<br><span class="note">Media missing on host — open Studio (branch preselected) and queue a render.</span>`
         : `<strong>Explorer freemium</strong><br>
          Full episodes used: ${st0.fullVideosUsed} / ${st0.fullVideosFree}<br>
-         Additional titles: first ${st0.previewFraction}% free, then membership.`;
+         Additional titles: first ${st0.previewFraction}% free, then membership.<br>
+         <span class="note">Media missing — Queue this cut in Studio to render on this host.</span>`;
       refreshChrome();
       return;
     }
@@ -1719,7 +1774,7 @@
     };
   }
 
-  async function renderStudio(scenarioId) {
+  async function renderStudio(scenarioId, choiceHint) {
     showPage("studio");
     setActiveNav("studio");
     scenarioId = resolveStudioScenarioId(scenarioId);
@@ -1729,6 +1784,12 @@
     }
     state.scenarioId = scenarioId;
     saveLastStudioScenario(scenarioId);
+    // Deep link #/studio/{id}/{choice} — remember for freemium return + preselect
+    const hint = String(choiceHint || "").trim();
+    if (hint && !hint.includes("..") && !hint.includes("/")) {
+      saveLastStudioChoice(scenarioId, hint);
+      state.choiceId = hint;
+    }
 
     const select = $("#studio-scenario");
     const ordered = scenariosChronological(state.scenarios);
@@ -1826,7 +1887,7 @@
     });
 
     if (!state.choiceId || !choices.find((c) => c.id === state.choiceId)) {
-      // Prefer last device choice for this pack, else historical baseline
+      // Prefer deep-link/device choice for this pack, else historical baseline
       const remembered = loadLastStudioChoice(scenarioId);
       const rememberedOk =
         remembered && choices.some((c) => c && c.id === remembered) ? remembered : null;
@@ -1834,11 +1895,15 @@
         rememberedOk ||
         choices.find((c) => c.is_historical)?.id ||
         choices[0]?.id;
-      const el = list.querySelector(`[data-choice="${state.choiceId}"]`);
-      el?.classList.add("selected");
-      el?.setAttribute("aria-pressed", "true");
-      el?.setAttribute("aria-checked", "true");
       if (state.choiceId) saveLastStudioChoice(scenarioId, state.choiceId);
+    }
+    {
+      const el = list.querySelector(`[data-choice="${state.choiceId}"]`);
+      if (el) {
+        el.classList.add("selected");
+        el.setAttribute("aria-pressed", "true");
+        el.setAttribute("aria-checked", "true");
+      }
     }
 
     paintStudioMediaStrip();
@@ -3181,8 +3246,8 @@
   let lastRouteKey = null;
   let routeFocusReady = false; // skip focus steal on first paint after boot
 
-  function routeKey(page, a) {
-    return (page || "home") + "/" + (a || "");
+  function routeKey(page, a, b) {
+    return (page || "home") + "/" + (a || "") + "/" + (b || "");
   }
 
   function focusMainForRoute() {
@@ -3221,8 +3286,16 @@
     }
   }
 
-  function routeHashPath(page, param) {
+  function routeHashPath(page, param, choice) {
     if (page === "watch" && param) return "watch/" + encodeURIComponent(param);
+    if (page === "studio" && param && choice) {
+      return (
+        "studio/" +
+        encodeURIComponent(param) +
+        "/" +
+        encodeURIComponent(choice)
+      );
+    }
     if (page === "studio" && param) return "studio/" + encodeURIComponent(param);
     if (page === "studio") return "studio";
     if (page === "library") return "library";
@@ -3230,7 +3303,7 @@
     return "";
   }
 
-  function syncShareMeta(title, description, page, param) {
+  function syncShareMeta(title, description, page, param, choice) {
     /** Keep og/twitter/description/url + canonical aligned with the SPA route. */
     if (title) {
       setMetaContent('meta[property="og:title"]', title);
@@ -3241,7 +3314,7 @@
       setMetaContent('meta[property="og:description"]', description);
       setMetaContent('meta[name="twitter:description"]', description);
     }
-    const shareUrl = publicShareUrl(routeHashPath(page, param));
+    const shareUrl = publicShareUrl(routeHashPath(page, param, choice));
     if (shareUrl) {
       setMetaContent('meta[property="og:url"]', shareUrl);
       let link = document.querySelector('link[rel="canonical"]');
@@ -3254,7 +3327,7 @@
     }
   }
 
-  function updateDocumentTitle(page, param) {
+  function updateDocumentTitle(page, param, choice) {
     const brand = (state.catalog && state.catalog.brand && state.catalog.brand.name) || "Forked History";
     const tagline =
       (state.catalog && state.catalog.brand && state.catalog.brand.tagline) || "";
@@ -3285,7 +3358,12 @@
       }
     } else if (page === "studio") {
       const sid = param || state.scenarioId || "";
-      title = sid ? `Studio · ${sid} — ${brand}` : `Studio — ${brand}`;
+      const cid = choice || state.choiceId || "";
+      title = sid
+        ? cid
+          ? `Studio · ${sid} / ${cid} — ${brand}`
+          : `Studio · ${sid} — ${brand}`
+        : `Studio — ${brand}`;
       description = sid
         ? `Fork ${sid} in the studio — authored branches free; LLM re-render is Scholar. Speculation always labeled.`
         : `Interactive decision studio — ${brand}. Speculation always labeled.`;
@@ -3294,12 +3372,12 @@
       description = `Explorer free · Scholar $4.99/mo — full library and studio. Funds sovereign compute.`;
     }
     document.title = title;
-    syncShareMeta(title, description, page, param);
+    syncShareMeta(title, description, page, param, choice);
   }
 
   async function route() {
-    const { page, a } = parseHash();
-    const key = routeKey(page, a);
+    const { page, a, b } = parseHash();
+    const key = routeKey(page, a, b);
     const changed = key !== lastRouteKey;
     lastRouteKey = key;
     state.route = page;
@@ -3309,11 +3387,11 @@
     try {
       if (page === "library") await renderLibrary();
       else if (page === "watch") await renderWatch(a);
-      else if (page === "studio") await renderStudio(a);
+      else if (page === "studio") await renderStudio(a, b);
       else if (page === "pricing") await renderPricing();
       else await renderHome();
     } finally {
-      updateDocumentTitle(page, a);
+      updateDocumentTitle(page, a, b);
       if (changed) focusMainForRoute();
     }
   }
