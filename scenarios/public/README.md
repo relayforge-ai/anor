@@ -29,6 +29,7 @@ See `schema/fork_scenario.schema.json`.
 | ELO-012 | Waterloo 1815 — Guard or break contact? | 1815 | Commit late, break contact, or commit early? |
 | ELO-014 | Gettysburg 1863 — Pickett’s Charge decision | 1863 | Order the center assault, refuse, or turn wide? |
 | ELO-015 | Appomattox 1865 — Grant’s terms decision | 1865 | Generous parole, harder terms, or delay for orders? |
+| ELO-016 | Midway 1942 — spring the carrier ambush? | 1942 | Commit carriers, wait for confirmation, or disperse? |
 | ELO-011 | Munich 1938 — stand firm or concede? | 1938 | Refuse transfer, settle, or limited deal? |
 | ELO-010 | Bay of Pigs — scrub, proceed, or denser air? | 1961 | Cancel landing, proceed limited air, or denser cover? |
 | ELO-007 | EXCOMM — quarantine or strike? | 1962 | Naval quarantine vs airstrike/invasion? |

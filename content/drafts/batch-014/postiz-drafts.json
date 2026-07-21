@@ -1,0 +1,83 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-014",
+  "created": "2026-07-21",
+  "theme": "Midway 1942 carrier ambush decision (ELO-016)",
+  "needs_ryan": [
+    "Connect TikTok/YouTube in Postiz",
+    "Replace INTEGRATION_* placeholders",
+    "Review 🧪 labels on non-historical cuts",
+    "Approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-016-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1942. Decrypts point to Midway.\n📗 Documented ambush — and the decks that burn.\n#historytok #midway #ww2",
+      "media_local": "outputs/videos/ELO-016-historical/ELO-016-historical.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-016-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "4 June 1942: Spring the Midway ambush",
+      "caption": "📗 Documented baseline: U.S. carriers spring the Midway intercept; four Japanese fleet carriers are lost.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#history #midway #1942 #pacificwar",
+      "media_local": "outputs/videos/ELO-016-historical/ELO-016-historical.mp4",
+      "settings": {
+        "title": "4 June 1942: Spring the Midway ambush",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "midway", "label": "midway"},
+          {"value": "pacificwar", "label": "pacificwar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-016-wait-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they wait for confirmation?\n🧪 SIMULATED.\n📗 History launched the ambush.\n#althistory #midway",
+      "media_local": "outputs/videos/ELO-016-wait_confirm/ELO-016-wait_confirm.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-016-wait-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Midway waited for clearer confirmation?",
+      "caption": "⚠️ SIMULATED — not a secret second Midway.\n\nConfirmation versus culminating moment. No guaranteed safer formula.\n\n#althistory #midway #speculationlabeled",
+      "media_local": "outputs/videos/ELO-016-wait_confirm/ELO-016-wait_confirm.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Midway waited for clearer confirmation?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "midway", "label": "midway"}
+        ]
+      }
+    },
+    {
+      "id": "elo-016-disperse-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if U.S. carriers dispersed instead of concentrating at Midway?",
+      "caption": "⚠️ DRAMATIZED process — not a guaranteed safer Pacific.\n\nConcentration versus risk-spreading under incomplete intelligence.\n\n#althistory #midway #speculationlabeled",
+      "media_local": "outputs/videos/ELO-016-disperse/ELO-016-disperse.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if U.S. carriers dispersed instead of concentrating at Midway?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "1942", "label": "1942"}
+        ]
+      }
+    }
+  ]
+}

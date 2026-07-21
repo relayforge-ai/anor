@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-016",
+  "title": "Midway 1942 — spring the ambush now or wait for clearer confirmation?",
+  "era": "1942",
+  "location": "Central Pacific / Midway Atoll approaches",
+  "datetime": "4 June 1942, morning as Japanese carriers close on Midway",
+  "domain": "Pacific War / carrier warfare / signals intelligence and operational risk",
+  "known_outcome": "U.S. carriers, acting on broken JN-25 traffic and the Midway water-shortage ruse that confirmed the target, launch strikes that catch Japanese flight decks at a vulnerable moment. Four Japanese fleet carriers are lost. The Imperial Japanese Navy’s offensive carrier edge in the Central Pacific is broken; the strategic initiative shifts toward the United States.",
+  "decision_question": "With imperfect but converging intelligence that Midway is the objective, does Nimitz commit the carriers to ambush under incomplete confirmation, hold for more certainty, or disperse assets rather than concentrate for a fleet action?",
+  "opening": {
+    "cold_open": "Grey Pacific dawn. Flight decks wet with spray. Radio rooms hold decrypts that may be gold — or a trap. One launch order can put three American carriers against a Japanese force that still believes it holds the initiative.",
+    "what_they_knew": "They knew Japanese carriers were at sea. They believed Midway was the target after the AF water-shortage confirm. They knew U.S. decks were fewer and still raw from Coral Sea. They did not know the exact Japanese disposition minute by minute — or whether the next hour would open a flight deck or close it forever.",
+    "pressure": "Fuel and aircraft cycles. The cost of launching too early into empty ocean. The cost of launching too late into prepared CAP and empty magazines on the wrong side of the ledger."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Spring the ambush — commit carriers on the Midway intercept",
+      "is_historical": true,
+      "summary": "Documented path: U.S. carriers concentrate and strike; Japanese carriers are caught in a critical rearming/relaunch window; four fleet carriers are lost.",
+      "immediate": "Strikes go in under incomplete information. Timing and luck on the flight decks decide more than slogans.",
+      "near_term": "Japan’s carrier striking power in the Central Pacific is shattered. Midway holds. The Pacific war’s operational tempo changes.",
+      "longer_arc": "Midway becomes a canonical study in intelligence, concentration of force, and the brutal timing of carrier aviation — not a morality play.",
+      "speculation_level": "documented",
+      "image_prompt": "1942 Pacific carrier deck at dawn, SBD dive bombers spotted, grey ocean horizon, archival documentary painting, sepia chiaroscuro, film grain, period-accurate USN gear, no text, no glorified gore",
+      "vo_script": "4 June 1942. The decrypts point to Midway. History records the order to spring the ambush. American carriers strike. Four Japanese fleet carriers burn. The Central Pacific’s carrier balance turns."
+    },
+    {
+      "id": "wait_confirm",
+      "label": "Hold the launch — wait for clearer tactical confirmation",
+      "is_historical": false,
+      "summary": "SPECULATION: Delay the carrier strike package until sightings and timing feel cleaner.",
+      "immediate": "Hours matter. A later launch may find different decks — or empty ocean and a Japanese force already free of the trap.",
+      "near_term": "Waiting reorders risk; it does not invent perfect information. Midway’s garrison still faces bombardment if the ambush never forms.",
+      "longer_arc": "Simulated. Explores the trade between confirmation and culminating moment in carrier warfare — not a secret safer formula.",
+      "speculation_level": "simulated",
+      "image_prompt": "1942 flag plot room with charts and radio traffic, officers hesitating over a launch clock, restrained documentary still, film grain, sepia, no text",
+      "vo_script": "What if the launch is held for clearer confirmation? This is speculation. Hours under incomplete contact. Different flight decks may open — or the ambush window may close. We label the branch simulated because confirmation and culmination trade against each other."
+    },
+    {
+      "id": "disperse",
+      "label": "Disperse — avoid a concentrated fleet action",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: refuse concentration; keep carriers apart rather than force a decisive engagement at Midway.",
+      "immediate": "Dispersion may save decks from a single catastrophe — or surrender the only geometry that can break the Japanese carrier force.",
+      "near_term": "Midway may still be hit. The Japanese carriers may complete their mission and withdraw intact.",
+      "longer_arc": "Dramatized process study of concentration versus risk-spreading under incomplete Pacific intelligence — not a second history book with a guaranteed better peace.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1942 Pacific map table, dispersed carrier task group tracks, documentary chiaroscuro, film grain, no modern objects, no text",
+      "vo_script": "What if the carriers disperse instead of concentrating for the ambush? Different risks first. This branch is dramatized process — a study of concentration under incomplete information — not a guaranteed safer Pacific."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Battle of Midway (June 1942)",
+    "Published accounts of JN-25 cryptanalysis and the Midway AF confirmation",
+    "ELOSTIRION ELO-016 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-hour carrier battle into the commit-or-hold decision under SIGINT. Counterfactual wait-confirm and disperse branches are labeled simulated or dramatized — not secret history. No triumphal gore; no anime carrier fantasy.",
+    "corpus": "ELOSTIRION ELO-016 public pack"
+  },
+  "style_lock": "1942 Pacific carrier war, grey ocean, flight decks, period USN/IJN silhouettes at distance, documentary gravity, sepia/chiaroscuro archival stills, no modern objects, no text",
+  "tags": ["alt-history", "Midway", "1942", "Pacific War", "carrier", "decision-point"]
+}

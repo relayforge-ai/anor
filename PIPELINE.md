@@ -46,6 +46,7 @@ python3 -m pipeline.cli site --port 8787
 | ELO-012 | Waterloo 1815 Guard decision | 1815 | Commit late, break contact, or earlier Guard? |
 | ELO-014 | Gettysburg 1863 Pickett’s Charge | 1863 | Order center assault, refuse, or turn wide? |
 | ELO-015 | Appomattox 1865 Grant’s terms | 1865 | Parole terms, harder sheet, or delay for orders? |
+| ELO-016 | Midway 1942 carrier ambush | 1942 | Spring ambush, wait for confirmation, or disperse? |
 | ELO-011 | Munich 1938 Sudeten crisis | 1938 | Stand firm, settle, or limited deal? |
 | ELO-010 | Bay of Pigs go/no-go | 1961 | Scrub, proceed, or denser air? |
 | ELO-007 | EXCOMM quarantine | 1962 | Quarantine vs strike? |
@@ -118,6 +119,7 @@ anor/
 | `content/drafts/batch-011/` | Waterloo 1815 (ELO-012) | DRAFT |
 | `content/drafts/batch-012/` | Gettysburg 1863 (ELO-014) | DRAFT |
 | `content/drafts/batch-013/` | Appomattox 1865 (ELO-015) | DRAFT |
+| `content/drafts/batch-014/` | Midway 1942 (ELO-016) | DRAFT |
 
 Each batch has markdown captions + `postiz-drafts.json` with `status: "draft"` and placeholder integration IDs. **Agents must not publish.**
 

@@ -4105,3 +4105,28 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Partial-host Library default is visible on the filter bar as well as in the toast.
+
+---
+
+## Iteration 159 — 2026-07-21
+
+### OBSERVE
+Main green after 8e1fea2 (library filter pulse). ELO-015 complete; freemium stretch heavy. Content gap: no Pacific carrier decision pack after Civil War Appomattox.
+
+### PLAN
+**One high-impact change:** ship public pack ELO-016 Midway 1942 end-to-end.
+
+### EXECUTE
+- `scenarios/public/ELO-016.json` (historical / wait_confirm / disperse)
+- Catalog 3 videos (featured historical)
+- `content/drafts/batch-014/*` human-gate drafts + postiz
+- Docs: public README, PIPELINE, drafts README
+- Social + core pack tests
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Midway decision pack live for library/Studio + draft social. Public ELO only; no auto-publish.

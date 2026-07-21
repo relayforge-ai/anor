@@ -62,6 +62,7 @@ class TestPublicPacks(unittest.TestCase):
                 "ELO-013",
                 "ELO-014",
                 "ELO-015",
+                "ELO-016",
             }.issubset(ids),
             f"missing core packs; have {sorted(ids)}",
         )

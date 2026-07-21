@@ -1019,6 +1019,73 @@
       "speculation": "dramatized",
       "featured": false,
       "blurb": "DRAMATIZED process: hold under a short truce while couriers seek harder or softer language from Washington — not a guaranteed better peace."
+    },
+    {
+      "id": "ELO-016-historical",
+      "scenario_id": "ELO-016",
+      "choice_id": "historical",
+      "title": "Midway 1942: spring the carrier ambush",
+      "subtitle": "Documented intercept — 4 June",
+      "era": "1942",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-016-historical/ELO-016-historical.mp4",
+      "poster_gradient": [
+        "#1a2430",
+        "#0c1018"
+      ],
+      "tags": [
+        "Midway",
+        "1942",
+        "Pacific War",
+        "documented"
+      ],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: U.S. carriers spring the Midway ambush; four Japanese fleet carriers are lost and the Central Pacific carrier balance turns."
+    },
+    {
+      "id": "ELO-016-wait_confirm",
+      "scenario_id": "ELO-016",
+      "choice_id": "wait_confirm",
+      "title": "SPECULATION: Wait for clearer confirmation",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1942",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-016-wait_confirm/ELO-016-wait_confirm.mp4",
+      "poster_gradient": [
+        "#243040",
+        "#101418"
+      ],
+      "tags": [
+        "Midway",
+        "1942",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: hold the launch for cleaner tactical confirmation. Hours reorder risk — they do not invent perfect information."
+    },
+    {
+      "id": "ELO-016-disperse",
+      "scenario_id": "ELO-016",
+      "choice_id": "disperse",
+      "title": "DRAMATIZED: Disperse rather than concentrate",
+      "subtitle": "Concentration vs risk-spreading",
+      "era": "1942",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-016-disperse/ELO-016-disperse.mp4",
+      "poster_gradient": [
+        "#2a3040",
+        "#0e1218"
+      ],
+      "tags": [
+        "Midway",
+        "1942",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "DRAMATIZED process: refuse concentration — may save decks or surrender the only geometry that can break the Japanese carrier force."
     }
   ]
 }

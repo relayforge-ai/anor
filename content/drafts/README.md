@@ -148,7 +148,17 @@ See `batch-012/README.md` and `batch-012/postiz-drafts.json`.
 | `batch-013/ELO-015-harsher_terms.md` | harder surrender sheet | simulated | YT + TT |
 | `batch-013/ELO-015-delay_for_orders.md` | delay for political orders | dramatized | YT + TT |
 
-See `batch-013/README.md` and `batch-013/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
+See `batch-013/README.md` and `batch-013/postiz-drafts.json`.
+
+## Batch 014 — Midway 1942 (ELO-016)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-014/ELO-016-historical.md` | spring the ambush | historical | YT + TT |
+| `batch-014/ELO-016-wait_confirm.md` | wait for confirmation | simulated | YT + TT |
+| `batch-014/ELO-016-disperse.md` | disperse carriers | dramatized | YT + TT |
+
+See `batch-014/README.md` and `batch-014/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
 
 Render commands (offline-safe with mock media, or point env at Dawes):
 
@@ -188,6 +198,9 @@ python -m pipeline.cli video --scenario ELO-014 --choice wide_turn
 python -m pipeline.cli video --scenario ELO-015 --choice historical
 python -m pipeline.cli video --scenario ELO-015 --choice harsher_terms
 python -m pipeline.cli video --scenario ELO-015 --choice delay_for_orders
+python -m pipeline.cli video --scenario ELO-016 --choice historical
+python -m pipeline.cli video --scenario ELO-016 --choice wait_confirm
+python -m pipeline.cli video --scenario ELO-016 --choice disperse
 ```
 
 
