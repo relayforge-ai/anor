@@ -952,6 +952,73 @@
       "speculation": "dramatized",
       "featured": false,
       "blurb": "DRAMATIZED process: seek a flank rather than a center rupture — different risks first; not a secret winning road."
+    },
+    {
+      "id": "ELO-015-historical",
+      "scenario_id": "ELO-015",
+      "choice_id": "historical",
+      "title": "Appomattox 1865: Grant’s terms at the McLean House",
+      "subtitle": "Documented parole terms — 9 April",
+      "era": "1865",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-015-historical/ELO-015-historical.mp4",
+      "poster_gradient": [
+        "#2a2418",
+        "#101418"
+      ],
+      "tags": [
+        "Appomattox",
+        "1865",
+        "Civil War",
+        "documented"
+      ],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: Grant offers written parole terms; Lee accepts; the Army of Northern Virginia surrenders without a last stand at the capital’s doorstep."
+    },
+    {
+      "id": "ELO-015-harsher_terms",
+      "scenario_id": "ELO-015",
+      "choice_id": "harsher_terms",
+      "title": "SPECULATION: Harder surrender terms",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1865",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-015-harsher_terms/ELO-015-harsher_terms.mp4",
+      "poster_gradient": [
+        "#322818",
+        "#141018"
+      ],
+      "tags": [
+        "Appomattox",
+        "1865",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: demand a more punitive sheet — fewer privileges, stricter custody. May deter later resistance or force one more fight before the ink dries."
+    },
+    {
+      "id": "ELO-015-delay_for_orders",
+      "scenario_id": "ELO-015",
+      "choice_id": "delay_for_orders",
+      "title": "DRAMATIZED: Delay for political instructions",
+      "subtitle": "Civil-military lag at the edge of surrender",
+      "era": "1865",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-015-delay_for_orders/ELO-015-delay_for_orders.mp4",
+      "poster_gradient": [
+        "#3a2818",
+        "#101210"
+      ],
+      "tags": [
+        "Appomattox",
+        "1865",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "DRAMATIZED process: hold under a short truce while couriers seek harder or softer language from Washington — not a guaranteed better peace."
     }
   ]
 }

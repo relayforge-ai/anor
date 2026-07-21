@@ -138,7 +138,17 @@ See `batch-011/README.md` and `batch-011/postiz-drafts.json`.
 | `batch-012/ELO-014-refuse_charge.md` | refuse frontal assault | simulated | YT + TT |
 | `batch-012/ELO-014-wide_turn.md` | wide turning movement | dramatized | YT + TT |
 
-See `batch-012/README.md` and `batch-012/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
+See `batch-012/README.md` and `batch-012/postiz-drafts.json`.
+
+## Batch 013 — Appomattox 1865 (ELO-015)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-013/ELO-015-historical.md` | Grant’s parole terms | historical | YT + TT |
+| `batch-013/ELO-015-harsher_terms.md` | harder surrender sheet | simulated | YT + TT |
+| `batch-013/ELO-015-delay_for_orders.md` | delay for political orders | dramatized | YT + TT |
+
+See `batch-013/README.md` and `batch-013/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
 
 Render commands (offline-safe with mock media, or point env at Dawes):
 

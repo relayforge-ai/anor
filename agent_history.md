@@ -3662,3 +3662,28 @@ Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Home continue strip leads with resume-able host media; missing cuts stay available via Queue in Studio.
+
+---
+
+## Iteration 140 — 2026-07-21
+
+### OBSERVE
+Main green after fd78a8a (continue-watching on-host). Content gap: ELO-015 Appomattox scenario JSON existed untracked without catalog rows, social drafts, or docs — freemium-heavy stretch left Civil War endgame pack incomplete.
+
+### PLAN
+**One high-impact change:** ship public pack ELO-015 (Appomattox 1865) end-to-end — catalog, batch-013 human-gate drafts, docs, social tests.
+
+### EXECUTE
+- Keep `scenarios/public/ELO-015.json` (historical / harsher_terms / delay_for_orders)
+- Append 3 catalog videos (featured historical cut)
+- `content/drafts/batch-013/*` markdown + postiz-drafts.json + README (status draft, no auto-publish)
+- Update scenarios/public/README, PIPELINE.md, content/drafts/README
+- Extend scripts/tests/test_social_drafts.py for batch-013 + labeled cuts
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Public Appomattox pack live for site/library + human-gate social drafts. No MANDOS. No auto-publish.

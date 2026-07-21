@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-015",
+  "title": "Appomattox 1865 — offer Grant’s terms or demand harder surrender?",
+  "era": "1865",
+  "location": "Appomattox Court House / Virginia",
+  "datetime": "9 April 1865, afternoon after the Army of Northern Virginia is cut off",
+  "domain": "American Civil War / operational endgame / political reconstruction",
+  "known_outcome": "Lee meets Grant at the McLean House. Grant offers written terms: officers keep side arms and baggage; men are paroled and may take horses and mules home for spring plowing; arms stacked. Lee accepts. The Army of Northern Virginia surrenders without a last-ditch urban fight in the capital’s shadow.",
+  "decision_question": "With Lee’s army nearly surrounded and Richmond already fallen, does Grant offer relatively generous parole terms, demand a harsher unconditional posture, or allow a temporary truce while political instructions from Washington harden?",
+  "opening": {
+    "cold_open": "April mud. White flags on a Virginia road. Two armies that have spent four years of attrition now stand within a few miles of a final collision — or a signature that ends one field army without another slaughter.",
+    "what_they_knew": "They knew Lee’s line of retreat was closing. They knew hunger and desertion had thinned gray ranks. They knew Lincoln’s public line favored reunion over revenge. They did not know whether a harder term sheet would shorten the remaining war — or seed years of guerrilla bitterness.",
+    "pressure": "Political clocks in Washington. Soldiers’ exhaustion. The risk of one more day of pursuit turning into another Gettysburg-scale bill of dead."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Grant’s terms — parole, horses for plowing, stack arms",
+      "is_historical": true,
+      "summary": "Documented path: Grant issues written terms consistent with Lincoln’s preference for a soft landing; Lee accepts; the Army of Northern Virginia surrenders.",
+      "immediate": "Arms stacked. Paroles issued. Officers keep side arms. Horses and mules go home with men who farm.",
+      "near_term": "Other Confederate forces still exist, but the largest eastern field army is out of the war without a last stand at the capital’s doorstep.",
+      "longer_arc": "Appomattox becomes a canonical study in endgame politics: how terms shape the transition from open war to uneasy peace.",
+      "speculation_level": "documented",
+      "image_prompt": "1865 Virginia farmhouse porch, Union and Confederate officers meeting, spring light, archival documentary painting, sepia chiaroscuro, film grain, period-accurate uniforms, no text, no triumphal gore",
+      "vo_script": "9 April 1865. The road is closed. History records Grant’s written terms — parole, stacked arms, horses for spring plowing — and Lee’s acceptance. One army leaves the field without another day of massed slaughter."
+    },
+    {
+      "id": "harsher_terms",
+      "label": "Harder terms — no side arms, no horses, tighter custody",
+      "is_historical": false,
+      "summary": "SPECULATION: Demand a more punitive sheet before accepting the white flag — fewer privileges, stricter custody of officers.",
+      "immediate": "Negotiations may stall. Pride and logistics collide. A delayed signature risks renewed fighting while the net closes.",
+      "near_term": "If accepted, bitterness may harden; if refused, the field may pay another butcher’s bill. Neither outcome is a scoreboard certainty.",
+      "longer_arc": "Simulated. Explores whether harder endgame terms shorten remaining resistance or seed longer irregular violence — not a secret winning formula.",
+      "speculation_level": "simulated",
+      "image_prompt": "1865 staff tent with maps and ink, Union officers drafting sterner terms, restrained documentary still, film grain, sepia, no text",
+      "vo_script": "What if the terms are harsher — no side arms, no horses, tighter custody? This is speculation. A harder sheet may deter later resistance — or force one more fight before the ink dries. We label the branch simulated because the trade is political cost versus field cost, not a guaranteed shorter war."
+    },
+    {
+      "id": "delay_for_orders",
+      "label": "Delay signature — wait for explicit political instructions",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: hold the white flag under a short truce while couriers seek harder or softer language from Washington.",
+      "immediate": "Hours matter. A truce can cool tempers — or let a cornered army attempt another break.",
+      "near_term": "Political delay reorders risks; it does not invent a clean telegraphed solution on demand.",
+      "longer_arc": "Dramatized process study of civil-military lag at the end of a civil war — not a second history book with a guaranteed better peace.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1865 muddy Virginia road, courier with dispatch bag, distant armies under white flags, documentary chiaroscuro, film grain, no modern objects, no text",
+      "vo_script": "What if Grant delays for explicit orders from Washington? Hours under a truce. Different risks arrive first. This branch is dramatized process — a study of political lag at the edge of surrender — not a guaranteed better peace."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Appomattox campaign (April 1865)",
+    "Published accounts of Grant–Lee correspondence and the McLean House meeting",
+    "ELOSTIRION ELO-015 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses endgame politics into a terms decision. Counterfactual harsher-terms and delay branches are labeled simulated or dramatized — not secret history. No Lost Cause romance; no triumphal gore.",
+    "corpus": "ELOSTIRION ELO-015 public pack"
+  },
+  "style_lock": "1865 Virginia spring landscape, Civil War uniforms, farmhouse and muddy roads, documentary gravity, sepia/chiaroscuro archival stills, no modern objects, no text",
+  "tags": ["alt-history", "Appomattox", "1865", "Civil War", "decision-point"]
+}

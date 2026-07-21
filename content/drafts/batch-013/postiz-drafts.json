@@ -1,0 +1,83 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-013",
+  "created": "2026-07-21",
+  "theme": "Appomattox 1865 Grant’s terms decision (ELO-015)",
+  "needs_ryan": [
+    "Connect TikTok/YouTube in Postiz",
+    "Replace INTEGRATION_* placeholders",
+    "Review 🧪 labels on non-historical cuts",
+    "Approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-015-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1865. Road closed. The terms are parole.\n📗 Documented Appomattox — and the signature.\n#historytok #appomattox #civilwar",
+      "media_local": "outputs/videos/ELO-015-historical/ELO-015-historical.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-015-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "9 April 1865: Grant’s terms at Appomattox",
+      "caption": "📗 Documented baseline: written parole terms; Lee accepts; one army leaves the field without another massed slaughter.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#history #appomattox #1865 #civilwar",
+      "media_local": "outputs/videos/ELO-015-historical/ELO-015-historical.mp4",
+      "settings": {
+        "title": "9 April 1865: Grant’s terms at Appomattox",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "appomattox", "label": "appomattox"},
+          {"value": "civilwar", "label": "civilwar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-015-harsher-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if the terms are harder?\n🧪 SIMULATED.\n📗 History offered parole and horses.\n#althistory #appomattox",
+      "media_local": "outputs/videos/ELO-015-harsher_terms/ELO-015-harsher_terms.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-015-harsher-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Grant demanded harder Appomattox terms?",
+      "caption": "⚠️ SIMULATED — not a secret second Appomattox.\n\nPolitical cost versus field cost. No guaranteed shorter war.\n\n#althistory #appomattox #speculationlabeled",
+      "media_local": "outputs/videos/ELO-015-harsher_terms/ELO-015-harsher_terms.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Grant demanded harder Appomattox terms?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "appomattox", "label": "appomattox"}
+        ]
+      }
+    },
+    {
+      "id": "elo-015-delay-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if Grant delayed Appomattox for political orders?",
+      "caption": "⚠️ DRAMATIZED process — not a guaranteed better peace.\n\nCivil-military lag at the edge of surrender. Hours under a truce reorder risks.\n\n#althistory #appomattox #speculationlabeled",
+      "media_local": "outputs/videos/ELO-015-delay_for_orders/ELO-015-delay_for_orders.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if Grant delayed Appomattox for political orders?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "1865", "label": "1865"}
+        ]
+      }
+    }
+  ]
+}
