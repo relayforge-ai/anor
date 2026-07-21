@@ -1007,6 +1007,7 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
     try:
         from .video_pipeline import (
             clip_cache_enabled,
+            clip_cache_max_bytes,
             ken_burns_quality_fingerprint,
             video_frame_size,
         )
@@ -1014,10 +1015,12 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         frame_w, frame_h = video_frame_size()
         clip_cache_on = clip_cache_enabled()
         kb_quality = ken_burns_quality_fingerprint()
+        clip_max_b = clip_cache_max_bytes()
     except Exception:
         frame_w, frame_h = 1920, 1080
         clip_cache_on = True
         kb_quality = None
+        clip_max_b = 512 * 1024 * 1024
     return {
         "config": cfg.describe(),
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
@@ -1036,6 +1039,10 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         ),
         "video_frame_size": [frame_w, frame_h],
         "clip_cache": clip_cache_on,
+        # Soft disk budget (MB); 0 = unlimited — ops-safe, no host paths
+        "clip_cache_max_mb": (
+            int(clip_max_b // (1024 * 1024)) if clip_max_b > 0 else 0
+        ),
         "ken_burns_quality": kb_quality,
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),

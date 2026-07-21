@@ -253,6 +253,76 @@ def clip_cache_dir() -> Path:
     return REPO_ROOT / "outputs" / "clip_cache"
 
 
+def clip_cache_max_bytes() -> int:
+    """Soft cap for Ken Burns clip cache (LRU by mtime). 0 = unlimited.
+
+    Env ``ANOR_CLIP_CACHE_MAX_MB`` (default 512). Keeps cost-ladder reuse without
+    unbounded disk growth on long grind hosts.
+    """
+    raw = (os.environ.get("ANOR_CLIP_CACHE_MAX_MB") or "512").strip()
+    try:
+        mb = int(raw)
+    except ValueError:
+        mb = 512
+    if mb <= 0:
+        return 0
+    return mb * 1024 * 1024
+
+
+def prune_clip_cache(*, max_bytes: Optional[int] = None) -> dict[str, int]:
+    """Drop coldest clip-cache MP4s until total size is under ``max_bytes``.
+
+    Returns public-safe counters: removed, kept, bytes_before, bytes_after.
+    No-op when max_bytes is 0 (unlimited) or the directory is missing.
+    """
+    cap = clip_cache_max_bytes() if max_bytes is None else int(max_bytes)
+    empty = {"removed": 0, "kept": 0, "bytes_before": 0, "bytes_after": 0}
+    if cap <= 0:
+        return empty
+    root = clip_cache_dir()
+    try:
+        if not root.is_dir():
+            return empty
+        entries: list[tuple[float, int, Path]] = []
+        for p in root.glob("*.mp4"):
+            try:
+                st = p.stat()
+                if not p.is_file():
+                    continue
+                entries.append((float(st.st_mtime), int(st.st_size), p))
+            except OSError:
+                continue
+    except OSError:
+        return empty
+
+    total = sum(sz for _, sz, _ in entries)
+    empty["bytes_before"] = total
+    if total <= cap:
+        empty["kept"] = len(entries)
+        empty["bytes_after"] = total
+        return empty
+
+    # Coldest first (oldest mtime)
+    entries.sort(key=lambda t: t[0])
+    removed = 0
+    for _mt, sz, p in entries:
+        if total <= cap:
+            break
+        try:
+            p.unlink(missing_ok=True)
+            total -= sz
+            removed += 1
+        except OSError:
+            continue
+    kept = max(0, len(entries) - removed)
+    return {
+        "removed": removed,
+        "kept": kept,
+        "bytes_before": empty["bytes_before"],
+        "bytes_after": max(0, total),
+    }
+
+
 def _file_fingerprint(path: Path) -> str:
     """Compact content fingerprint (size + mtime + head sample)."""
     st = path.stat()
@@ -297,6 +367,11 @@ def _try_clip_cache_hit(key: str, out_clip: Path) -> Optional[Path]:
         out_clip = Path(out_clip)
         out_clip.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, out_clip)
+        # Touch cache entry so LRU prune keeps hot clips
+        try:
+            os.utime(src, None)
+        except OSError:
+            pass
         out_clip.with_suffix(".cache.txt").write_text(
             f"clip_cache_hit key={key}\n", encoding="utf-8"
         )
@@ -315,6 +390,8 @@ def _store_clip_cache(key: str, out_clip: Path) -> None:
         tmp = dest.with_suffix(".tmp")
         shutil.copy2(out_clip, tmp)
         tmp.replace(dest)
+        # Bound disk growth after each successful store
+        prune_clip_cache()
     except OSError:
         pass
 

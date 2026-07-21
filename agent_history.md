@@ -3121,3 +3121,27 @@ Full local CI → 295 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Freemium library/watch show real runtime and size for on-host cuts instead of stale draft estimates.
+
+---
+
+## Iteration 117 — 2026-07-21
+
+### OBSERVE
+Main green after 44d0ec8. Clip cache already cost-laddered re-muxes but grew unbounded on grind hosts (~625 entries / ~35MB locally, no max). Still/TTS caches smaller; freemium runtime polish shipped. Engine disk budget was the gap.
+
+### PLAN
+**One high-impact change:** LRU soft cap for Ken Burns clip cache (mtime, touch-on-hit).
+
+### EXECUTE
+- `clip_cache_max_bytes` / `prune_clip_cache` (ANOR_CLIP_CACHE_MAX_MB default 512; 0 = unlimited)
+- Prune after each successful store; touch cache file on hit for true LRU
+- Health reports `clip_cache_max_mb` (no paths)
+- `.env.example` + unit tests for prune order and default
+
+### TEST
+```
+Full local CI → 297 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Long grind hosts keep clip-cache reuse without unbounded disk growth; ops can see the soft budget on health.

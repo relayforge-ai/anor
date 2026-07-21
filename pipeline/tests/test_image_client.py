@@ -172,6 +172,9 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertIn("video_frame_size", h)
         self.assertEqual(h["video_frame_size"], [1920, 1080])
         self.assertIn("clip_cache", h)
+        self.assertIn("clip_cache_max_mb", h)
+        self.assertIsInstance(h["clip_cache_max_mb"], int)
+        self.assertGreaterEqual(h["clip_cache_max_mb"], 0)
         self.assertIn("ken_burns_quality", h)
         self.assertIsInstance(h["ken_burns_quality"], str)
         self.assertIn("fps", h["ken_burns_quality"])
@@ -651,6 +654,67 @@ class TestClipCache(unittest.TestCase):
                         os.environ.pop(k, None)
                     else:
                         os.environ[k] = v
+
+    def test_prune_clip_cache_lru_by_mtime(self):
+        """Coldest MP4s drop first until under ANOR_CLIP_CACHE_MAX_MB budget."""
+        import time
+        from pipeline.video_pipeline import clip_cache_max_bytes, prune_clip_cache
+
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_CLIP_CACHE_DIR", "ANOR_CLIP_CACHE_MAX_MB")
+        }
+        with tempfile.TemporaryDirectory() as td:
+            cache_dir = Path(td) / "ccache"
+            cache_dir.mkdir()
+            os.environ["ANOR_CLIP_CACHE_DIR"] = str(cache_dir)
+            # ~3 KB budget: keep newest of three 2 KB stubs
+            os.environ["ANOR_CLIP_CACHE_MAX_MB"] = "0"  # set via max_bytes arg
+            # Write three files with distinct mtimes
+            paths = []
+            for i, name in enumerate(("a.mp4", "b.mp4", "c.mp4")):
+                p = cache_dir / name
+                p.write_bytes(b"\x00" * 2048)
+                # st_mtime resolution can be 1s on some FS — step explicitly
+                os.utime(p, (time.time() - 30 + i * 10, time.time() - 30 + i * 10))
+                paths.append(p)
+            try:
+                # Cap at 3 KB → total 6 KB before, drop oldest until ≤ 3072
+                stats = prune_clip_cache(max_bytes=3072)
+                self.assertGreaterEqual(stats["bytes_before"], 6000)
+                self.assertLessEqual(stats["bytes_after"], 3072)
+                self.assertEqual(stats["removed"], 2)
+                self.assertEqual(stats["kept"], 1)
+                self.assertTrue(paths[2].is_file(), "newest should survive")
+                self.assertFalse(paths[0].is_file())
+                self.assertFalse(paths[1].is_file())
+                # Unlimited when max_bytes=0
+                paths[2].write_bytes(b"\x00" * 2048)
+                z = prune_clip_cache(max_bytes=0)
+                self.assertEqual(z["removed"], 0)
+                self.assertEqual(clip_cache_max_bytes(), 0)  # env still 0
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+    def test_clip_cache_max_mb_default(self):
+        from pipeline.video_pipeline import clip_cache_max_bytes
+
+        prev = os.environ.pop("ANOR_CLIP_CACHE_MAX_MB", None)
+        try:
+            self.assertEqual(clip_cache_max_bytes(), 512 * 1024 * 1024)
+            os.environ["ANOR_CLIP_CACHE_MAX_MB"] = "128"
+            self.assertEqual(clip_cache_max_bytes(), 128 * 1024 * 1024)
+            os.environ["ANOR_CLIP_CACHE_MAX_MB"] = "0"
+            self.assertEqual(clip_cache_max_bytes(), 0)
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_CLIP_CACHE_MAX_MB", None)
+            else:
+                os.environ["ANOR_CLIP_CACHE_MAX_MB"] = prev
 
     def test_clip_cache_hit_skips_ffmpeg(self):
         from pipeline.video_pipeline import _ken_burns_clip
