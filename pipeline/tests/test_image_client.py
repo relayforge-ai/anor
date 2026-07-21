@@ -175,6 +175,10 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertIn("clip_cache_max_mb", h)
         self.assertIsInstance(h["clip_cache_max_mb"], int)
         self.assertGreaterEqual(h["clip_cache_max_mb"], 0)
+        self.assertIn("still_cache_max_mb", h)
+        self.assertIsInstance(h["still_cache_max_mb"], int)
+        self.assertIn("tts_cache_max_mb", h)
+        self.assertIsInstance(h["tts_cache_max_mb"], int)
         self.assertIn("ken_burns_quality", h)
         self.assertIsInstance(h["ken_burns_quality"], str)
         self.assertIn("fps", h["ken_burns_quality"])
@@ -258,6 +262,49 @@ class TestStillCache(unittest.TestCase):
                     os.environ.pop(k, None)
                 else:
                     os.environ[k] = v
+
+    def test_prune_still_cache_lru(self):
+        import time
+
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_STILL_CACHE_DIR", "ANOR_STILL_CACHE_MAX_MB")
+        }
+        with tempfile.TemporaryDirectory() as td:
+            cache_dir = Path(td) / "scache"
+            cache_dir.mkdir()
+            os.environ["ANOR_STILL_CACHE_DIR"] = str(cache_dir)
+            paths = []
+            for i, name in enumerate(("a.png", "b.png", "c.png")):
+                p = cache_dir / name
+                p.write_bytes(b"\x00" * 2048)
+                os.utime(p, (time.time() - 30 + i * 10, time.time() - 30 + i * 10))
+                paths.append(p)
+            try:
+                stats = ImageClient.prune_still_cache(max_bytes=3072)
+                self.assertEqual(stats["removed"], 2)
+                self.assertTrue(paths[2].is_file())
+                self.assertFalse(paths[0].is_file())
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+    def test_still_cache_max_mb_env(self):
+        prev = os.environ.pop("ANOR_STILL_CACHE_MAX_MB", None)
+        try:
+            self.assertEqual(ImageClient.still_cache_max_bytes(), 1024 * 1024 * 1024)
+            os.environ["ANOR_STILL_CACHE_MAX_MB"] = "64"
+            self.assertEqual(ImageClient.still_cache_max_bytes(), 64 * 1024 * 1024)
+            os.environ["ANOR_STILL_CACHE_MAX_MB"] = "0"
+            self.assertEqual(ImageClient.still_cache_max_bytes(), 0)
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_STILL_CACHE_MAX_MB", None)
+            else:
+                os.environ["ANOR_STILL_CACHE_MAX_MB"] = prev
 
     def test_mock_cache_hit_skips_second_generate_work(self):
         prev = {

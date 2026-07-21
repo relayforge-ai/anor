@@ -3145,3 +3145,27 @@ Full local CI → 297 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Long grind hosts keep clip-cache reuse without unbounded disk growth; ops can see the soft budget on health.
+
+---
+
+## Iteration 118 — 2026-07-21
+
+### OBSERVE
+Main green after 17e9f3e (clip-cache LRU). Still and TTS content-addressed caches still unbounded — SDXL+ESRGAN stills are multi-MB and will dominate disk once Comfy path is exercised hard on grind hosts.
+
+### PLAN
+**One high-impact change:** LRU soft caps for still + TTS caches (same pattern as clip).
+
+### EXECUTE
+- Shared `prune_media_cache_dir` + `_cache_max_bytes` in clients.py
+- `ANOR_STILL_CACHE_MAX_MB` default 1024; `ANOR_TTS_CACHE_MAX_MB` default 256; 0 = unlimited
+- Prune after store; touch on hit; health `still_cache_max_mb` / `tts_cache_max_mb`
+- `.env.example` + unit tests
+
+### TEST
+```
+Full local CI → 301 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Full cost ladder (still / TTS / clip) has disk budgets so long grind + real Comfy stills cannot fill the host unbounded.

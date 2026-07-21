@@ -41,6 +41,78 @@ _DEFAULT_COMFY_NEGATIVE = (
     "modern clothing, anachronism, cartoon, anime, oversaturated"
 )
 
+_TTS_CACHE_AUDIO_SUFFIXES = (".wav", ".mp3", ".aiff", ".m4a", ".ogg")
+
+
+def _cache_max_bytes(env_name: str, default_mb: int) -> int:
+    """Soft cap in bytes from ``ENV`` (MB). 0 / negative → unlimited."""
+    raw = (os.environ.get(env_name) or str(default_mb)).strip()
+    try:
+        mb = int(raw)
+    except ValueError:
+        mb = default_mb
+    if mb <= 0:
+        return 0
+    return mb * 1024 * 1024
+
+
+def prune_media_cache_dir(
+    root: Path,
+    *,
+    max_bytes: int,
+    suffixes: tuple[str, ...],
+) -> dict[str, int]:
+    """Drop coldest cache files (by mtime) until total size ≤ ``max_bytes``.
+
+    Public-safe counters only — no host paths. No-op when max_bytes ≤ 0.
+    """
+    empty = {"removed": 0, "kept": 0, "bytes_before": 0, "bytes_after": 0}
+    if max_bytes <= 0:
+        return empty
+    root = Path(root)
+    try:
+        if not root.is_dir():
+            return empty
+        entries: list[tuple[float, int, Path]] = []
+        for p in root.iterdir():
+            try:
+                if not p.is_file():
+                    continue
+                suf = p.suffix.lower()
+                if suf not in suffixes:
+                    continue
+                st = p.stat()
+                entries.append((float(st.st_mtime), int(st.st_size), p))
+            except OSError:
+                continue
+    except OSError:
+        return empty
+
+    total = sum(sz for _, sz, _ in entries)
+    empty["bytes_before"] = total
+    if total <= max_bytes:
+        empty["kept"] = len(entries)
+        empty["bytes_after"] = total
+        return empty
+
+    entries.sort(key=lambda t: t[0])  # coldest first
+    removed = 0
+    for _mt, sz, p in entries:
+        if total <= max_bytes:
+            break
+        try:
+            p.unlink(missing_ok=True)
+            total -= sz
+            removed += 1
+        except OSError:
+            continue
+    return {
+        "removed": removed,
+        "kept": max(0, len(entries) - removed),
+        "bytes_before": empty["bytes_before"],
+        "bytes_after": max(0, total),
+    }
+
 
 def _env_int(name: str, default: int) -> int:
     raw = os.environ.get(name, "").strip()
@@ -335,6 +407,28 @@ class ImageClient:
         return _REPO_ROOT / "outputs" / "still_cache"
 
     @staticmethod
+    def still_cache_max_bytes() -> int:
+        """Soft cap for still PNG cache (LRU by mtime). 0 = unlimited.
+
+        Env ``ANOR_STILL_CACHE_MAX_MB`` (default 1024). SDXL+ESRGAN stills are
+        multi-MB; bound disk without dropping cost-ladder reuse entirely.
+        """
+        return _cache_max_bytes("ANOR_STILL_CACHE_MAX_MB", 1024)
+
+    @staticmethod
+    def prune_still_cache(*, max_bytes: Optional[int] = None) -> dict[str, int]:
+        cap = (
+            ImageClient.still_cache_max_bytes()
+            if max_bytes is None
+            else int(max_bytes)
+        )
+        return prune_media_cache_dir(
+            ImageClient.still_cache_dir(),
+            max_bytes=cap,
+            suffixes=(".png",),
+        )
+
+    @staticmethod
     def comfy_quality_fingerprint() -> str:
         """Steps/CFG/sampler/scheduler — quality knobs that change pixel output.
 
@@ -385,6 +479,10 @@ class ImageClient:
                 return None
             out_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, out_path)
+            try:
+                os.utime(src, None)  # LRU: keep hot stills under soft cap
+            except OSError:
+                pass
             # Sidecar for human review / draft pipeline
             out_path.with_suffix(".prompt.txt").write_text(full_prompt, encoding="utf-8")
             note = out_path.with_suffix(".cache.txt")
@@ -402,6 +500,7 @@ class ImageClient:
             tmp = dest.with_suffix(".tmp")
             shutil.copy2(out_path, tmp)
             tmp.replace(dest)
+            ImageClient.prune_still_cache()
         except OSError:
             pass
 
@@ -813,6 +912,27 @@ class TTSClient:
         return _REPO_ROOT / "outputs" / "tts_cache"
 
     @staticmethod
+    def tts_cache_max_bytes() -> int:
+        """Soft cap for VO audio cache (LRU by mtime). 0 = unlimited.
+
+        Env ``ANOR_TTS_CACHE_MAX_MB`` (default 256).
+        """
+        return _cache_max_bytes("ANOR_TTS_CACHE_MAX_MB", 256)
+
+    @staticmethod
+    def prune_tts_cache(*, max_bytes: Optional[int] = None) -> dict[str, int]:
+        cap = (
+            TTSClient.tts_cache_max_bytes()
+            if max_bytes is None
+            else int(max_bytes)
+        )
+        return prune_media_cache_dir(
+            TTSClient.tts_cache_dir(),
+            max_bytes=cap,
+            suffixes=_TTS_CACHE_AUDIO_SUFFIXES,
+        )
+
+    @staticmethod
     def tts_cache_key(
         *,
         text: str,
@@ -835,7 +955,7 @@ class TTSClient:
         hits = [
             p
             for p in self._tts_cache_glob(key)
-            if p.suffix.lower() in (".wav", ".mp3", ".aiff", ".m4a", ".ogg")
+            if p.suffix.lower() in _TTS_CACHE_AUDIO_SUFFIXES
             and p.stat().st_size >= _STILL_CACHE_MIN_BYTES
         ]
         if not hits:
@@ -847,6 +967,10 @@ class TTSClient:
                 dest = out_path.with_suffix(src.suffix)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
+            try:
+                os.utime(src, None)  # LRU: keep hot VO under soft cap
+            except OSError:
+                pass
             dest.with_suffix(dest.suffix + ".cache.txt").write_text(
                 f"tts_cache_hit key={key}\n",
                 encoding="utf-8",
@@ -864,6 +988,7 @@ class TTSClient:
             tmp = dest.with_suffix(dest.suffix + ".tmp")
             shutil.copy2(out_path, tmp)
             tmp.replace(dest)
+            TTSClient.prune_tts_cache()
         except OSError:
             pass
 
@@ -1037,6 +1162,11 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         "still_cache": ImageClient.still_cache_enabled(
             backend=img._backend()
         ),
+        "still_cache_max_mb": (
+            int(ImageClient.still_cache_max_bytes() // (1024 * 1024))
+            if ImageClient.still_cache_max_bytes() > 0
+            else 0
+        ),
         "video_frame_size": [frame_w, frame_h],
         "clip_cache": clip_cache_on,
         # Soft disk budget (MB); 0 = unlimited — ops-safe, no host paths
@@ -1048,5 +1178,10 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         "tts_backend": tts._backend(),
         "tts_fallback_mock": TTSClient.mock_fallback_enabled(),
         "tts_cache": TTSClient.tts_cache_enabled(backend=tts._backend()),
+        "tts_cache_max_mb": (
+            int(TTSClient.tts_cache_max_bytes() // (1024 * 1024))
+            if TTSClient.tts_cache_max_bytes() > 0
+            else 0
+        ),
         "http_retry": http_retry_config(),
     }

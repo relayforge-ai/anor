@@ -167,6 +167,49 @@ class TestTtsCache(unittest.TestCase):
                     else:
                         os.environ[k] = v
 
+    def test_prune_tts_cache_lru(self):
+        import time
+
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_TTS_CACHE_DIR", "ANOR_TTS_CACHE_MAX_MB")
+        }
+        with tempfile.TemporaryDirectory() as td:
+            cache_dir = Path(td) / "tcache"
+            cache_dir.mkdir()
+            os.environ["ANOR_TTS_CACHE_DIR"] = str(cache_dir)
+            paths = []
+            for i, name in enumerate(("a.wav", "b.wav", "c.wav")):
+                p = cache_dir / name
+                p.write_bytes(b"\x00" * 2048)
+                os.utime(p, (time.time() - 30 + i * 10, time.time() - 30 + i * 10))
+                paths.append(p)
+            try:
+                stats = TTSClient.prune_tts_cache(max_bytes=3072)
+                self.assertEqual(stats["removed"], 2)
+                self.assertTrue(paths[2].is_file())
+                self.assertFalse(paths[0].is_file())
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+    def test_tts_cache_max_mb_env(self):
+        prev = os.environ.pop("ANOR_TTS_CACHE_MAX_MB", None)
+        try:
+            self.assertEqual(TTSClient.tts_cache_max_bytes(), 256 * 1024 * 1024)
+            os.environ["ANOR_TTS_CACHE_MAX_MB"] = "32"
+            self.assertEqual(TTSClient.tts_cache_max_bytes(), 32 * 1024 * 1024)
+            os.environ["ANOR_TTS_CACHE_MAX_MB"] = "0"
+            self.assertEqual(TTSClient.tts_cache_max_bytes(), 0)
+        finally:
+            if prev is None:
+                os.environ.pop("ANOR_TTS_CACHE_MAX_MB", None)
+            else:
+                os.environ["ANOR_TTS_CACHE_MAX_MB"] = prev
+
 
 class TestHealthTts(unittest.TestCase):
     def test_health_reports_tts_fallback(self):
@@ -175,6 +218,7 @@ class TestHealthTts(unittest.TestCase):
         self.assertIn("tts_backend", h)
         self.assertIn("tts_fallback_mock", h)
         self.assertIn("tts_cache", h)
+        self.assertIn("tts_cache_max_mb", h)
 
 
 if __name__ == "__main__":
