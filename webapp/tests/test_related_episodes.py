@@ -44,6 +44,11 @@ class TestRelatedEpisodes(unittest.TestCase):
         self.assertIn("function packBranchPosition", JS)
         self.assertIn("of this decision", JS)
         self.assertIn("packBranchPosition(video)", JS)
+        # End-of-pack freemium cue after last branch
+        self.assertIn("decisionComplete", JS)
+        self.assertIn("every branch of this decision", JS)
+        self.assertIn("Next branch:", JS)
+        self.assertIn("Next era:", JS)
         self.assertIn('id="watch-adjacent"', HTML)
         self.assertIn('id="watch-prev"', HTML)
         self.assertIn('id="watch-next"', HTML)

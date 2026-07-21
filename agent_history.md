@@ -3710,3 +3710,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Watch binge UX surfaces decision-pack progress alongside library chronology.
+
+---
+
+## Iteration 142 — 2026-07-21
+
+### OBSERVE
+Main green after 6c15cc0 (pack branch position). End-of-cut copy treated every finish the same — finishing the last branch of a 3-cut decision felt identical to finishing a middle branch.
+
+### PLAN
+**One high-impact change:** freemium pack-completion messaging when the last branch of a decision ends (decisionComplete).
+
+### EXECUTE
+- Detect onLastBranch + nextLeavesPack via packBranchPosition + adjacent next
+- End note: "every branch of this decision" + Next branch vs Next era labels
+- Toasts + Studio pulse after full pack; static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Watch completion celebrates full decision packs and points to next era or Studio.

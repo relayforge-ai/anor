@@ -1387,6 +1387,17 @@
     clearAutoNextTimer();
     if (accessMode === "preview") return;
     const { next } = adjacentEpisodes(video);
+    const packPos = packBranchPosition(video);
+    // Last branch of this decision in museum order, and next leaves the pack
+    // (or catalog ends) — freemium retention cue after a full fork set.
+    const onLastBranch =
+      packPos.total > 0 && packPos.index === packPos.total - 1;
+    const nextLeavesPack =
+      !next ||
+      (video.scenario_id &&
+        next.scenario_id &&
+        next.scenario_id !== video.scenario_id);
+    const decisionComplete = onLastBranch && nextLeavesPack;
     const nextBtn = $("#watch-next");
     if (nextBtn && next) {
       nextBtn.classList.add("pulse-cta");
@@ -1403,21 +1414,36 @@
         quota.appendChild(note);
       }
       if (next) {
-        note.innerHTML = `You finished this cut. <button type="button" class="btn btn-ghost btn-sm" id="watch-end-next">Next: ${escapeHtml(
-          next.title || next.id
-        )}</button> · or open Studio to fork.`;
+        const nextLabel = decisionComplete
+          ? `Next era: ${escapeHtml(next.title || next.id)}`
+          : next.scenario_id &&
+              video.scenario_id &&
+              next.scenario_id === video.scenario_id
+            ? `Next branch: ${escapeHtml(next.title || next.id)}`
+            : `Next: ${escapeHtml(next.title || next.id)}`;
+        const lead = decisionComplete
+          ? `You finished every branch of this decision (${packPos.total}). `
+          : packPos.total > 1 && packPos.index >= 0
+            ? `You finished this cut (branch ${packPos.index + 1}/${packPos.total}). `
+            : "You finished this cut. ";
+        note.innerHTML = `${lead}<button type="button" class="btn btn-ghost btn-sm" id="watch-end-next">${nextLabel}</button> · or open Studio to fork.`;
         const endNext = $("#watch-end-next");
         if (endNext) {
           endNext.onclick = () => goAdjacentEpisode(1);
         }
       } else {
-        note.textContent =
-          "You finished the last cut in chronological order. Open Studio to fork — speculation stays labeled.";
+        note.textContent = decisionComplete
+          ? `You finished every branch of this decision (${packPos.total}) and the last cut in chronological order. Open Studio to fork — speculation stays labeled.`
+          : "You finished the last cut in chronological order. Open Studio to fork — speculation stays labeled.";
       }
     }
     // Device-local auto-advance (off by default; never for preview/paywall path)
     if (next && loadAutoNextEpisode()) {
-      toast(`Next cut in 3s: ${next.title || next.id} (auto-next on)`);
+      toast(
+        decisionComplete
+          ? `Decision complete — next era in 3s: ${next.title || next.id} (auto-next on)`
+          : `Next cut in 3s: ${next.title || next.id} (auto-next on)`
+      );
       autoNextTimer = setTimeout(() => {
         autoNextTimer = null;
         if (state.route === "watch" && state.videoId === video.id) {
@@ -1426,18 +1452,25 @@
       }, 3000);
     } else {
       toast(
-        next
-          ? "Episode complete — Next cut ready, or open Studio to fork"
-          : "Episode complete — open Studio to fork this decision"
+        decisionComplete
+          ? next
+            ? "Decision complete — every branch watched; next era ready"
+            : "Decision complete — open Studio to fork this decision"
+          : next
+            ? "Episode complete — Next cut ready, or open Studio to fork"
+            : "Episode complete — open Studio to fork this decision"
       );
     }
     const cta = $("#watch-studio");
-    if (cta && !next) {
+    // Pulse Studio after a full pack, or when the catalog has nowhere left to go
+    if (cta && (!next || decisionComplete)) {
       cta.classList.add("pulse-cta");
-      try {
-        cta.focus({ preventScroll: true });
-      } catch (_) {
-        cta.focus();
+      if (!next) {
+        try {
+          cta.focus({ preventScroll: true });
+        } catch (_) {
+          cta.focus();
+        }
       }
     } else if (nextBtn && next && !loadAutoNextEpisode()) {
       try {
