@@ -4012,3 +4012,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Civil War pack ships offline end-to-end under mock_media; fleet URLs cannot leak into CI renders.
+
+---
+
+## Iteration 155 — 2026-07-21
+
+### OBSERVE
+Main green after d1d941c (ELO-015 e2e mock). Speed cycle via ,/. existed; freemium binge still lacked direct rate presets matching the four speed chips.
+
+### PLAN
+**One high-impact change:** watch keys 1–4 set PLAYBACK_RATES; 0 resets to 1×.
+
+### EXECUTE
+- Keyboard: 1→0.75× 2→1× 3→1.25× 4→1.5×; 0→normal
+- player-kbd-hint documents presets
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Explorers can jump to any device playback rate without cycling.

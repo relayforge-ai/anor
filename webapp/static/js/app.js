@@ -2726,7 +2726,7 @@
 
   function bindWatchKeyboardShortcuts() {
     /**
-     * Space/K play; J/← L/→ seek; ,/. speed; M mute; F full; S share;
+     * Space/K play; J/← L/→ seek; ,/. or 1–4 speed (0 = 1×); M mute; F full; S share;
      * [/]/p/n prev/next episode; A toggle auto-next — watch only.
      */
     if (document.documentElement.dataset.watchKbd === "1") return;
@@ -2787,6 +2787,29 @@
         e.preventDefault();
         cyclePlaybackRate(1);
         return;
+      }
+      // Direct speed presets: 1→0.75× 2→1× 3→1.25× 4→1.5× · 0 resets to 1×
+      if (key === "0") {
+        e.preventDefault();
+        const applied = applyPlaybackRate($("#player"), 1);
+        savePlaybackRate(applied);
+        toast("Playback speed: normal");
+        return;
+      }
+      if (key >= "1" && key <= "4") {
+        const idx = parseInt(key, 10) - 1;
+        if (idx >= 0 && idx < PLAYBACK_RATES.length) {
+          e.preventDefault();
+          const rate = PLAYBACK_RATES[idx];
+          const applied = applyPlaybackRate($("#player"), rate);
+          savePlaybackRate(applied);
+          toast(
+            applied === 1
+              ? "Playback speed: normal"
+              : `Playback speed: ${applied}× (saved on this device)`
+          );
+          return;
+        }
       }
       if (key === "j" || key === "J" || key === "ArrowLeft") {
         e.preventDefault();
