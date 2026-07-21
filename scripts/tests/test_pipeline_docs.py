@@ -41,6 +41,22 @@ class TestPipelineDocs(unittest.TestCase):
         ):
             self.assertIn(needle, doc)
 
+    def test_pipeline_documents_cost_ladder_caches(self):
+        """Operators need still/TTS/clip cache + mock/Comfy licensing callouts."""
+        doc = PIPELINE.read_text(encoding="utf-8")
+        for needle in (
+            "ANOR_STILL_CACHE",
+            "ANOR_CLIP_CACHE",
+            "ANOR_TTS_CACHE",
+            "Ken Burns",
+            "serialized",
+            "Flux.1-dev",
+            "sd_xl_base",
+            "ANOR_IMAGE_FALLBACK_MOCK",
+            ".env.example",
+        ):
+            self.assertIn(needle, doc, f"PIPELINE.md missing cost-ladder note: {needle}")
+
     def test_pipeline_mentions_human_gate_not_auto_publish(self):
         doc = PIPELINE.read_text(encoding="utf-8")
         self.assertRegex(

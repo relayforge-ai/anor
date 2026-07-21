@@ -123,11 +123,38 @@ Each batch has markdown captions + `postiz-drafts.json` with `status: "draft"` a
 
 ## Cost flags
 
+Lowest cost is the default product path: mock offline for CI, local fleet for
+monetized renders, content-addressed caches so re-queues do not re-pay GPU/TTS.
+
 | Path | Cost |
 |------|------|
-| `ANOR_MOCK_MEDIA=1` | $0 |
-| Local Ollama + Comfy + system/`say` TTS | watts only |
+| `ANOR_MOCK_MEDIA=1` | **$0** — never hits `IMAGE_URL` / `TTS_URL` / LLM media; CI default |
+| Local Ollama + Comfy (SDXL OpenRAIL) + system/`say` TTS | watts only |
 | Cloud LLM/image/TTS via paid `*_URL` | **flag before use** — not default |
+
+### Cost ladder (still → TTS → Ken Burns clip)
+
+Re-renders and Studio “Queue video” re-use intermediate artifacts when fingerprints match:
+
+| Layer | Env (defaults on) | Soft cap | Notes |
+|-------|-------------------|----------|--------|
+| Still cache | `ANOR_STILL_CACHE=1` | `ANOR_STILL_CACHE_MAX_MB=1024` | Content-addressed PNG; includes Comfy steps/CFG/upscale; mock off by default (`ANOR_STILL_CACHE_MOCK=0`) |
+| TTS / VO cache | `ANOR_TTS_CACHE=1` | `ANOR_TTS_CACHE_MAX_MB` (see `.env.example`) | Skip re-pay for identical VO scripts |
+| Ken Burns clip cache | `ANOR_CLIP_CACHE=1` | `ANOR_CLIP_CACHE_MAX_MB=512` | Skip ffmpeg zoompan when still + audio + quality match |
+| Final MP4 disk cache | Studio/job layer | `ANOR_VIDEO_CACHE_MIN_BYTES` | Same scenario/choice re-serve without worker when present |
+
+**Comfy on Dawes:** shared GPU with Ollama (`--lowvram`) — image jobs are **serialized**
+in-process (`_COMFY_LOCK`). Do not hammer `IMAGE_URL` concurrently from multiple workers.
+
+**Licensing (monetized channel):** SDXL (OpenRAIL) or Flux.1-schnell (Apache) only.
+**Never** Flux.1-dev (non-commercial). Prefer `IMAGE_MODEL=sd_xl_base_1.0.safetensors`
++ Real-ESRGAN upscale for 1080p Ken Burns headroom.
+
+**Outage nets (default on):** `ANOR_IMAGE_FALLBACK_MOCK` / `ANOR_TTS_FALLBACK_MOCK`
+finish a render with placeholders rather than hard-fail when fleet endpoints flake —
+prefer healthy live endpoints; keep mock for CI.
+
+See [`.env.example`](.env.example) for the full flag list. Never commit real hosts or secrets.
 
 ## Tests
 

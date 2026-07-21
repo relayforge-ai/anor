@@ -3919,3 +3919,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Fresh hosts get a Studio CTA instead of dead cards; social render cheatsheet covers Civil War packs.
+
+---
+
+## Iteration 151 — 2026-07-21
+
+### OBSERVE
+Main green after ae1c8b9 (empty-host Home). ELO-015 complete. PIPELINE cost table was three rows — still/TTS/clip caches, Comfy serialize, and licensing were only in .env.example.
+
+### PLAN
+**One high-impact change:** document the full cost ladder in PIPELINE.md + CI needle test.
+
+### EXECUTE
+- Expand Cost flags: mock $0, still/TTS/clip caches + caps, final MP4 disk cache
+- Comfy serialize + SDXL-only licensing + fallback mock notes
+- `test_pipeline_documents_cost_ladder_caches` in scripts/tests/test_pipeline_docs.py
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Operators can run lowest-cost re-renders from docs without reading client source.
