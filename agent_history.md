@@ -2475,3 +2475,25 @@ Full local CI → 264 OK + pip-audit clean
 
 ### RESULT
 Every public decision branch is listable in Library and status-aware in Studio.
+
+---
+
+## Iteration 89 — 2026-07-21
+
+### OBSERVE
+Main green after full catalog coverage. Watch page was a dead end after play — no path to sibling branches or tag-adjacent cuts.
+
+### PLAN
+**One high-impact change:** related cuts on watch (same pack + tag overlap ranking).
+
+### EXECUTE
+- `relatedEpisodes` / `paintWatchRelated`; `#watch-related` grid
+- CSS + tests; CI module list
+
+### TEST
+```
+Full local CI → 267 OK + pip-audit clean
+```
+
+### RESULT
+Explorers discover counterfactual siblings and thematically related episodes without returning to Library.

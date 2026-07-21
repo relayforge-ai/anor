@@ -596,6 +596,14 @@ textarea {
   font-size: 0.9rem;
 }
 
+/* Watch: related cuts */
+.watch-related[hidden] {
+  display: none !important;
+}
+.watch-related .video-card {
+  min-height: 0;
+}
+
 /* Library search + filter toolbar */
 .library-toolbar {
   display: flex;

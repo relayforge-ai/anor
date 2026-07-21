@@ -662,6 +662,60 @@
     else el.setAttribute("hidden", "");
   }
 
+  function relatedEpisodes(video, limit) {
+    /**
+     * Rank other catalog cuts: same scenario first, then tag overlap, then era.
+     * Keeps freemium discovery inside the public catalog only.
+     */
+    const lim = Math.max(1, Math.min(limit || 3, 6));
+    const all = (state.catalog && state.catalog.videos) || [];
+    if (!video || !all.length) return [];
+    const tags = new Set(
+      (Array.isArray(video.tags) ? video.tags : []).map((t) => String(t).toLowerCase())
+    );
+    const era = String(video.era || "").toLowerCase();
+    const sid = video.scenario_id;
+    const scored = [];
+    for (const v of all) {
+      if (!v || v.id === video.id) continue;
+      let score = 0;
+      if (sid && v.scenario_id === sid) score += 100;
+      const vt = Array.isArray(v.tags) ? v.tags : [];
+      for (const t of vt) {
+        if (tags.has(String(t).toLowerCase())) score += 10;
+      }
+      if (era && String(v.era || "").toLowerCase() === era) score += 3;
+      if (v.featured) score += 1;
+      if (v.available === false) score -= 2;
+      if (score > 0) scored.push({ v, score });
+    }
+    scored.sort((a, b) => b.score - a.score || String(a.v.id).localeCompare(String(b.v.id)));
+    return scored.slice(0, lim).map((x) => x.v);
+  }
+
+  function paintWatchRelated(video) {
+    const wrap = $("#watch-related");
+    const grid = $("#watch-related-grid");
+    const note = $("#watch-related-note");
+    if (!wrap || !grid) return;
+    const related = relatedEpisodes(video, 3);
+    if (!related.length) {
+      wrap.hidden = true;
+      grid.innerHTML = "";
+      return;
+    }
+    wrap.hidden = false;
+    const samePack = related.filter((r) => r.scenario_id === video.scenario_id).length;
+    if (note) {
+      note.textContent =
+        samePack > 0
+          ? "Other branches of this decision — and nearby topics in the public catalog."
+          : "Nearby topics in the public catalog (speculation still labeled).";
+    }
+    grid.innerHTML = related.map(videoCardHtml).join("");
+    bindVideoCards(grid);
+  }
+
   function renderWatch(videoId) {
     showPage("watch");
     setActiveNav("library");
@@ -673,6 +727,7 @@
     }
     state.videoId = videoId;
     clearPreviewWatch();
+    paintWatchRelated(video);
 
     const access = FHFreemium.videoAccess(videoId, state.catalog);
     $("#watch-title").textContent = video.title;
@@ -717,6 +772,13 @@
 
     if (!video.file || video.available === false) {
       setPlayerLoading(true, "Episode media not on this host yet — queue a render in Studio.");
+      // side quota still useful when media missing
+      const st0 = FHFreemium.statusSummary(state.catalog);
+      $("#watch-quota").innerHTML = st0.isMember
+        ? `<strong>Scholar</strong> — full access`
+        : `<strong>Explorer freemium</strong><br>
+         Full episodes used: ${st0.fullVideosUsed} / ${st0.fullVideosFree}<br>
+         Additional titles: first ${st0.previewFraction}% free, then membership.`;
       refreshChrome();
       return;
     }
