@@ -535,11 +535,12 @@
   }
 
   /**
-   * Filter library catalog entries by speculation/availability chip and free-text query.
-   * Query matches title, subtitle, blurb, era, id, scenario_id (case-insensitive).
+   * Filter library catalog entries by freemium access, speculation/availability, and query.
+   * Query matches title, subtitle, blurb, era, id, scenario_id, tags (case-insensitive).
    */
-  function filterLibraryVideos(videos, filter, query) {
+  function filterLibraryVideos(videos, filter, query, catalog) {
     const f = filter || "all";
+    const cat = catalog || state.catalog;
     let list = videos || [];
     if (f === "documented") list = list.filter((v) => v.speculation === "documented");
     else if (f === "simulated") {
@@ -547,6 +548,15 @@
         (v) => v.speculation === "simulated" || v.speculation === "dramatized"
       );
     } else if (f === "available") list = list.filter((v) => v.available !== false);
+    else if (f === "unlocked") {
+      // Full access now: Scholar, claimed free full, or still-claimable free full slot
+      list = list.filter((v) => {
+        const a = FHFreemium.videoAccess(v.id, cat);
+        return a.mode === "full" || a.mode === "claimable_full";
+      });
+    } else if (f === "preview") {
+      list = list.filter((v) => FHFreemium.videoAccess(v.id, cat).mode === "preview");
+    }
 
     const q = normalizeLibraryQuery(query);
     if (!q) return list;
@@ -627,12 +637,19 @@
       searchInput.value = state.libraryQuery || "";
     }
     const all = state.catalog.videos || [];
-    const videos = filterLibraryVideos(all, state.libraryFilter, state.libraryQuery);
+    const videos = filterLibraryVideos(
+      all,
+      state.libraryFilter,
+      state.libraryQuery,
+      state.catalog
+    );
     const grid = $("#library-grid");
     const status = $("#library-filter-status");
     if (status) {
       const labels = {
         all: "Showing all episodes",
+        unlocked: "Showing full-access titles on this device",
+        preview: "Showing Explorer preview-only titles",
         documented: "Showing 📗 documented baselines only",
         simulated: "Showing 🧪 simulated / dramatized forks only",
         available: "Showing episodes with media on this host",
@@ -647,15 +664,24 @@
     }
     if (!videos.length) {
       const hasQuery = !!normalizeLibraryQuery(state.libraryQuery);
+      const f = state.libraryFilter || "all";
+      let emptyHint =
+        "Try <strong>All</strong> or another filter. Documented and simulated cuts stay separate on purpose.";
+      if (f === "unlocked") {
+        emptyHint =
+          "No full unlocks yet — open a title to claim your free full episode, or demo-unlock Scholar for the whole library.";
+      } else if (f === "preview") {
+        emptyHint =
+          "No preview-only titles right now (Scholars and unused free-full slots show under <strong>Unlocked</strong>).";
+      } else if (hasQuery) {
+        emptyHint =
+          "Try another word (era, title, or pack id), clear the search box, or switch filter chips.";
+      }
       grid.innerHTML = `
         <div class="card side-panel library-empty" style="grid-column:1/-1">
           <p class="eyebrow">${hasQuery ? "Search" : "Filter"}</p>
           <h3 class="h3" style="margin-top:0">No episodes match</h3>
-          <p class="lede-sm">${
-            hasQuery
-              ? "Try another word (era, title, or pack id), clear the search box, or switch filter chips."
-              : "Try <strong>All</strong> or another speculation label. Documented and simulated cuts stay separate on purpose."
-          }</p>
+          <p class="lede-sm">${emptyHint}</p>
         </div>`;
       return;
     }

@@ -198,11 +198,17 @@
             class="library-filters row"
             id="library-filters"
             role="toolbar"
-            aria-label="Filter episodes by speculation label"
+            aria-label="Filter episodes by access and speculation"
             style="flex-wrap:wrap;gap:0.45rem"
           >
             <button type="button" class="btn btn-ghost btn-sm library-filter active" data-lib-filter="all" aria-pressed="true">
               All
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="unlocked" aria-pressed="false" title="Full access on this device (free unlock, Scholar, or claimable free full)">
+              Unlocked
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="preview" aria-pressed="false" title="Explorer preview-only titles (first quarter free)">
+              Preview only
             </button>
             <button type="button" class="btn btn-ghost btn-sm library-filter" data-lib-filter="documented" aria-pressed="false">
               📗 Documented

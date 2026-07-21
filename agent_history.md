@@ -2588,3 +2588,26 @@ Full local CI → 274 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers and Scholars resume recent cuts from the home page without accounts or analytics — privacy-preserving freemium polish.
+
+---
+
+## Iteration 94 — 2026-07-21
+
+### OBSERVE
+Main green after Continue watching. Library filters only sorted by speculation/host availability — Explorers could not list titles they already unlocked vs preview-only.
+
+### PLAN
+**One high-impact change:** freemium access chips in Library (Unlocked / Preview only).
+
+### EXECUTE
+- `filterLibraryVideos` modes `unlocked` (full + claimable_full) and `preview`
+- HTML filter chips + status labels + empty-state guidance
+- Library search tests for access chips
+
+### TEST
+```
+Full local CI → 275 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can browse what they can finish now vs paywall-gated previews without hunting pills on every card.

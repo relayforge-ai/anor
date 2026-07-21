@@ -26,6 +26,18 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("tokens.every", JS)
         # Esc clears search
         self.assertIn('e.key === "Escape"', JS)
+        # Freemium access chips (unlocked / preview-only)
+        self.assertIn('f === "unlocked"', JS)
+        self.assertIn('f === "preview"', JS)
+        self.assertIn("videoAccess", JS)
+        self.assertIn("claimable_full", JS)
+
+    def test_html_has_freemium_access_filters(self):
+        self.assertIn('data-lib-filter="unlocked"', HTML)
+        self.assertIn('data-lib-filter="preview"', HTML)
+        self.assertIn("Preview only", HTML)
+        self.assertIn("Unlocked", HTML)
+        self.assertIn("Filter episodes by access and speculation", HTML)
 
     def test_slash_focuses_library_search(self):
         self.assertIn('e.key === "/"', JS)
