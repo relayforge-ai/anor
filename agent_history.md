@@ -3263,3 +3263,27 @@ Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can keyboard-skim narrated cuts without bypassing the freemium preview gate.
+
+---
+
+## Iteration 123 — 2026-07-21
+
+### OBSERVE
+Main green after 09b119e (watch seek/play keys). Mute and fullscreen still required browser chrome; mute did not stick across episodes on the same device.
+
+### PLAN
+**One high-impact change:** M mute (device preference) + F fullscreen on the watch player.
+
+### EXECUTE
+- `toggleWatchMute` / `applyPlaybackMuted` with `fh:playbackMuted`
+- `toggleWatchFullscreen` (stage → video → webkitEnterFullscreen)
+- Wire into watch keyboard map; re-apply mute on media load
+- Hint text + static contract tests
+
+### TEST
+```
+Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Watch keyboard suite covers play, seek, mute, and fullscreen without network or freemium-gate bypass.

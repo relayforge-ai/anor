@@ -146,9 +146,15 @@ class TestStaticProgressUI(unittest.TestCase):
             "bindWatchKeyboardShortcuts",
             "seekWatchPlayer",
             "toggleWatchPlayback",
+            "toggleWatchMute",
+            "toggleWatchFullscreen",
+            "PLAYBACK_MUTE_KEY",
+            "fh:playbackMuted",
             "previewCeiling",
             'key === "j"',
             'key === "ArrowLeft"',
+            'key === "m"',
+            'key === "f"',
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
@@ -253,6 +259,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("Playback speed", html)
         self.assertIn('id="player-kbd-hint"', html)
         self.assertIn("−10s", html)
+        self.assertIn("mute", html)
+        self.assertIn("full", html)
         self.assertIn(".player-kbd-hint", css)
 
     def test_index_fork_region_live(self):

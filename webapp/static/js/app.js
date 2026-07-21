@@ -27,6 +27,8 @@
   /** localStorage playback rate for watch player (device-only freemium UX) */
   const PLAYBACK_RATE_KEY = "fh:playbackRate";
   const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5];
+  /** localStorage mute preference for watch player (device-only) */
+  const PLAYBACK_MUTE_KEY = "fh:playbackMuted";
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
   /** Active rate-limit countdown timer (studio) */
@@ -1255,9 +1257,10 @@
 
     setPlayerLoading(true, "Loading episode…");
     player.src = "/media/videos/" + video.file;
-    // Restore freemium device speed preference (no network)
+    // Restore freemium device speed + mute preferences (no network)
     bindPlayerSpeedControls();
     applyPlaybackRate(player, loadPlaybackRate());
+    applyPlaybackMuted(player, loadPlaybackMuted());
 
     /** Persist mid-watch position for freemium resume (throttled). */
     let lastPosSave = 0;
@@ -1311,8 +1314,9 @@
 
     player.onloadedmetadata = () => {
       setPlayerLoading(false);
-      // Browsers may reset rate when media loads — re-apply
+      // Browsers may reset rate/mute when media loads — re-apply
       applyPlaybackRate(player, loadPlaybackRate());
+      applyPlaybackMuted(player, loadPlaybackMuted());
       if (access2.mode === "preview") {
         FHFreemium.markPreview(videoId);
         previewCeiling = player.duration * access2.previewFraction;
@@ -2024,8 +2028,73 @@
     return true;
   }
 
+  function loadPlaybackMuted() {
+    try {
+      const raw = localStorage.getItem(PLAYBACK_MUTE_KEY);
+      if (raw === "1" || raw === "true") return true;
+      if (raw === "0" || raw === "false") return false;
+    } catch (_) {}
+    return false;
+  }
+
+  function savePlaybackMuted(muted) {
+    try {
+      localStorage.setItem(PLAYBACK_MUTE_KEY, muted ? "1" : "0");
+    } catch (_) {}
+  }
+
+  function applyPlaybackMuted(player, muted) {
+    if (!player) return false;
+    try {
+      player.muted = !!muted;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function toggleWatchMute() {
+    const player = $("#player");
+    if (!player || !player.getAttribute("src")) return false;
+    const next = !player.muted;
+    applyPlaybackMuted(player, next);
+    savePlaybackMuted(next);
+    toast(next ? "Muted (saved on this device)" : "Unmuted");
+    return true;
+  }
+
+  function toggleWatchFullscreen() {
+    const player = $("#player");
+    const stage = $(".player-stage");
+    if (!player || !player.getAttribute("src")) return false;
+    try {
+      // Prefer stage (video + gate chrome); fall back to element APIs
+      if (document.fullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) exit.call(document);
+        return true;
+      }
+      if (stage && stage.requestFullscreen) {
+        stage.requestFullscreen();
+        return true;
+      }
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+        return true;
+      }
+      if (typeof player.webkitEnterFullscreen === "function") {
+        player.webkitEnterFullscreen();
+        return true;
+      }
+    } catch (_) {
+      return false;
+    }
+    toast("Fullscreen not available in this browser");
+    return false;
+  }
+
   function bindWatchKeyboardShortcuts() {
-    /** Space/K play-pause; J/← −10s; L/→ +10s — freemium watch only. */
+    /** Space/K play-pause; J/← −10s; L/→ +10s; M mute; F fullscreen — watch only. */
     if (document.documentElement.dataset.watchKbd === "1") return;
     document.documentElement.dataset.watchKbd = "1";
     document.addEventListener("keydown", (e) => {
@@ -2049,6 +2118,16 @@
       if (key === "l" || key === "L" || key === "ArrowRight") {
         e.preventDefault();
         seekWatchPlayer(10);
+        return;
+      }
+      if (key === "m" || key === "M") {
+        e.preventDefault();
+        toggleWatchMute();
+        return;
+      }
+      if (key === "f" || key === "F") {
+        e.preventDefault();
+        toggleWatchFullscreen();
       }
     });
   }
