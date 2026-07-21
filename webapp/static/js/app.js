@@ -24,10 +24,64 @@
   /** localStorage map scenario_id → last choice_id (device-only) */
   const LAST_STUDIO_CHOICES_KEY = "fh:lastStudioChoices";
   const LAST_STUDIO_CHOICES_MAX = 32;
+  /** localStorage playback rate for watch player (device-only freemium UX) */
+  const PLAYBACK_RATE_KEY = "fh:playbackRate";
+  const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5];
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
   /** Active rate-limit countdown timer (studio) */
   let rateLimitTimer = null;
+  let playerSpeedBound = false;
+
+  function loadPlaybackRate() {
+    try {
+      const n = parseFloat(localStorage.getItem(PLAYBACK_RATE_KEY) || "1");
+      if (PLAYBACK_RATES.some((r) => Math.abs(r - n) < 0.001)) return n;
+    } catch (_) {}
+    return 1;
+  }
+
+  function savePlaybackRate(rate) {
+    try {
+      localStorage.setItem(PLAYBACK_RATE_KEY, String(rate));
+    } catch (_) {}
+  }
+
+  function applyPlaybackRate(player, rate) {
+    const r = PLAYBACK_RATES.find((x) => Math.abs(x - rate) < 0.001) || 1;
+    if (player) {
+      try {
+        player.playbackRate = r;
+      } catch (_) {}
+    }
+    $$(".player-speed-btn").forEach((btn) => {
+      const br = parseFloat(btn.getAttribute("data-rate") || "1");
+      const on = Math.abs(br - r) < 0.001;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.classList.toggle("active", on);
+    });
+    return r;
+  }
+
+  function bindPlayerSpeedControls() {
+    if (playerSpeedBound) return;
+    const bar = $("#player-speed");
+    if (!bar) return;
+    playerSpeedBound = true;
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".player-speed-btn");
+      if (!btn) return;
+      const rate = parseFloat(btn.getAttribute("data-rate") || "1");
+      const player = $("#player");
+      const applied = applyPlaybackRate(player, rate);
+      savePlaybackRate(applied);
+      toast(
+        applied === 1
+          ? "Playback speed: normal"
+          : `Playback speed: ${applied}× (saved on this device)`
+      );
+    });
+  }
 
   function saveActiveVideoJob(rec) {
     try {
@@ -1201,6 +1255,9 @@
 
     setPlayerLoading(true, "Loading episode…");
     player.src = "/media/videos/" + video.file;
+    // Restore freemium device speed preference (no network)
+    bindPlayerSpeedControls();
+    applyPlaybackRate(player, loadPlaybackRate());
 
     /** Persist mid-watch position for freemium resume (throttled). */
     let lastPosSave = 0;
@@ -1254,6 +1311,8 @@
 
     player.onloadedmetadata = () => {
       setPlayerLoading(false);
+      // Browsers may reset rate when media loads — re-apply
+      applyPlaybackRate(player, loadPlaybackRate());
       if (access2.mode === "preview") {
         FHFreemium.markPreview(videoId);
         previewCeiling = player.duration * access2.previewFraction;

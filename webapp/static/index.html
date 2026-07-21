@@ -250,24 +250,39 @@
         <div class="row" id="watch-pills" style="margin-bottom:1rem"></div>
 
         <div class="player-layout">
-          <div class="player-stage">
-            <video id="player" controls playsinline preload="metadata"></video>
-            <div class="player-loading" id="player-loading" hidden>
-              <div class="player-loading-inner" role="status" aria-live="polite">
-                <div class="player-spinner" aria-hidden="true"></div>
-                <p id="player-loading-text">Loading episode…</p>
-              </div>
-            </div>
-            <div class="player-gate" id="player-gate">
-              <div class="gate-card">
-                <span class="pill pill-warn">Preview complete</span>
-                <h3>The rest of this fork is for Scholars</h3>
-                <p id="gate-copy">You've used your free full episode. Explorers can preview a quarter of each additional title.</p>
-                <div class="gate-actions">
-                  <button class="btn btn-primary" id="gate-upgrade">Unlock Scholar · $4.99/mo</button>
-                  <button class="btn btn-ghost" id="gate-demo">Demo unlock (review)</button>
+          <div class="player-column">
+            <div class="player-stage">
+              <video id="player" controls playsinline preload="metadata"></video>
+              <div class="player-loading" id="player-loading" hidden>
+                <div class="player-loading-inner" role="status" aria-live="polite">
+                  <div class="player-spinner" aria-hidden="true"></div>
+                  <p id="player-loading-text">Loading episode…</p>
                 </div>
               </div>
+              <div class="player-gate" id="player-gate">
+                <div class="gate-card">
+                  <span class="pill pill-warn">Preview complete</span>
+                  <h3>The rest of this fork is for Scholars</h3>
+                  <p id="gate-copy">You've used your free full episode. Explorers can preview a quarter of each additional title.</p>
+                  <div class="gate-actions">
+                    <button class="btn btn-primary" id="gate-upgrade">Unlock Scholar · $4.99/mo</button>
+                    <button class="btn btn-ghost" id="gate-demo">Demo unlock (review)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="player-speed"
+              id="player-speed"
+              role="group"
+              aria-label="Playback speed"
+              title="Local preference on this device — no network"
+            >
+              <span class="player-speed-label">Speed</span>
+              <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="0.75" aria-pressed="false">0.75×</button>
+              <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="1" aria-pressed="true">1×</button>
+              <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="1.25" aria-pressed="false">1.25×</button>
+              <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="1.5" aria-pressed="false">1.5×</button>
             </div>
           </div>
           <aside class="card side-panel">

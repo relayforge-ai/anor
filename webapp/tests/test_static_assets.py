@@ -138,6 +138,11 @@ class TestStaticProgressUI(unittest.TestCase):
             "video-card-resume",
             "video-card-on-host",
             "on-host first within era",
+            "PLAYBACK_RATE_KEY",
+            "fh:playbackRate",
+            "applyPlaybackRate",
+            "bindPlayerSpeedControls",
+            "playbackRate",
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
@@ -230,10 +235,16 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".home-continue", css)
         self.assertIn(".video-card-resume", css)
         self.assertIn(".video-card-has-resume", css)
+        self.assertIn(".player-speed", css)
+        self.assertIn(".player-speed-btn", css)
+        self.assertIn(".player-column", css)
         html = (STATIC / "index.html").read_text(encoding="utf-8")
         self.assertIn('id="home-continue"', html)
         self.assertIn('id="home-continue-grid"', html)
         self.assertIn("Continue watching", html)
+        self.assertIn('id="player-speed"', html)
+        self.assertIn('data-rate="1.25"', html)
+        self.assertIn("Playback speed", html)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

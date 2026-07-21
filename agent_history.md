@@ -3216,3 +3216,26 @@ Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Partial host inventories surface playable cuts first within each era without breaking the museum timeline.
+
+---
+
+## Iteration 121 — 2026-07-21
+
+### OBSERVE
+Main green after e37e8c8. Watch player was fixed at 1× — documentary / archival VO episodes reward slower or faster listening, and freemium Explorers had no device-local speed control (browser native menus are inconsistent).
+
+### PLAN
+**One high-impact change:** watch playback speed chips (0.75×–1.5×) with localStorage preference.
+
+### EXECUTE
+- `#player-speed` control bar under the stage (0.75 / 1 / 1.25 / 1.5)
+- `fh:playbackRate` load/save; re-apply on media metadata load
+- CSS + static asset contract tests
+
+### TEST
+```
+Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can skim or slow documentary cuts with a preference that sticks on-device and never hits the network.
