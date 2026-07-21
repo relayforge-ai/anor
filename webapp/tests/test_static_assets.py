@@ -180,6 +180,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "adjacentEpisodes",
             "goAdjacentEpisode",
             "paintWatchAdjacent",
+            "packBranchPosition",
+            "of this decision",
             "handleWatchEpisodeEnded",
             "preferAvailable",
             "Skipped missing media",

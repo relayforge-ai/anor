@@ -1276,6 +1276,19 @@
   }
 
   /**
+   * Position of this cut among same-pack branches (museum chronological order).
+   * Surfaces "branch 2/3 of this decision" so freemium bingeers track the fork,
+   * not only the global library index.
+   */
+  function packBranchPosition(video) {
+    const list = videosChronological((state.catalog && state.catalog.videos) || []);
+    if (!video || !video.scenario_id) return { index: -1, total: 0 };
+    const pack = list.filter((v) => v && v.scenario_id === video.scenario_id);
+    const index = pack.findIndex((v) => v && v.id === video.id);
+    return { index, total: pack.length };
+  }
+
+  /**
    * Prev/next cut in museum chronological order (era → pack → documented → on-host).
    * When preferAvailable (default), skip "not on host" rows so partial grind
    * inventories binge onto playable media without dead ends.
@@ -1467,6 +1480,7 @@
     if (!bar) return;
     clearAutoNextTimer();
     const { prev, next, index, total } = adjacentEpisodes(video);
+    const packPos = packBranchPosition(video);
     const prevBtn = $("#watch-prev");
     const nextBtn = $("#watch-next");
     const pos = $("#watch-adjacent-pos");
@@ -1476,12 +1490,17 @@
         Array.isArray(state.catalog?.videos) &&
         state.catalog.videos.some((x) => x && x.available === false) &&
         state.catalog.videos.some((x) => x && x.available !== false);
-      pos.textContent =
+      let label =
         index >= 0 && total > 0
           ? mix
             ? `${index + 1} / ${total} · chronological · on-host binge`
             : `${index + 1} / ${total} · chronological`
           : "Catalog order";
+      // Decision-pack branch index (e.g. historical → simulated → dramatized)
+      if (packPos.index >= 0 && packPos.total > 0) {
+        label += ` · branch ${packPos.index + 1}/${packPos.total} of this decision`;
+      }
+      pos.textContent = label;
     }
     if (prevBtn) {
       prevBtn.disabled = !prev;

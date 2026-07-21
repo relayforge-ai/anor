@@ -3687,3 +3687,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Public Appomattox pack live for site/library + human-gate social drafts. No MANDOS. No auto-publish.
+
+---
+
+## Iteration 141 — 2026-07-21
+
+### OBSERVE
+Main green after 7555a33 (ELO-015 Appomattox). Comfy image path + lock already solid; freemium binge nav showed only global chronological index — easy to lose place inside a 3-branch decision pack.
+
+### PLAN
+**One high-impact change:** show pack branch position on the watch adjacent bar (branch N/M of this decision).
+
+### EXECUTE
+- `packBranchPosition(video)` — same-scenario cuts in museum order
+- `paintWatchAdjacent` appends `branch i/n of this decision`
+- Static contract needles in related + static asset tests
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Watch binge UX surfaces decision-pack progress alongside library chronology.
