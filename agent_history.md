@@ -3335,3 +3335,26 @@ Full local CI → 303 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Full-access viewers can continue the museum timeline immediately after a cut ends, with optional hands-free auto-next on-device only.
+
+---
+
+## Iteration 126 — 2026-07-21
+
+### OBSERVE
+Main green after d31d7f3 (auto-next binge). SPA already refreshed og:title/description per route, but og:url and link[rel=canonical] stayed empty/static — shared episode previews and freemium discovery lost deep-link URLs.
+
+### PLAN
+**One high-impact change:** route-aware og:url + canonical for SPA deep links.
+
+### EXECUTE
+- `publicShareUrl` / `routeHashPath` aligned with episode share payload shape
+- `syncShareMeta` updates og:url and canonical on every route
+- Shell meta/link tags in index.html; share + static SEO tests
+
+### TEST
+```
+Full local CI → 304 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Watch/studio/library routes emit absolute deep-link URLs in share meta without secrets or path leaks.

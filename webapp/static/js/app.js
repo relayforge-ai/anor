@@ -3133,8 +3133,32 @@
     if (el && content) el.setAttribute("content", content);
   }
 
-  function syncShareMeta(title, description) {
-    /** Keep og/twitter/description aligned with the SPA route for in-app share sheets. */
+  /**
+   * Absolute deep-link for the current SPA hash route (origin + path + hash).
+   * Matches episodeSharePayload URL shape for freemium share / SEO meta.
+   */
+  function publicShareUrl(hashPath) {
+    try {
+      const url = new URL(location.href);
+      const path = String(hashPath || "").replace(/^#\/?/, "").replace(/^\//, "");
+      url.hash = path ? "#/" + path : "#/";
+      return url.origin + url.pathname + url.search + url.hash;
+    } catch (_) {
+      return location.href;
+    }
+  }
+
+  function routeHashPath(page, param) {
+    if (page === "watch" && param) return "watch/" + encodeURIComponent(param);
+    if (page === "studio" && param) return "studio/" + encodeURIComponent(param);
+    if (page === "studio") return "studio";
+    if (page === "library") return "library";
+    if (page === "pricing") return "pricing";
+    return "";
+  }
+
+  function syncShareMeta(title, description, page, param) {
+    /** Keep og/twitter/description/url + canonical aligned with the SPA route. */
     if (title) {
       setMetaContent('meta[property="og:title"]', title);
       setMetaContent('meta[name="twitter:title"]', title);
@@ -3143,6 +3167,17 @@
       setMetaContent('meta[name="description"]', description);
       setMetaContent('meta[property="og:description"]', description);
       setMetaContent('meta[name="twitter:description"]', description);
+    }
+    const shareUrl = publicShareUrl(routeHashPath(page, param));
+    if (shareUrl) {
+      setMetaContent('meta[property="og:url"]', shareUrl);
+      let link = document.querySelector('link[rel="canonical"]');
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "canonical");
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", shareUrl);
     }
   }
 
@@ -3186,7 +3221,7 @@
       description = `Explorer free · Scholar $4.99/mo — full library and studio. Funds sovereign compute.`;
     }
     document.title = title;
-    syncShareMeta(title, description);
+    syncShareMeta(title, description, page, param);
   }
 
   async function route() {

@@ -27,6 +27,16 @@ class TestShareEpisode(unittest.TestCase):
         self.assertIn("Documented baseline", JS)
         self.assertIn("Labeled speculation", JS)
 
+    def test_route_share_meta_updates_canonical_and_og_url(self):
+        """SPA routes refresh og:url + canonical for freemium discovery/share."""
+        self.assertIn("function publicShareUrl", JS)
+        self.assertIn("function routeHashPath", JS)
+        self.assertIn("function syncShareMeta", JS)
+        self.assertIn('meta[property="og:url"]', JS)
+        self.assertIn('link[rel="canonical"]', JS)
+        self.assertIn('property="og:url"', HTML)
+        self.assertIn('rel="canonical"', HTML)
+
     def test_share_does_not_auto_publish(self):
         # Share must not invoke Postiz or draft publish paths
         self.assertNotIn("postiz", JS.lower())
