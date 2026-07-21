@@ -2956,3 +2956,26 @@ Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Home hero surfaces device Studio continuity next to Continue watching / featured rotation.
+
+---
+
+## Iteration 110 — 2026-07-21
+
+### OBSERVE
+Main green after home Resume Studio CTA. Chronological library still rendered a flat card grid — eras were only pills on cards, so the freemium museum timeline was hard to scan as history grows (36 cuts).
+
+### PLAN
+**One high-impact change:** era section headers in the chronological library grid.
+
+### EXECUTE
+- `libraryGridHtml({ groupByEra })` inserts `.library-era-head` between era groups
+- Skip grouping for In progress (recency order)
+- CSS + library tests
+
+### TEST
+```
+Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Library reads as a dated museum ledger (216 BC → … → 1962) instead of an undifferentiated card wall.

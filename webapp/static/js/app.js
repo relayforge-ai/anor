@@ -813,6 +813,32 @@
     });
   }
 
+  /**
+   * Museum library grid: era section heads between chronological groups.
+   * Skip era heads for in_progress (recency order, not timeline).
+   */
+  function libraryGridHtml(videos, { groupByEra } = {}) {
+    const list = videos || [];
+    if (!groupByEra) {
+      return list.map(videoCardHtml).join("");
+    }
+    const parts = [];
+    let lastEra = null;
+    for (const v of list) {
+      const era = String((v && v.era) || "Undated").trim() || "Undated";
+      if (era !== lastEra) {
+        lastEra = era;
+        parts.push(
+          `<div class="library-era-head" role="presentation" style="grid-column:1/-1">
+            <h3 class="library-era-title">${escapeHtml(era)}</h3>
+          </div>`
+        );
+      }
+      parts.push(videoCardHtml(v));
+    }
+    return parts.join("");
+  }
+
   function renderLibrary() {
     showPage("library");
     setActiveNav("library");
@@ -897,8 +923,9 @@
       return;
     }
     const anyAvailable = videos.some((v) => v.available !== false);
+    const groupByEra = state.libraryFilter !== "in_progress";
     grid.innerHTML =
-      videos.map(videoCardHtml).join("") +
+      libraryGridHtml(videos, { groupByEra }) +
       (anyAvailable
         ? ""
         : libraryEmptyHtml(

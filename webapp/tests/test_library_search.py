@@ -38,6 +38,10 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("function eraSortKey", JS)
         self.assertIn("videosChronological(", JS)
         self.assertIn("chronological", JS)
+        # Era section heads in chronological library
+        self.assertIn("function libraryGridHtml", JS)
+        self.assertIn("library-era-head", JS)
+        self.assertIn("groupByEra", JS)
         # Daily rotating freemium hero
         self.assertIn("function pickFeaturedOfDay", JS)
         self.assertIn("Featured today", JS)
@@ -59,6 +63,8 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn(".library-search", CSS)
         self.assertIn(".library-toolbar", CSS)
         self.assertIn(".video-card-tags", CSS)
+        self.assertIn(".library-era-head", CSS)
+        self.assertIn(".library-era-title", CSS)
 
     def test_video_tags_click_to_search(self):
         self.assertIn("videoCardTagsHtml", JS)

@@ -761,6 +761,25 @@ textarea {
   text-align: left;
   border-style: dashed;
 }
+/* Chronological era section heads in library grid */
+.library-era-head {
+  margin: 0.85rem 0 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.library-era-head:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.library-era-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+}
 
 /* ——— Player ——— */
 .player-layout {
