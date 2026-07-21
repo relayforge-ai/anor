@@ -2611,3 +2611,26 @@ Full local CI → 275 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can browse what they can finish now vs paywall-gated previews without hunting pills on every card.
+
+---
+
+## Iteration 95 — 2026-07-21
+
+### OBSERVE
+Main green after freemium library access filters. Social pipeline still missing drafts for four public choice cuts (ELO-013 surface_delay, ELO-001 forks, ELO-003 recon) — catalog-complete packs without human-gate captions.
+
+### PLAN
+**One high-impact change:** batch-009 gap-fill social drafts + regression that every public choice has a draft file.
+
+### EXECUTE
+- `content/drafts/batch-009/` — four ELO-*.md cuts, Postiz draft JSON, README
+- Root drafts README: batch-008 + batch-009 index
+- Tests: batch-009 present/pack-only; `test_every_public_choice_has_a_draft_file`; speculation labels
+
+### TEST
+```
+Full local CI → 278 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Every public pack choice now has a human-gate draft under content/drafts/ — never auto-publish; Ryan still flips draft→schedule.

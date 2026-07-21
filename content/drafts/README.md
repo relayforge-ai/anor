@@ -89,13 +89,39 @@ See `batch-006/README.md` and `batch-006/postiz-drafts.json`.
 
 See `batch-007/README.md` and `batch-007/postiz-drafts.json`.
 
+## Batch 008 — Bay of Pigs (ELO-010)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-008/ELO-010-historical.md` | proceed limited air | historical | YT + TT |
+| `batch-008/ELO-010-scrub.md` | scrub before beach | simulated | YT + TT |
+| `batch-008/ELO-010-dense_air.md` | denser air cover | dramatized | YT + TT |
+
+See `batch-008/README.md` and `batch-008/postiz-drafts.json`.
+
+## Batch 009 — gap fill (remaining public choice cuts)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-009/ELO-013-surface_delay.md` | B-59 delay the vote | surface_delay | YT + TT |
+| `batch-009/ELO-001-immediate_accept.md` | Barbarossa faster accept | immediate_accept | YT + TT |
+| `batch-009/ELO-001-disinformation_trap.md` | longer denial framing | disinformation_trap | YT |
+| `batch-009/ELO-003-recon.md` | Cannae limited probe | recon | YT + TT |
+
+See `batch-009/README.md` and `batch-009/postiz-drafts.json`. Completes social-draft coverage for every public pack choice.
+
 Render commands (offline-safe with mock media, or point env at Dawes):
 
 ```bash
 export ANOR_MOCK_MEDIA=1   # or set LLM_URL IMAGE_URL TTS_URL
 python -m pipeline.cli video --scenario ELO-003 --choice historical
 python -m pipeline.cli video --scenario ELO-003 --choice march
+python -m pipeline.cli video --scenario ELO-003 --choice recon
 python -m pipeline.cli video --scenario ELO-013 --choice historical
+python -m pipeline.cli video --scenario ELO-013 --choice surface_delay
+python -m pipeline.cli video --scenario ELO-001 --choice historical
+python -m pipeline.cli video --scenario ELO-001 --choice immediate_accept
+python -m pipeline.cli video --scenario ELO-001 --choice disinformation_trap
 python -m pipeline.cli video --scenario ELO-007 --choice historical
 python -m pipeline.cli video --scenario ELO-007 --choice surgical_strike
 python -m pipeline.cli video --scenario ELO-009 --choice historical
@@ -108,7 +134,10 @@ python -m pipeline.cli video --scenario ELO-006 --choice historical
 python -m pipeline.cli video --scenario ELO-006 --choice force_corridors
 python -m pipeline.cli video --scenario ELO-008 --choice historical
 python -m pipeline.cli video --scenario ELO-008 --choice delay_longer
+python -m pipeline.cli video --scenario ELO-010 --choice historical
+python -m pipeline.cli video --scenario ELO-010 --choice scrub
 ```
+
 
 ## Human gate checklist
 

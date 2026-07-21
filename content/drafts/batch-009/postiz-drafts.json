@@ -1,0 +1,124 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-009",
+  "created": "2026-07-21",
+  "theme": "Gap fill — ELO-013 surface_delay, ELO-001 forks, ELO-003 recon (public packs only)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review all four cuts for on-screen 🧪 / dramatized labels",
+    "Extra review: ELO-001-disinformation_trap tone if clipped",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-013-surface-delay-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if B-59 delayed the nuclear vote?\nHeat. Charges. Static.\n🧪 Dramatized — not secret history.\n📗 Real path: refuse and surface.\n#historytok #coldwar #althistory",
+      "media_local": "outputs/videos/ELO-013-surface_delay/ELO-013-surface_delay.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-013-surface-delay-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if B-59 delayed the nuclear vote one more time?",
+      "caption": "⚠️ DRAMATIZED process — not a second history book.\n\n📗 Baseline: Arkhipov refuses; B-59 surfaces.\n🧪 Delay studies the thin margin before any launch vote.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#althistory #arkhipov #coldwar #speculationlabeled",
+      "media_local": "outputs/videos/ELO-013-surface_delay/ELO-013-surface_delay.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if B-59 delayed the nuclear vote one more time?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "coldwar", "label": "coldwar"},
+          {"value": "arkhipov", "label": "arkhipov"}
+        ]
+      }
+    },
+    {
+      "id": "elo-001-immediate-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if the center believed Barbarossa in hour one?\n🧪 SIMULATED — not a secret win.\n📗 History: delay under shock.\n#historytok #ww2 #althistory",
+      "media_local": "outputs/videos/ELO-001-immediate_accept/ELO-001-immediate_accept.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-001-immediate-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Stalin’s center believed Barbarossa in the first true reports?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: shock and costly delay on 22 June 1941.\n🧪 Faster acceptance is process — not a magic counteroffensive.\n\n#althistory #barbarossa #ww2 #speculationlabeled",
+      "media_local": "outputs/videos/ELO-001-immediate_accept/ELO-001-immediate_accept.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Stalin’s center believed Barbarossa in the first true reports?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "ww2", "label": "ww2"}
+        ]
+      }
+    },
+    {
+      "id": "elo-001-disinfo-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: A darker Barbarossa night — denial as performance",
+      "caption": "⚠️ SIMULATED darker branch — not a documentary claim of extra secret hours.\n\n📗 Baseline already includes costly delay.\n🧪 Longer provocation framing: the frontier does not care about the performance.\n\n#althistory #barbarossa #speculationlabeled",
+      "media_local": "outputs/videos/ELO-001-disinformation_trap/ELO-001-disinformation_trap.mp4",
+      "settings": {
+        "title": "SPECULATION: A darker Barbarossa night — denial as performance",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "ww2", "label": "ww2"}
+        ]
+      }
+    },
+    {
+      "id": "elo-003-recon-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if Hannibal sent a probe after Cannae — not the full march?\n🧪 SIMULATED.\n📗 History: refuse the knockout ride.\n#historytok #rome #althistory",
+      "media_local": "outputs/videos/ELO-003-recon/ELO-003-recon.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-003-recon-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Hannibal sent a probe toward Rome after Cannae?",
+      "caption": "⚠️ SIMULATED counterfactual — not Livy.\n\n📗 Baseline: refuse the full cavalry march.\n🧪 A limited probe carries terror — not a siege train.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#althistory #hannibal #cannae #speculationlabeled",
+      "media_local": "outputs/videos/ELO-003-recon/ELO-003-recon.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Hannibal sent a probe toward Rome after Cannae?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "hannibal", "label": "hannibal"},
+          {"value": "rome", "label": "rome"}
+        ]
+      }
+    }
+  ]
+}

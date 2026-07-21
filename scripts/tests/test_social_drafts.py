@@ -97,6 +97,33 @@ class TestSocialDrafts(unittest.TestCase):
         ):
             self.assertTrue((b8 / name).is_file(), f"missing {name}")
 
+    def test_batch_009_present(self):
+        b9 = DRAFTS / "batch-009"
+        self.assertTrue(b9.is_dir())
+        for name in (
+            "ELO-013-surface_delay.md",
+            "ELO-001-immediate_accept.md",
+            "ELO-001-disinformation_trap.md",
+            "ELO-003-recon.md",
+            "postiz-drafts.json",
+            "README.md",
+        ):
+            self.assertTrue((b9 / name).is_file(), f"missing {name}")
+
+    def test_every_public_choice_has_a_draft_file(self):
+        """Catalog social coverage: each public pack choice has an ELO-*-{choice} draft."""
+        for pack_path in sorted(PUBLIC.glob("ELO-*.json")):
+            data = json.loads(pack_path.read_text(encoding="utf-8"))
+            sid = data.get("scenario_id") or pack_path.stem
+            for choice in data.get("choices") or []:
+                cid = choice.get("id")
+                self.assertTrue(cid, f"{pack_path.name} choice missing id")
+                hits = list(DRAFTS.glob(f"batch-*/{sid}-{cid}.md"))
+                self.assertTrue(
+                    hits,
+                    f"missing social draft for {sid}-{cid} under content/drafts/batch-*/",
+                )
+
     def test_postiz_payloads_are_draft_human_gate(self):
         for path in DRAFTS.glob("batch-*/postiz-drafts.json"):
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -189,6 +216,14 @@ class TestSocialDrafts(unittest.TestCase):
             self.assertNotIn("mandos", text.lower())
             self.assertNotIn("master source", text.lower())
 
+    def test_batch_009_references_public_packs_only(self):
+        for path in (DRAFTS / "batch-009").glob("ELO-*.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertRegex(text, r"ELO-0\d{2}")
+            self.assertIn("scenarios/public/", text)
+            self.assertNotIn("mandos", text.lower())
+            self.assertNotIn("master source", text.lower())
+
     def test_simulated_drafts_carry_label(self):
         labeled = [
             DRAFTS / "batch-002" / "ELO-007-surgical_strike.md",
@@ -205,6 +240,10 @@ class TestSocialDrafts(unittest.TestCase):
             DRAFTS / "batch-007" / "ELO-008-postpone_month.md",
             DRAFTS / "batch-008" / "ELO-010-scrub.md",
             DRAFTS / "batch-008" / "ELO-010-dense_air.md",
+            DRAFTS / "batch-009" / "ELO-013-surface_delay.md",
+            DRAFTS / "batch-009" / "ELO-001-immediate_accept.md",
+            DRAFTS / "batch-009" / "ELO-001-disinformation_trap.md",
+            DRAFTS / "batch-009" / "ELO-003-recon.md",
         ]
         for path in labeled:
             text = path.read_text(encoding="utf-8")
