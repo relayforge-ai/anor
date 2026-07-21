@@ -3733,3 +3733,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Watch completion celebrates full decision packs and points to next era or Studio.
+
+---
+
+## Iteration 143 — 2026-07-21
+
+### OBSERVE
+Main green after 7df7f4b (pack completion UX). Clip-cache ladder already solid with tests. Content risk remains: only 3 sample packs validated in CI; mid-ship packs (scenario without catalog) could reach main again.
+
+### PLAN
+**One high-impact change:** CI integrity for all public packs + catalog ↔ choice coverage.
+
+### EXECUTE
+- `test_all_public_packs_pass_validation` — every ELO-*.json via validate + load_scenario
+- `test_list_scenarios_covers_every_public_file`
+- `test_catalog_matches_public_packs` — id convention, file path, speculation match, no missing cuts
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Incomplete public packs fail CI before freemium/library/social ship.
