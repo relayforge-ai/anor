@@ -2316,3 +2316,26 @@ Full local CI (unittest + compileall + pytest + pip-audit) → OK
 
 ### RESULT
 Scholars see honest remaining-time estimates during render; phones keep cancel + stage progress reachable.
+
+---
+
+## Iteration 82 — 2026-07-21
+
+### OBSERVE
+Main green after work-based ETA. Disk cache hit saved GPU but Scholars had no studio path to intentionally re-render after Comfy/style upgrades (`force` API only).
+
+### PLAN
+**One high-impact change:** studio Force re-render (`force: true`) with confirm + API test.
+
+### EXECUTE
+- `queueVideoRender({ force })` posts `force`; toast on force queue
+- Completion UI: Force re-render (Scholar) + confirm dialog
+- `test_cache_hit_flags_and_force_bypasses`; static needles
+
+### TEST
+```
+Full local CI → OK
+```
+
+### RESULT
+Default path stays cache-cheap; deliberate re-renders available after confirm.

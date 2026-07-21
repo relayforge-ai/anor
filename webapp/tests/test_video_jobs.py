@@ -89,6 +89,42 @@ class TestVideoJobsAPI(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read().decode() or "{}")
 
+    def test_cache_hit_flags_and_force_bypasses(self):
+        """Existing MP4 → cache_hit; force=true schedules a new non-cached job."""
+        from webapp.jobs import video_artifact_dir
+
+        out_dir = video_artifact_dir("ELO-CACHEAPI", "historical")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        mp4 = out_dir / "ELO-CACHEAPI-historical.mp4"
+        mp4.write_bytes(b"\x00" * 4096)
+        self.addCleanup(lambda: mp4.unlink(missing_ok=True))
+
+        status, job = self.post_job(
+            {
+                "scenario_id": "ELO-CACHEAPI",
+                "choice_id": "historical",
+                "use_llm": False,
+            }
+        )
+        self.assertEqual(status, 202, job)
+        self.assertTrue(job.get("cache_hit"), job)
+        self.assertEqual(job.get("status"), "completed")
+        self.assertTrue((job.get("result") or {}).get("cached"))
+
+        status2, job2 = self.post_job(
+            {
+                "scenario_id": "ELO-CACHEAPI",
+                "choice_id": "historical",
+                "use_llm": False,
+                "force": True,
+            }
+        )
+        self.assertEqual(status2, 202, job2)
+        self.assertFalse(job2.get("cache_hit"), job2)
+        # Force should not be an instant completed cache record
+        self.assertNotEqual(job2.get("status"), "completed")
+        self.assertNotEqual(job["id"], job2["id"])
+
     def test_enqueue_and_complete(self):
         status, job = self.post_job(
             {"scenario_id": "ELO-003", "choice_id": "historical", "use_llm": False}

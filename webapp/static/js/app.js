@@ -1406,7 +1406,10 @@
           const url = st.result?.media_url || "";
           const wasCached = !!(st.result && st.result.cached);
           const cachedNote = wasCached
-            ? `<p class="note">Served from disk cache — no new stills/TTS/ffmpeg work.</p>`
+            ? `<p class="note">Served from disk cache — no new stills/TTS/ffmpeg work. Use <strong>Force re-render</strong> only when you need fresh stills/VO.</p>`
+            : "";
+          const forceBtn = FHFreemium.isMember()
+            ? `<button type="button" class="btn btn-ghost btn-sm" id="btn-force-rerender" title="Ignore disk cache and re-run stills → TTS → Ken Burns">Force re-render</button>`
             : "";
           $("#fork-result").innerHTML =
             renderSimProgress({
@@ -1419,14 +1422,22 @@
             `<div style="margin-top:1rem">
               <p class="note">Async job <code>${escapeHtml(jobId)}</code> finished.</p>
               ${cachedNote}
+              <div class="row" style="flex-wrap:wrap;gap:0.45rem;margin-top:0.35rem">
               ${
                 url
                   ? `<a class="btn btn-primary btn-sm" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open MP4</a>
                      <a class="btn btn-ghost btn-sm" href="#/library">Open library</a>
-                     <video controls playsinline style="width:100%;margin-top:0.8rem;border-radius:12px;border:1px solid var(--line)" src="${escapeHtml(url)}"></video>`
+                     ${forceBtn}`
+                  : forceBtn
+              }
+              </div>
+              ${
+                url
+                  ? `<video controls playsinline style="width:100%;margin-top:0.8rem;border-radius:12px;border:1px solid var(--line)" src="${escapeHtml(url)}"></video>`
                   : ""
               }
             </div>`;
+          bindForceRerenderButton();
           toast(
             wasCached
               ? "Existing render ready"
@@ -1560,7 +1571,23 @@
     }
   }
 
-  async function queueVideoRender() {
+  function bindForceRerenderButton() {
+    const fr = $("#btn-force-rerender");
+    if (!fr) return;
+    fr.onclick = () => {
+      if (
+        !confirm(
+          "Force a full re-render? This uses GPU/TTS/ffmpeg even if an MP4 already exists."
+        )
+      ) {
+        return;
+      }
+      queueVideoRender({ force: true });
+    };
+  }
+
+  async function queueVideoRender(opts) {
+    const force = !!(opts && opts.force);
     if (!state.scenarioId || !state.choiceId) {
       toast("Select a scenario and a decision first.");
       return;
@@ -1583,6 +1610,7 @@
       btn.disabled = true;
       btn.classList.add("busy");
     }
+    syncStudioDock();
 
     try {
       const r = await fetch("/api/video/jobs", {
@@ -1592,6 +1620,7 @@
           scenario_id: state.scenarioId,
           choice_id: state.choiceId,
           use_llm: false,
+          force: force,
         }),
       });
       const job = await r.json().catch(() => ({}));
@@ -1615,6 +1644,8 @@
         toast("Using existing render — no GPU work");
       } else if (job.deduped) {
         toast("Joined existing render job");
+      } else if (force) {
+        toast("Force re-render queued");
       } else {
         toast("Video job queued");
       }
@@ -1627,7 +1658,7 @@
         retryAfter,
         retryAction: "video",
       });
-      bindRateLimitRetry(retryAfter, () => queueVideoRender());
+      bindRateLimitRetry(retryAfter, () => queueVideoRender({ force: force }));
       if (btn) {
         btn.disabled = false;
         btn.classList.remove("busy");
