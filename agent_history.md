@@ -2842,3 +2842,26 @@ Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Clip cache remains an ffmpeg cost saver without serving stale motion after Ken Burns quality changes.
+
+---
+
+## Iteration 105 — 2026-07-21
+
+### OBSERVE
+Main green after clip-cache quality keys. Opening Studio without a deep link always fell back to `scenarios[0]` (catalog/API order), not the last pack the Explorer worked on — weak freemium return path after library/watch retention work.
+
+### PLAN
+**One high-impact change:** remember last Studio pack in localStorage and restore on bare `#/studio`.
+
+### EXECUTE
+- `saveLastStudioScenario` / `loadLastStudioScenario` / `resolveStudioScenarioId`
+- Prefer route id → last device pack → chronological first public pack
+- Persist on every successful studio open; static needles
+
+### TEST
+```
+Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers reopen Studio on the same decision pack across visits without accounts — device-only, no analytics.

@@ -19,6 +19,8 @@
   /** sessionStorage keys — survive tab refresh within the browser session */
   const ACTIVE_VIDEO_KEY = "fh:activeVideoJob";
   const LAST_FORK_KEY = "fh:lastFork";
+  /** localStorage — last Studio pack for freemium return visits (device-only) */
+  const LAST_STUDIO_KEY = "fh:lastStudioScenario";
   /** Prevent double-polling the same job (button + auto-resume) */
   let videoPollActiveId = null;
   /** Active rate-limit countdown timer (studio) */
@@ -75,6 +77,40 @@
       sessionStorage.removeItem(LAST_FORK_KEY);
     } catch (_) {}
     state.lastFork = null;
+  }
+
+  function saveLastStudioScenario(scenarioId) {
+    try {
+      const id = String(scenarioId || "").trim();
+      if (!id || id.length > 64 || id.includes("/") || id.includes("..")) return;
+      localStorage.setItem(LAST_STUDIO_KEY, id);
+    } catch (_) {}
+  }
+
+  function loadLastStudioScenario() {
+    try {
+      const id = (localStorage.getItem(LAST_STUDIO_KEY) || "").trim();
+      if (!id || id.length > 64 || id.includes("/") || id.includes("..")) return null;
+      return id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function resolveStudioScenarioId(scenarioId) {
+    /** Prefer explicit route id, else last device pack, else chronological first public pack. */
+    const packs = state.scenarios || [];
+    const known = new Set(packs.map((s) => s && s.scenario_id).filter(Boolean));
+    const sid = String(scenarioId || "").trim();
+    if (sid && known.has(sid)) return sid;
+    const last = loadLastStudioScenario();
+    if (last && known.has(last)) return last;
+    const ordered = scenariosChronological(packs);
+    return (
+      (ordered[0] && ordered[0].scenario_id) ||
+      (packs[0] && packs[0].scenario_id) ||
+      null
+    );
   }
 
   function parseRetryAfter(response) {
@@ -1178,8 +1214,13 @@
   async function renderStudio(scenarioId) {
     showPage("studio");
     setActiveNav("studio");
-    if (!scenarioId) scenarioId = state.scenarios[0]?.scenario_id;
+    scenarioId = resolveStudioScenarioId(scenarioId);
+    if (!scenarioId) {
+      toast("No public packs available");
+      return;
+    }
     state.scenarioId = scenarioId;
+    saveLastStudioScenario(scenarioId);
 
     const select = $("#studio-scenario");
     const ordered = scenariosChronological(state.scenarios);
