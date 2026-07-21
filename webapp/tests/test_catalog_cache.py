@@ -34,6 +34,75 @@ class TestCatalogCache(unittest.TestCase):
             self.assertIn("available", v)
             self.assertIsInstance(v["available"], bool)
 
+    def test_catalog_available_row_includes_deliverable_metrics(self):
+        """When MP4 + build.json exist, catalog surfaces bytes + duration_s."""
+        import json
+
+        server_mod.clear_catalog_cache()
+        videos_root = server_mod.VIDEOS
+        raw = server_mod._read_json(server_mod.CATALOG)
+        sample = next(
+            (
+                v
+                for v in raw.get("videos") or []
+                if isinstance(v, dict) and isinstance(v.get("file"), str)
+            ),
+            None,
+        )
+        self.assertIsNotNone(sample)
+        rel = sample["file"]
+        target = server_mod.safe_join(videos_root, rel)
+        self.assertIsNotNone(target)
+        out_dir = target.parent
+        out_dir.mkdir(parents=True, exist_ok=True)
+        created_mp4 = False
+        if not target.is_file():
+            target.write_bytes(b"\x00" * 4096)
+            created_mp4 = True
+        build = out_dir / "build.json"
+        prev_build = build.read_text(encoding="utf-8") if build.is_file() else None
+        build.write_text(
+            json.dumps(
+                {
+                    "out_mp4_bytes": 215701,
+                    "duration_s": 60.79,
+                    "cache": {
+                        "still_hits": 0,
+                        "tts_hits": 0,
+                        "clip_hits": 0,
+                        "segments": 3,
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        def _restore():
+            if prev_build is None:
+                build.unlink(missing_ok=True)
+            else:
+                build.write_text(prev_build, encoding="utf-8")
+            if created_mp4:
+                target.unlink(missing_ok=True)
+            server_mod.clear_catalog_cache()
+
+        self.addCleanup(_restore)
+        server_mod.clear_catalog_cache()
+        cat = server_mod.build_catalog_payload()
+        row = next(
+            (
+                v
+                for v in cat["videos"]
+                if v.get("scenario_id") == sample["scenario_id"]
+                and v.get("choice_id") == sample["choice_id"]
+            ),
+            None,
+        )
+        self.assertIsNotNone(row)
+        self.assertTrue(row.get("available"))
+        self.assertEqual(row.get("bytes"), 215701)
+        self.assertEqual(row.get("duration_s"), 60.79)
+
     def test_catalog_covers_every_public_pack_choice(self):
         """Library/media-strip need a catalog row per public choice id."""
         import json

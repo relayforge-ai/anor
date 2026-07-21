@@ -14,6 +14,7 @@ Env:
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -86,6 +87,66 @@ def find_cached_video(scenario_id: str, choice_id: str) -> Optional[Path]:
         except OSError:
             continue
     return None
+
+
+def read_cached_video_metrics(mp4: Path) -> dict[str, Any]:
+    """Public-safe deliverable metrics for an on-disk MP4 (build.json + size).
+
+    Reads sibling ``build.json`` written by the video pipeline when present.
+    Never returns host paths or cache keys — only ints/floats suitable for
+    job results and freemium catalog rows.
+
+    Keys (all optional):
+      - bytes: final MP4 size
+      - duration_s: runtime seconds
+      - cache: {still_hits, tts_hits, clip_hits, segments} from ladder summary
+    """
+    out: dict[str, Any] = {}
+    try:
+        st_size = int(mp4.stat().st_size)
+        if st_size >= 0:
+            out["bytes"] = st_size
+    except OSError:
+        pass
+
+    build_path = mp4.parent / "build.json"
+    try:
+        if not build_path.is_file():
+            return out
+        meta = json.loads(build_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+        return out
+    if not isinstance(meta, dict):
+        return out
+
+    try:
+        ob = meta.get("out_mp4_bytes")
+        if ob is not None and int(ob) >= 0:
+            out["bytes"] = int(ob)
+    except (TypeError, ValueError):
+        pass
+    try:
+        ds = meta.get("duration_s")
+        if ds is not None and float(ds) > 0:
+            out["duration_s"] = round(float(ds), 2)
+    except (TypeError, ValueError):
+        pass
+
+    raw_cache = meta.get("cache")
+    if isinstance(raw_cache, dict):
+        try:
+            segs = raw_cache.get("segments")
+            if segs is None:
+                segs = len(meta.get("segments") or [])
+            out["cache"] = {
+                "still_hits": int(raw_cache.get("still_hits") or 0),
+                "tts_hits": int(raw_cache.get("tts_hits") or 0),
+                "clip_hits": int(raw_cache.get("clip_hits") or 0),
+                "segments": int(segs or 0),
+            }
+        except (TypeError, ValueError):
+            pass
+    return out
 
 
 def media_url_for(scenario_id: str, choice_id: str, filename: str) -> str:
@@ -510,6 +571,22 @@ class VideoJobQueue:
                 cached = find_cached_video(scenario_id, choice_id)
                 if cached is not None:
                     now = time.time()
+                    # Match full-render job results: size, duration, ladder summary
+                    metrics = read_cached_video_metrics(cached)
+                    result_payload: dict[str, Any] = {
+                        "media_url": media_url_for(scenario_id, choice_id, cached.name),
+                        "segments": None,
+                        "mock_media": None,
+                        "cached": True,
+                    }
+                    if "bytes" in metrics:
+                        result_payload["bytes"] = metrics["bytes"]
+                    if "duration_s" in metrics:
+                        result_payload["duration_s"] = metrics["duration_s"]
+                    if "cache" in metrics:
+                        result_payload["cache"] = metrics["cache"]
+                        # Prefer segments count from ladder when known
+                        result_payload["segments"] = metrics["cache"].get("segments")
                     job = VideoJob(
                         id=uuid.uuid4().hex[:16],
                         scenario_id=scenario_id,
@@ -522,12 +599,7 @@ class VideoJobQueue:
                         message="Using existing render (cache hit)",
                         started_at=now,
                         finished_at=now,
-                        result={
-                            "media_url": media_url_for(scenario_id, choice_id, cached.name),
-                            "segments": None,
-                            "mock_media": None,
-                            "cached": True,
-                        },
+                        result=result_payload,
                     )
                     self._jobs[job.id] = job
                     return job, False

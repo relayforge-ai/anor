@@ -3073,3 +3073,27 @@ Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Every render leaves auditable size/runtime metrics for cost ops and freemium Studio feedback without path leaks.
+
+---
+
+## Iteration 115 — 2026-07-21
+
+### OBSERVE
+Main green after b348f96 (deliverable size/duration on full renders). Disk-cache short-circuit jobs only set `result.cached=true` — no `bytes` / `duration_s` / ladder `cache` summary — so Studio's Deliverable note stayed empty on the freemium happy path (re-open existing cut). Catalog available rows also lacked runtime/size despite sibling `build.json`.
+
+### PLAN
+**One high-impact change:** enrich disk-cache job hits and catalog available rows with deliverable metrics from `build.json`.
+
+### EXECUTE
+- `read_cached_video_metrics(mp4)` — public-safe `bytes`, `duration_s`, ladder `cache` from sibling build.json (MP4 size fallback)
+- Enqueue cache-hit path merges metrics into job `result` (same shape as full render)
+- `build_catalog_payload` attaches `bytes` / `duration_s` when media is available
+- Unit tests: helper, cache-hit job, API cache_hit, catalog enrichment
+
+### TEST
+```
+Full local CI → 294 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Cache-hit Studio jobs and freemium catalog rows now surface deliverable size/runtime without re-rendering or path leaks.

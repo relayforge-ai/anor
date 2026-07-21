@@ -399,6 +399,15 @@ def build_catalog_payload() -> dict[str, Any]:
         if target is None:
             entry.pop("file", None)
             entry["available"] = False
+        elif entry["available"] and target is not None:
+            # Deliverable metrics from sibling build.json (public ints only)
+            from webapp.jobs import read_cached_video_metrics
+
+            metrics = read_cached_video_metrics(target)
+            if "bytes" in metrics:
+                entry["bytes"] = metrics["bytes"]
+            if "duration_s" in metrics:
+                entry["duration_s"] = metrics["duration_s"]
         safe_videos.append(entry)
     cat = dict(cat)
     cat["videos"] = safe_videos

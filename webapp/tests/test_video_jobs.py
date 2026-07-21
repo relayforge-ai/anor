@@ -91,13 +91,31 @@ class TestVideoJobsAPI(unittest.TestCase):
 
     def test_cache_hit_flags_and_force_bypasses(self):
         """Existing MP4 → cache_hit; force=true schedules a new non-cached job."""
+        import json
         from webapp.jobs import video_artifact_dir
 
         out_dir = video_artifact_dir("ELO-CACHEAPI", "historical")
         out_dir.mkdir(parents=True, exist_ok=True)
         mp4 = out_dir / "ELO-CACHEAPI-historical.mp4"
         mp4.write_bytes(b"\x00" * 4096)
+        build = out_dir / "build.json"
+        build.write_text(
+            json.dumps(
+                {
+                    "out_mp4_bytes": 4096,
+                    "duration_s": 33.0,
+                    "cache": {
+                        "still_hits": 0,
+                        "tts_hits": 0,
+                        "clip_hits": 0,
+                        "segments": 1,
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
         self.addCleanup(lambda: mp4.unlink(missing_ok=True))
+        self.addCleanup(lambda: build.unlink(missing_ok=True))
 
         status, job = self.post_job(
             {
@@ -109,7 +127,11 @@ class TestVideoJobsAPI(unittest.TestCase):
         self.assertEqual(status, 202, job)
         self.assertTrue(job.get("cache_hit"), job)
         self.assertEqual(job.get("status"), "completed")
-        self.assertTrue((job.get("result") or {}).get("cached"))
+        result = job.get("result") or {}
+        self.assertTrue(result.get("cached"))
+        self.assertEqual(result.get("bytes"), 4096)
+        self.assertEqual(result.get("duration_s"), 33.0)
+        self.assertIsInstance(result.get("cache"), dict)
 
         status2, job2 = self.post_job(
             {
