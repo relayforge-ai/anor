@@ -4,6 +4,8 @@
 Serves:
   /                 SPA
   /static/*         CSS/JS
+  /robots.txt       crawl policy (public freemium surface)
+  /sitemap.xml      public routes + pack/episode deep links
   /api/catalog      pricing + video catalog
   /api/scenarios    public packs list
   /api/scenario/:id pack detail
@@ -230,6 +232,114 @@ def _scenarios_dir_fingerprint() -> str:
         return "|".join(parts)
     except OSError:
         return "err"
+
+
+def public_base_url(handler: Optional[BaseHTTPRequestHandler] = None) -> str:
+    """Canonical public origin for sitemap/robots (no trailing slash).
+
+    Prefer ``ANOR_PUBLIC_URL`` in production. Fall back to request Host +
+    X-Forwarded-Proto (or http) so local dev still emits absolute URLs.
+    """
+    raw = (os.environ.get("ANOR_PUBLIC_URL") or "").strip().rstrip("/")
+    if raw:
+        return raw
+    host = "127.0.0.1"
+    scheme = "http"
+    if handler is not None:
+        try:
+            host = (handler.headers.get("Host") or host).split(",")[0].strip() or host
+        except Exception:
+            pass
+        try:
+            xf = (handler.headers.get("X-Forwarded-Proto") or "").split(",")[0].strip()
+            if xf in ("http", "https"):
+                scheme = xf
+        except Exception:
+            pass
+    # Strip accidental path/query if Host is weird
+    host = host.split("/")[0].strip() or "127.0.0.1"
+    return f"{scheme}://{host}"
+
+
+def _xml_escape(s: str) -> str:
+    return (
+        str(s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&apos;")
+    )
+
+
+def build_robots_txt(base_url: str) -> str:
+    """Crawl policy: index SPA + static; skip API/job/media noise."""
+    base = (base_url or "").rstrip("/") or "http://127.0.0.1"
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Allow: /static/",
+        "Disallow: /api/",
+        "Disallow: /media/",
+        f"Sitemap: {base}/sitemap.xml",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def build_sitemap_xml(
+    base_url: str,
+    *,
+    catalog: Optional[dict[str, Any]] = None,
+    scenarios: Optional[list[dict[str, str]]] = None,
+) -> str:
+    """SPA deep-link sitemap for freemium discovery (hash routes).
+
+    Includes home, library, pricing, studio, each public pack, each catalog episode.
+    """
+    base = (base_url or "").rstrip("/") or "http://127.0.0.1"
+    locs: list[str] = [
+        f"{base}/",
+        f"{base}/#/library",
+        f"{base}/#/pricing",
+        f"{base}/#/studio",
+    ]
+    if scenarios is None:
+        try:
+            scenarios = list_scenarios_cached()
+        except Exception:
+            scenarios = []
+    for s in scenarios or []:
+        sid = (s.get("scenario_id") or "").strip()
+        if sid and "/" not in sid and ".." not in sid:
+            locs.append(f"{base}/#/studio/{sid}")
+    if catalog is None:
+        try:
+            catalog = build_catalog_payload()
+        except Exception:
+            catalog = {}
+    for v in (catalog or {}).get("videos") or []:
+        vid = str((v or {}).get("id") or "").strip()
+        if vid and "/" not in vid and ".." not in vid:
+            locs.append(f"{base}/#/watch/{vid}")
+    # De-dupe preserve order
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for loc in locs:
+        if loc not in seen:
+            seen.add(loc)
+            ordered.append(loc)
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for loc in ordered:
+        parts.append("  <url>")
+        parts.append(f"    <loc>{_xml_escape(loc)}</loc>")
+        parts.append("  </url>")
+    parts.append("</urlset>")
+    parts.append("")
+    return "\n".join(parts)
 
 
 def list_scenarios_cached() -> list[dict[str, str]]:
@@ -670,6 +780,24 @@ class Handler(BaseHTTPRequestHandler):
 
         if path in ("/", "/index.html"):
             return self._file(STATIC / "index.html", "text/html; charset=utf-8")
+
+        if path == "/robots.txt":
+            body = build_robots_txt(public_base_url(self)).encode("utf-8")
+            return self._send(
+                200,
+                body,
+                "text/plain; charset=utf-8",
+                extra={"Cache-Control": "public, max-age=3600"},
+            )
+
+        if path == "/sitemap.xml":
+            body = build_sitemap_xml(public_base_url(self)).encode("utf-8")
+            return self._send(
+                200,
+                body,
+                "application/xml; charset=utf-8",
+                extra={"Cache-Control": "public, max-age=300"},
+            )
 
         if path.startswith("/static/"):
             rel = path[len("/static/") :]

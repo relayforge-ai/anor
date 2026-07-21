@@ -2634,3 +2634,27 @@ Full local CI → 278 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Every public pack choice now has a human-gate draft under content/drafts/ — never auto-publish; Ryan still flips draft→schedule.
+
+---
+
+## Iteration 96 — 2026-07-21
+
+### OBSERVE
+Main green after full social-draft coverage. Freemium SPA had no crawl policy or sitemap — discovery depended on manual share only; `/api/*` and media still waste crawl budget if bots wander.
+
+### PLAN
+**One high-impact change:** public `/robots.txt` + `/sitemap.xml` for freemium SEO.
+
+### EXECUTE
+- `build_robots_txt` / `build_sitemap_xml` / `public_base_url` (ANOR_PUBLIC_URL or Host)
+- Sitemap: home, library, pricing, studio, each pack, each catalog episode (hash deep links)
+- robots: Allow SPA/static; Disallow /api/ and /media/; Sitemap absolute URL
+- index.html sitemap link; .env.example; tests + CI module list
+
+### TEST
+```
+Full local CI → 284 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Crawlers can find the freemium surface and public pack/episode deep links without indexing job/API noise.

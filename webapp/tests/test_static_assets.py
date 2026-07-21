@@ -236,6 +236,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "Labeled speculation",
             'rel="icon"',
             "/static/favicon.svg",
+            'rel="sitemap"',
+            "/sitemap.xml",
         ):
             self.assertIn(needle, html, f"missing {needle}")
         # No hardcoded production hosts or secrets in the shell
