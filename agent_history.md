@@ -2888,3 +2888,26 @@ Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Studio restores both pack and branch on freemium return visits — device-only, no analytics.
+
+---
+
+## Iteration 107 — 2026-07-21
+
+### OBSERVE
+Main green after Studio choice recall. Public catalog lacked a Napoleonic culmination pack between Rubicon/Cannae ancient set and modern wars — freemium library had a chronological gap around 1815.
+
+### PLAN
+**One high-impact change:** ship public pack ELO-012 (Waterloo 1815) end-to-end.
+
+### EXECUTE
+- `scenarios/public/ELO-012.json` — historical / break_contact / commit_early (labeled)
+- Catalog: 3 video rows (featured historical); `content/drafts/batch-011/` human-gate
+- README / PIPELINE / social tests for batch-011
+
+### TEST
+```
+Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+New monetizable Waterloo decision pack with freemium catalog coverage and draft-only social pipeline; mock-media path unchanged.

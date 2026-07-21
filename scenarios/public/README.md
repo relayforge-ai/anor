@@ -26,6 +26,7 @@ See `schema/fork_scenario.schema.json`.
 | ELO-001 | Stalin's dacha, Barbarossa | 1941 | Accept the invasion reports? |
 | ELO-008 | Overlord — go, delay, or hold? | 1944 | D-Day weather go/no-go? |
 | ELO-006 | Berlin Blockade — airlift or force? | 1948 | Airlift vs force corridors? |
+| ELO-012 | Waterloo 1815 — Guard or break contact? | 1815 | Commit late, break contact, or commit early? |
 | ELO-011 | Munich 1938 — stand firm or concede? | 1938 | Refuse transfer, settle, or limited deal? |
 | ELO-010 | Bay of Pigs — scrub, proceed, or denser air? | 1961 | Cancel landing, proceed limited air, or denser cover? |
 | ELO-007 | EXCOMM — quarantine or strike? | 1962 | Naval quarantine vs airstrike/invasion? |

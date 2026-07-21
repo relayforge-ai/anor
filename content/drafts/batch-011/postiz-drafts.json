@@ -1,0 +1,83 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-011",
+  "created": "2026-07-21",
+  "theme": "Waterloo 1815 Guard decision (ELO-012)",
+  "needs_ryan": [
+    "Connect TikTok/YouTube in Postiz",
+    "Replace INTEGRATION_* placeholders",
+    "Review 🧪 labels on non-historical cuts",
+    "Approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-012-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1815. Ridge holds. Guard goes late.\n📗 Documented last punch — and the break.\n#historytok #waterloo #napoleon",
+      "media_local": "outputs/videos/ELO-012-historical/ELO-012-historical.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-012-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "18 June 1815: The late Guard assault at Waterloo",
+      "caption": "📗 Documented baseline: late Imperial Guard commitment fails; the army unravels.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#history #waterloo #1815 #napoleon",
+      "media_local": "outputs/videos/ELO-012-historical/ELO-012-historical.mp4",
+      "settings": {
+        "title": "18 June 1815: The late Guard assault at Waterloo",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "waterloo", "label": "waterloo"},
+          {"value": "napoleon", "label": "napoleon"}
+        ]
+      }
+    },
+    {
+      "id": "elo-012-break-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they break contact before the last reserve is spent?\n🧪 SIMULATED.\n📗 History spent the Guard late.\n#althistory #waterloo",
+      "media_local": "outputs/videos/ELO-012-break_contact/ELO-012-break_contact.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-012-break-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Napoleon broke contact before the last reserve was spent?",
+      "caption": "⚠️ SIMULATED — not a secret second Waterloo.\n\nReserve conserved vs initiative surrendered.\n\n#althistory #waterloo #speculationlabeled",
+      "media_local": "outputs/videos/ELO-012-break_contact/ELO-012-break_contact.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Napoleon broke contact before the last reserve was spent?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "waterloo", "label": "waterloo"}
+        ]
+      }
+    },
+    {
+      "id": "elo-012-early-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if the Guard went earlier at Waterloo?",
+      "caption": "⚠️ DRAMATIZED process — not a secret winning hour.\n\nTiming reorders risks. It does not invent a guaranteed breakthrough.\n\n#althistory #waterloo #speculationlabeled",
+      "media_local": "outputs/videos/ELO-012-commit_early/ELO-012-commit_early.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if the Guard went earlier at Waterloo?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "1815", "label": "1815"}
+        ]
+      }
+    }
+  ]
+}

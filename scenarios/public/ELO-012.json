@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-012",
+  "title": "Waterloo 1815 — commit the Guard or break contact?",
+  "era": "1815",
+  "location": "Mont-Saint-Jean ridge / Belle Alliance / Brussels road",
+  "datetime": "18 June 1815, late afternoon under rain-softened ground",
+  "domain": "Napoleonic command / operational culmination / coalition war",
+  "known_outcome": "Napoleon commits the Imperial Guard late against Wellington’s line. The assault fails. Prussian pressure on the French right hardens. The army breaks. The Waterloo campaign ends in coalition victory and Napoleon’s second abdication.",
+  "decision_question": "With the Anglo-Allied line still holding and Prussian columns closing, does Napoleon commit the Guard for a decisive punch, attempt to break contact and re-form, or throw the Guard earlier while light remains?",
+  "opening": {
+    "cold_open": "Mud clings to boots and gun wheels. Smoke hangs low over a ridge that will not break. Messengers cut through wrecked squares. The day is late. The map still offers a punch — or a path off the field.",
+    "what_they_knew": "They knew Wellington’s line had bent without collapsing. They knew Prussian forces were no longer a rumor on the right. They knew the Guard was a last instrument, not an endless reserve. They did not know whether one more concentrated blow would open Brussels road — or finish the army.",
+    "pressure": "Daylight. Exhaustion. Coalition convergence. Political survival in Paris. The habit of seeking a decision battle after a hundred campaigns."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Commit the Guard late — seek a final rupture of the ridge",
+      "is_historical": true,
+      "summary": "Documented path: a late Guard assault against a still-coherent Allied line while Prussian pressure mounts; the assault fails and the French army disintegrates.",
+      "immediate": "Elite battalions go forward under fire. The ridge does not open as hoped. Local reverses become a general break.",
+      "near_term": "Pursuit, fragmentation, and the end of the campaign’s operational coherence.",
+      "longer_arc": "Waterloo becomes the canonical last act of the Napoleonic wars in Europe — a case study in culmination, reserves, and timing under incomplete information.",
+      "speculation_level": "documented",
+      "image_prompt": "1815 Waterloo ridge late afternoon, smoke and mud, Imperial Guard columns advancing, documentary historical painting, film grain, sepia warmth, no text, no gore glorification",
+      "vo_script": "18 June 1815. The ridge still holds. Prussian pressure is no longer theoretical. History records the late commitment of the Imperial Guard — a final punch that does not break Wellington’s line. The army unravels. The campaign ends."
+    },
+    {
+      "id": "break_contact",
+      "label": "Break contact — ordered disengagement before the last reserve is spent",
+      "is_historical": false,
+      "summary": "SPECULATION: Attempt a fighting withdrawal to re-form rather than spend the Guard on a late frontal rupture.",
+      "immediate": "Orders reverse the psychology of the field. Retreat under pressure risks becoming a rout — or preserves a core for another day.",
+      "near_term": "Coalition pursuit still exists. Political clocks in Paris still run. There is no honest guarantee of a clean extrication.",
+      "longer_arc": "Simulated. Explores culmination management and reserve conservation under coalition convergence — not a secret path to victory.",
+      "speculation_level": "simulated",
+      "image_prompt": "1815 muddy road at dusk, French columns turning from a ridge, staff officers with maps, restrained documentary still, film grain, no text",
+      "vo_script": "What if the order is break contact? This is speculation. Saving the Guard may save a core — or merely delay the same coalition arithmetic. We label the branch simulated because the only honest detail is the trade: reserve conserved versus initiative surrendered."
+    },
+    {
+      "id": "commit_early",
+      "label": "Commit the Guard earlier — punch while more light remains",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: spend the elite reserve earlier in the afternoon, accepting a thinner insurance policy later.",
+      "immediate": "An earlier assault may hit a different Allied posture — or simply spend the last tool before Prussian pressure peaks.",
+      "near_term": "Outcomes are not a scoreboard. Timing changes which risks arrive first; it does not invent a guaranteed breakthrough.",
+      "longer_arc": "Dramatized process study of reserve timing under incomplete information, not a claim of a secret winning hour.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1815 afternoon light on a Belgian ridge, Guard forming earlier, distant Allied squares, historical documentary chiaroscuro, film grain, no text",
+      "vo_script": "What if the Guard goes earlier? More light. Different fatigue. The same ridge still has to break. This branch is dramatized process — a study of when last reserves are spent — not a second history book with a guaranteed road to Brussels."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Waterloo campaign (June 1815)",
+    "Published operational narratives of Wellington, Blücher, and Napoleonic staff decisions",
+    "ELOSTIRION ELO-012 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-hour battle into a late-day reserve decision. Counterfactual break-contact and early-commit branches are labeled simulated or dramatized — not secret history.",
+    "corpus": "ELOSTIRION ELO-012 public pack"
+  },
+  "style_lock": "1815 Belgian ridge, mud and powder smoke, Napoleonic uniforms, documentary gravity, sepia/chiaroscuro archival stills, no modern objects, no text",
+  "tags": ["alt-history", "Waterloo", "1815", "Napoleon", "decision-point"]
+}

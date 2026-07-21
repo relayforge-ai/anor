@@ -118,7 +118,17 @@ See `batch-009/README.md` and `batch-009/postiz-drafts.json`.
 | `batch-010/ELO-011-stand_firm.md` | stand firm | simulated | YT + TT |
 | `batch-010/ELO-011-limited_deal.md` | limited deal + delay | dramatized | YT + TT |
 
-See `batch-010/README.md` and `batch-010/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
+See `batch-010/README.md` and `batch-010/postiz-drafts.json`.
+
+## Batch 011 — Waterloo 1815 (ELO-012)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-011/ELO-012-historical.md` | late Guard assault | historical | YT + TT |
+| `batch-011/ELO-012-break_contact.md` | break contact | simulated | YT + TT |
+| `batch-011/ELO-012-commit_early.md` | earlier Guard | dramatized | YT + TT |
+
+See `batch-011/README.md` and `batch-011/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
 
 Render commands (offline-safe with mock media, or point env at Dawes):
 
@@ -149,6 +159,9 @@ python -m pipeline.cli video --scenario ELO-010 --choice scrub
 python -m pipeline.cli video --scenario ELO-011 --choice historical
 python -m pipeline.cli video --scenario ELO-011 --choice stand_firm
 python -m pipeline.cli video --scenario ELO-011 --choice limited_deal
+python -m pipeline.cli video --scenario ELO-012 --choice historical
+python -m pipeline.cli video --scenario ELO-012 --choice break_contact
+python -m pipeline.cli video --scenario ELO-012 --choice commit_early
 ```
 
 

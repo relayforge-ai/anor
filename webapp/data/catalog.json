@@ -818,6 +818,73 @@
       "speculation": "dramatized",
       "featured": false,
       "blurb": "DRAMATIZED process: partial concessions and delay while rearming — not a secret stable peace architecture."
+    },
+    {
+      "id": "ELO-012-historical",
+      "scenario_id": "ELO-012",
+      "choice_id": "historical",
+      "title": "Waterloo 1815: the late Guard assault",
+      "subtitle": "Documented last punch on the ridge",
+      "era": "1815",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-012-historical/ELO-012-historical.mp4",
+      "poster_gradient": [
+        "#2a2418",
+        "#121018"
+      ],
+      "tags": [
+        "Waterloo",
+        "1815",
+        "Napoleon",
+        "documented"
+      ],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: a late Imperial Guard commitment fails to rupture Wellington’s line; the army breaks under coalition pressure."
+    },
+    {
+      "id": "ELO-012-break_contact",
+      "scenario_id": "ELO-012",
+      "choice_id": "break_contact",
+      "title": "SPECULATION: Break contact before the last reserve is spent",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1815",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-012-break_contact/ELO-012-break_contact.mp4",
+      "poster_gradient": [
+        "#322820",
+        "#141018"
+      ],
+      "tags": [
+        "Waterloo",
+        "1815",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: ordered disengagement to re-form rather than spend the Guard on a late frontal rupture. No clean extrication guaranteed."
+    },
+    {
+      "id": "ELO-012-commit_early",
+      "scenario_id": "ELO-012",
+      "choice_id": "commit_early",
+      "title": "DRAMATIZED: Commit the Guard earlier",
+      "subtitle": "Reserve timing under incomplete information",
+      "era": "1815",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-012-commit_early/ELO-012-commit_early.mp4",
+      "poster_gradient": [
+        "#3a2a18",
+        "#101418"
+      ],
+      "tags": [
+        "Waterloo",
+        "1815",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "DRAMATIZED process: spend the elite reserve earlier — different risks arrive first; not a secret winning hour."
     }
   ]
 }
