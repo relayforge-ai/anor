@@ -561,6 +561,49 @@ class TestClipCache(unittest.TestCase):
             self.assertNotEqual(k1, k3)
             self.assertEqual(len(k1), 28)
 
+    def test_clip_cache_key_tracks_ken_burns_quality(self):
+        from pipeline.video_pipeline import (
+            clip_cache_key,
+            ken_burns_quality_fingerprint,
+        )
+
+        prev = {
+            k: os.environ.get(k)
+            for k in (
+                "ANOR_VIDEO_FPS",
+                "ANOR_KB_ZOOM_MAX",
+                "ANOR_KB_ZOOM_DELTA",
+                "ANOR_KB_MIN_SCALE",
+            )
+        }
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            still, audio = self._make_still_audio(td_path)
+            try:
+                os.environ["ANOR_VIDEO_FPS"] = "30"
+                os.environ["ANOR_KB_ZOOM_MAX"] = "1.15"
+                os.environ["ANOR_KB_ZOOM_DELTA"] = "0.15"
+                os.environ["ANOR_KB_MIN_SCALE"] = "2"
+                q1 = ken_burns_quality_fingerprint()
+                k1 = clip_cache_key(
+                    still, audio, duration_s=0.5, width=640, height=360, quality=q1
+                )
+                os.environ["ANOR_KB_ZOOM_MAX"] = "1.25"
+                q2 = ken_burns_quality_fingerprint()
+                k2 = clip_cache_key(
+                    still, audio, duration_s=0.5, width=640, height=360, quality=q2
+                )
+                self.assertNotEqual(q1, q2)
+                self.assertNotEqual(k1, k2)
+                self.assertIn("z1.150", q1)
+                self.assertIn("z1.250", q2)
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
     def test_clip_cache_hit_skips_ffmpeg(self):
         from pipeline.video_pipeline import _ken_burns_clip
 

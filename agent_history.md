@@ -2819,3 +2819,26 @@ Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Freemium library can focus on unfinished cuts on this device — pairs with Resume pills and Continue watching.
+
+---
+
+## Iteration 104 — 2026-07-21
+
+### OBSERVE
+Main green after In progress library filter. Clip cache keyed still+audio+frame size+fps only — zoom max / ramp / min-scale were hardcoded and not in the key, so quality knob changes (or future env tuning) could reuse wrong Ken Burns muxes.
+
+### PLAN
+**One high-impact change:** Ken Burns quality fingerprint in clip-cache keys + env-tunable zoom/FPS knobs.
+
+### EXECUTE
+- `ken_burns_params` / `ken_burns_quality_fingerprint` (fps, zoom_max, zoom_delta, min_scale)
+- Wire into `ken_burns_filter` + `clip_cache_key`
+- Tests for quality sensitivity; .env.example knobs
+
+### TEST
+```
+Full local CI → 288 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Clip cache remains an ffmpeg cost saver without serving stale motion after Ken Burns quality changes.

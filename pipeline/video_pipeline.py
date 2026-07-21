@@ -94,6 +94,16 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 def video_frame_size() -> tuple[int, int]:
     """Output frame size for Ken Burns clips (default 1080p)."""
     w = _env_int("ANOR_VIDEO_WIDTH", 1920)
@@ -102,42 +112,75 @@ def video_frame_size() -> tuple[int, int]:
     return w - (w % 2), h - (h % 2)
 
 
+def ken_burns_params() -> dict:
+    """Ken Burns quality knobs (env-tunable; defaults match historical filter).
+
+    Included in clip-cache keys so changing zoom/FPS does not reuse a mux
+    rendered under different motion settings.
+    """
+    fps = _env_int("ANOR_VIDEO_FPS", 30)
+    zoom_max = max(1.01, min(2.0, _env_float("ANOR_KB_ZOOM_MAX", 1.15)))
+    zoom_delta = max(0.01, min(1.0, _env_float("ANOR_KB_ZOOM_DELTA", 0.15)))
+    min_scale = max(1, min(4, _env_int("ANOR_KB_MIN_SCALE", 2)))
+    return {
+        "fps": fps,
+        "zoom_max": zoom_max,
+        "zoom_delta": zoom_delta,
+        "min_scale": min_scale,
+    }
+
+
+def ken_burns_quality_fingerprint() -> str:
+    """Compact quality string for clip-cache keys."""
+    p = ken_burns_params()
+    return (
+        f"fps{int(p['fps'])}|"
+        f"z{float(p['zoom_max']):.3f}|"
+        f"dz{float(p['zoom_delta']):.3f}|"
+        f"min{int(p['min_scale'])}x"
+    )
+
+
 def ken_burns_filter(
     duration_s: float,
     *,
     width: Optional[int] = None,
     height: Optional[int] = None,
-    fps: int = 30,
+    fps: Optional[int] = None,
 ) -> str:
     """Build zoompan vf: slow zoom+pan into ``width``×``height``.
 
     Source stills should be *larger* than the frame (Comfy SDXL + Real-ESRGAN)
     so zoom has real pixel headroom. We avoid the old path that downscaled to
     frame size before zoompan (which destroyed headroom). Small mock stills are
-    scaled up to ≥2× frame first so zoompan is not pure soft upscale.
+    scaled up to ≥min_scale× frame first so zoompan is not pure soft upscale.
     """
+    params = ken_burns_params()
+    fps_v = int(fps) if fps is not None else int(params["fps"])
+    zoom_max = float(params["zoom_max"])
+    zoom_delta = float(params["zoom_delta"])
+    min_scale = int(params["min_scale"])
     w, h = video_frame_size() if width is None or height is None else (width, height)
     w, h = w - (w % 2), h - (h % 2)
-    frames = max(int(duration_s * fps) + 1, fps)
-    # Reach ~1.15× zoom over the clip under -loop 1 + d=1
-    z_step = 0.15 / max(frames, 1)
-    min_w, min_h = w * 2, h * 2
+    frames = max(int(duration_s * fps_v) + 1, fps_v)
+    z_step = zoom_delta / max(frames, 1)
+    min_w, min_h = w * min_scale, h * min_scale
     vf = (
         f"scale='if(lt(iw\\,{min_w})\\,{min_w}\\,iw)':"
         f"'if(lt(ih\\,{min_h})\\,{min_h}\\,ih)':"
         f"force_original_aspect_ratio=increase,"
         f"zoompan="
-        f"z='min(zoom+{z_step:.6f},1.15)':"
+        f"z='min(zoom+{z_step:.6f},{zoom_max:.4f})':"
         f"x='iw/2-(iw/zoom/2)':"
         f"y='ih/2-(ih/zoom/2)':"
-        f"d=1:s={w}x{h}:fps={fps},"
+        f"d=1:s={w}x{h}:fps={fps_v},"
         f"format=yuv420p"
     )
     return vf
 
 
 def clip_cache_enabled() -> bool:
-    """Reuse Ken Burns mux when still+audio+frame geometry match (default on)."""
+    """Reuse Ken Burns mux when still+audio+frame+quality match (default on)."""
     raw = (os.environ.get("ANOR_CLIP_CACHE") or "1").strip().lower()
     return raw not in ("0", "false", "no", "off")
 
@@ -166,15 +209,20 @@ def clip_cache_key(
     duration_s: float,
     width: int,
     height: int,
-    fps: int = 30,
+    fps: Optional[int] = None,
+    quality: Optional[str] = None,
 ) -> str:
+    params = ken_burns_params()
+    fps_v = int(fps) if fps is not None else int(params["fps"])
+    q = quality if quality is not None else ken_burns_quality_fingerprint()
     material = "|".join(
         [
             _file_fingerprint(Path(image)),
             _file_fingerprint(Path(audio)),
             f"{float(duration_s):.2f}",
             f"{int(width)}x{int(height)}",
-            str(int(fps)),
+            str(int(fps_v)),
+            q,
         ]
     )
     return hashlib.sha256(material.encode("utf-8")).hexdigest()[:28]
@@ -223,7 +271,12 @@ def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -
     if cache_on:
         try:
             cache_key = clip_cache_key(
-                image, audio, duration_s=dur, width=w, height=h
+                image,
+                audio,
+                duration_s=dur,
+                width=w,
+                height=h,
+                quality=ken_burns_quality_fingerprint(),
             )
             hit = _try_clip_cache_hit(cache_key, out_clip)
             if hit is not None:
