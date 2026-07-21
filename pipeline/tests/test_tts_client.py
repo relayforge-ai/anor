@@ -84,6 +84,27 @@ class TestTtsSynthesize(unittest.TestCase):
             self.assertGreater(path.stat().st_size, 100)
             self.assertTrue(str(path).endswith(".wav"))
 
+    def test_mock_media_never_hits_network_even_with_tts_url(self):
+        """CI / offline: mock_media must not call remote TTS HTTP."""
+        cfg = _cfg(
+            tts_url="http://127.0.0.1:8880/v1",
+            tts_backend="openai_audio",
+            mock_media=True,
+        )
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "vo.wav"
+            with (
+                patch("pipeline.clients._request_json") as rj,
+                patch("pipeline.clients._request_bytes") as rb,
+            ):
+                path = TTSClient(cfg).synthesize(
+                    "Documented baseline narration for Appomattox.", out
+                )
+                rj.assert_not_called()
+                rb.assert_not_called()
+            self.assertTrue(path.is_file())
+            self.assertGreater(path.stat().st_size, 100)
+
     def test_remote_failure_falls_back_to_silent(self):
         cfg = _cfg(tts_url="http://tts.local/v1", tts_backend="openai_audio")
         client = TTSClient(cfg)

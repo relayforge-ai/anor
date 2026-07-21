@@ -3872,3 +3872,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Partial-host Home filtering is transparent; full catalog path stays Library/Studio.
+
+---
+
+## Iteration 149 — 2026-07-21
+
+### OBSERVE
+Main green after 1931147 (home inventory note). Image/TTS mock paths existed but CI did not hard-assert that mock_media never opens HTTP when IMAGE_URL/TTS_URL point at live fleet hosts.
+
+### PLAN
+**One high-impact change:** unit tests that mock_media never calls network helpers for image + TTS.
+
+### EXECUTE
+- `test_mock_media_never_hits_network_even_with_comfy_url` (ImageClient)
+- `test_mock_media_never_hits_network_even_with_tts_url` (TTSClient)
+- Patches on `_request_json` / `_request_bytes` / `safe_get_bytes`
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Offline CI guarantee: ANOR_MOCK_MEDIA / mock_media cannot silently talk to Dawes Comfy or remote TTS.

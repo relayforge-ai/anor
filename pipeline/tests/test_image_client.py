@@ -89,6 +89,31 @@ class TestImageGenerate(unittest.TestCase):
             self.assertTrue(prompt_side.is_file())
             self.assertTrue(prompt_side.read_text().startswith("PRE:"))
 
+    def test_mock_media_never_hits_network_even_with_comfy_url(self):
+        """CI / offline: mock_media must not call Comfy/OpenAI HTTP (Dawes-safe)."""
+        cfg = _cfg(
+            image_url="http://192.168.4.27:8188",
+            image_backend="comfy",
+            mock_media=True,
+            style_prefix="PRE:",
+        )
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "offline.png"
+            with (
+                patch("pipeline.clients._request_json") as rj,
+                patch("pipeline.clients._request_bytes") as rb,
+                patch("pipeline.clients.safe_get_bytes") as sg,
+            ):
+                path = ImageClient(cfg).generate(
+                    "archival Appomattox still", out, width=64, height=36
+                )
+                rj.assert_not_called()
+                rb.assert_not_called()
+                sg.assert_not_called()
+            self.assertTrue(path.is_file())
+            self.assertGreater(path.stat().st_size, 20)
+            self.assertTrue(path.with_suffix(".prompt.txt").is_file())
+
     def test_openai_b64_json_path(self):
         cfg = _cfg(image_url="http://img.local/v1", image_backend="openai_images")
         client = ImageClient(cfg)
