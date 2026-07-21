@@ -4157,3 +4157,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Draft secret hygiene stops false-positiveing English; filter flash is a11y-safer.
+
+---
+
+## Iteration 161 — 2026-07-21
+
+### OBSERVE
+Main green after 10b7cce (secret scan). ELO-016 Midway shipped; only ELO-015 had e2e mock render zero-network coverage for social draft targets.
+
+### PLAN
+**One high-impact change:** shared helper + ELO-016 mock e2e zero-network render test.
+
+### EXECUTE
+- `_assert_mock_render_zero_network(scenario_id, choice_id)`
+- Refactor ELO-015 test onto helper
+- `test_render_elo016_mock_never_hits_network` for batch-014 historical cut
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Civil War + Pacific packs both have offline still→TTS→Ken Burns CI guarantees with fleet URLs patched.

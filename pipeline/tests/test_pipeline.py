@@ -243,14 +243,10 @@ class TestVideoPipeline(unittest.TestCase):
                 self.assertIsInstance(seg["tts_cache_hit"], bool)
                 self.assertIsInstance(seg["clip_cache_hit"], bool)
 
-    def test_render_elo015_mock_never_hits_network(self):
-        """ELO-015 Appomattox + fleet URLs still must not open Comfy/TTS/LLM HTTP in mock.
-
-        End-to-end offline guarantee for the Civil War pack social drafts target
-        (batch-013): still → TTS → Ken Burns → mux with ANOR_MOCK_MEDIA discipline.
-        """
+    def _assert_mock_render_zero_network(self, scenario_id: str, choice_id: str = "historical"):
+        """still → TTS → Ken Burns under mock_media never opens fleet HTTP."""
         os.environ.pop("ANOR_KEEP_VIDEO_WORK", None)
-        # Disable still/clip caches so generate always runs the mock path under patch
+        # Disable caches so generate always runs the mock path under patch
         prev_still = os.environ.get("ANOR_STILL_CACHE")
         prev_clip = os.environ.get("ANOR_CLIP_CACHE")
         prev_tts = os.environ.get("ANOR_TTS_CACHE")
@@ -266,15 +262,15 @@ class TestVideoPipeline(unittest.TestCase):
         )
         try:
             with tempfile.TemporaryDirectory() as td:
-                out = Path(td) / "elo015"
+                out = Path(td) / f"{scenario_id}-{choice_id}"
                 with (
                     patch("pipeline.clients._request_json") as rj,
                     patch("pipeline.clients._request_bytes") as rb,
                     patch("pipeline.clients.safe_get_bytes") as sg,
                 ):
                     result = render_video(
-                        "ELO-015",
-                        choice_id="historical",
+                        scenario_id,
+                        choice_id=choice_id,
                         out_dir=out,
                         cfg=cfg,
                         use_llm=False,
@@ -285,8 +281,8 @@ class TestVideoPipeline(unittest.TestCase):
                 self.assertTrue(result.out_mp4.is_file())
                 self.assertGreater(result.out_mp4.stat().st_size, 1000)
                 meta = json.loads((out / "build.json").read_text(encoding="utf-8"))
-                self.assertEqual(meta["scenario_id"], "ELO-015")
-                self.assertEqual(meta.get("choice_id"), "historical")
+                self.assertEqual(meta["scenario_id"], scenario_id)
+                self.assertEqual(meta.get("choice_id"), choice_id)
                 self.assertTrue(meta.get("mock_media") or cfg.mock_media)
         finally:
             if prev_still is None:
@@ -301,6 +297,14 @@ class TestVideoPipeline(unittest.TestCase):
                 os.environ.pop("ANOR_TTS_CACHE", None)
             else:
                 os.environ["ANOR_TTS_CACHE"] = prev_tts
+
+    def test_render_elo015_mock_never_hits_network(self):
+        """ELO-015 Appomattox batch-013 social target: offline e2e under mock_media."""
+        self._assert_mock_render_zero_network("ELO-015", "historical")
+
+    def test_render_elo016_mock_never_hits_network(self):
+        """ELO-016 Midway batch-014 social target: offline e2e under mock_media."""
+        self._assert_mock_render_zero_network("ELO-016", "historical")
 
     def test_render_keep_work_when_flagged(self):
         cfg = PipelineConfig.from_env()
