@@ -70,6 +70,9 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("library-filter-flash", JS)
         self.assertIn('state._pulseLibFilter = "available"', JS)
         self.assertIn(".library-filter-flash", CSS)
+        # A11y: filter flash respects reduced motion
+        self.assertIn("prefers-reduced-motion", CSS)
+        self.assertIn(".library-filter-flash", CSS)
         # Home/Studio pack pickers prefer packs with host media when mixed
         self.assertIn("function scenariosForDiscovery", JS)
         self.assertIn("function packIdsWithHostMedia", JS)

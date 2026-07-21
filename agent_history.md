@@ -4134,3 +4134,26 @@ Midway decision pack live for library/Studio + draft social. Public ELO only; no
 ### CI FIX (same iteration)
 GitHub failed `test_no_secrets_in_draft_tree` on false positive `sk-` inside `risk-spreading`.
 Reworded to `spreading risk` in drafts/catalog/pack.
+
+---
+
+## Iteration 160 — 2026-07-21
+
+### OBSERVE
+Main green after 3984449 (ELO-016 sk- reword). Secret scan used naive ``sk-`` substring — forced prose rewrites and will keep biting words like risk-. Library filter flash ignored prefers-reduced-motion.
+
+### PLAN
+**One high-impact change:** smart OpenAI sk- secret scan + reduced-motion for filter flash.
+
+### EXECUTE
+- `test_no_secrets_in_draft_tree` uses ``(?<![A-Za-z])sk-[A-Za-z0-9]{8,}``
+- Regression test allows risk-spreading prose, still catches sk-proj…
+- CSS: prefers-reduced-motion damps library-filter-flash / era-head-flash
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Draft secret hygiene stops false-positiveing English; filter flash is a11y-safer.

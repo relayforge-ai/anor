@@ -370,14 +370,31 @@ class TestSocialDrafts(unittest.TestCase):
             )
 
     def test_no_secrets_in_draft_tree(self):
+        """Reject secret-like material without false positives on English prose.
+
+        OpenAI-style keys look like ``sk-`` + alnum and are not preceded by a
+        letter (so ``risk-spreading`` never trips the scan).
+        """
+        openai_sk = re.compile(r"(?<![A-Za-z])sk-[A-Za-z0-9]{8,}")
         for path in DRAFTS.rglob("*"):
             if not path.is_file():
                 continue
             if path.suffix not in {".md", ".json", ".txt"}:
                 continue
             raw = path.read_text(encoding="utf-8", errors="replace")
-            for bad in ("sk-", "API_KEY=", "BEGIN PRIVATE", "password="):
+            self.assertIsNone(
+                openai_sk.search(raw),
+                f"{path} may contain OpenAI-style sk- secret material",
+            )
+            for bad in ("API_KEY=", "BEGIN PRIVATE", "password="):
                 self.assertNotIn(bad, raw, f"{path} may contain secret-like material")
+
+    def test_secret_scan_allows_risk_hyphen_prose(self):
+        """Regression: Midway batch once failed on the substring sk- inside risk-."""
+        sample = "Concentration versus risk-spreading under incomplete intelligence."
+        openai_sk = re.compile(r"(?<![A-Za-z])sk-[A-Za-z0-9]{8,}")
+        self.assertIsNone(openai_sk.search(sample))
+        self.assertIsNotNone(openai_sk.search("token sk-projABCDEF12 live"))
 
 
 if __name__ == "__main__":
