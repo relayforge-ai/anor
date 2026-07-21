@@ -2497,3 +2497,25 @@ Full local CI → 267 OK + pip-audit clean
 
 ### RESULT
 Explorers discover counterfactual siblings and thematically related episodes without returning to Library.
+
+---
+
+## Iteration 90 — 2026-07-21
+
+### OBSERVE
+Main green. Re-rendering the same image prompts re-paid SDXL+ESRGAN on Dawes (shared low-VRAM with Ollama).
+
+### PLAN
+**One high-impact change:** content-addressed still cache for identical prompt/geometry/model keys.
+
+### EXECUTE
+- `ImageClient.still_cache_key` / hit-store under `outputs/still_cache` (default on for remote)
+- Env knobs; health `still_cache` flag; unit tests; image tests isolate with ANOR_STILL_CACHE=0
+
+### TEST
+```
+Full local CI → 269 OK + pip-audit clean
+```
+
+### RESULT
+Identical archival stills skip the GPU path on subsequent video jobs — lower fleet cost.

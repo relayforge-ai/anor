@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import random
+import shutil
 import subprocess
 import threading
 import time
@@ -27,6 +29,11 @@ _RETRYABLE_HTTP = frozenset({408, 425, 429, 500, 502, 503, 504})
 # ComfyUI shares VRAM with Ollama on --lowvram fleets (Dawes). Serialize image
 # jobs so concurrent video segments do not thrash the GPU.
 _COMFY_LOCK = threading.Lock()
+
+# Content-addressed stills: avoid re-paying SDXL+ESRGAN for identical prompts.
+# Tiny mock 1×1 PNGs are ~70 bytes; real Comfy/ESRGAN stills are MiB-scale.
+_STILL_CACHE_MIN_BYTES = 32
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Default negative for archival / documentary stills (no text overlays).
 _DEFAULT_COMFY_NEGATIVE = (
@@ -305,6 +312,83 @@ class ImageClient:
         h = max(64, (int(h) // 8) * 8)
         return w, h
 
+    @staticmethod
+    def still_cache_enabled(*, backend: str) -> bool:
+        """Reuse identical stills across renders (default on for remote backends).
+
+        Mock is opt-in via ANOR_STILL_CACHE_MOCK=1 (CI/offline usually skips).
+        Disable entirely with ANOR_STILL_CACHE=0.
+        """
+        raw = (os.environ.get("ANOR_STILL_CACHE") or "1").strip().lower()
+        if raw in ("0", "false", "no", "off"):
+            return False
+        if backend == "mock":
+            m = (os.environ.get("ANOR_STILL_CACHE_MOCK") or "0").strip().lower()
+            return m in ("1", "true", "yes", "on")
+        return True
+
+    @staticmethod
+    def still_cache_dir() -> Path:
+        raw = (os.environ.get("ANOR_STILL_CACHE_DIR") or "").strip()
+        if raw:
+            return Path(raw).expanduser()
+        return _REPO_ROOT / "outputs" / "still_cache"
+
+    @staticmethod
+    def still_cache_key(
+        *,
+        full_prompt: str,
+        width: int,
+        height: int,
+        backend: str,
+        image_model: str,
+        upscale: bool,
+        upscale_model: str,
+    ) -> str:
+        """Stable short key for prompt + geometry + model path (not a secret)."""
+        material = "|".join(
+            [
+                full_prompt.strip(),
+                str(int(width)),
+                str(int(height)),
+                backend,
+                image_model or "",
+                "up1" if upscale else "up0",
+                upscale_model if upscale else "",
+            ]
+        )
+        return hashlib.sha256(material.encode("utf-8")).hexdigest()[:28]
+
+    def _still_cache_path(self, key: str) -> Path:
+        return self.still_cache_dir() / f"{key}.png"
+
+    def _try_still_cache_hit(self, key: str, out_path: Path, full_prompt: str) -> Optional[Path]:
+        src = self._still_cache_path(key)
+        try:
+            if not src.is_file() or src.stat().st_size < _STILL_CACHE_MIN_BYTES:
+                return None
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, out_path)
+            # Sidecar for human review / draft pipeline
+            out_path.with_suffix(".prompt.txt").write_text(full_prompt, encoding="utf-8")
+            note = out_path.with_suffix(".cache.txt")
+            note.write_text(f"still_cache_hit key={key}\n", encoding="utf-8")
+            return out_path
+        except OSError:
+            return None
+
+    def _store_still_cache(self, key: str, out_path: Path) -> None:
+        try:
+            if not out_path.is_file() or out_path.stat().st_size < _STILL_CACHE_MIN_BYTES:
+                return
+            dest = self._still_cache_path(key)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_suffix(".tmp")
+            shutil.copy2(out_path, tmp)
+            tmp.replace(dest)
+        except OSError:
+            pass
+
     def generate(
         self,
         prompt: str,
@@ -317,16 +401,43 @@ class ImageClient:
         w, h = self.still_size(width, height)
         full_prompt = f"{self.cfg.style_prefix}{prompt}"
         backend = self._backend()
+        upscale = self.comfy_upscale_enabled() if backend == "comfy" else False
+        up_model = self.comfy_upscale_model() if upscale else ""
+        cache_on = self.still_cache_enabled(backend=backend)
+        cache_key = (
+            self.still_cache_key(
+                full_prompt=full_prompt,
+                width=w,
+                height=h,
+                backend=backend,
+                image_model=self.cfg.image_model,
+                upscale=upscale,
+                upscale_model=up_model,
+            )
+            if cache_on
+            else ""
+        )
+        if cache_on and cache_key:
+            hit = self._try_still_cache_hit(cache_key, out_path, full_prompt)
+            if hit is not None:
+                return hit
 
         if backend == "mock":
-            return self._write_placeholder(out_path, w, h, full_prompt)
+            path = self._write_placeholder(out_path, w, h, full_prompt)
+            if cache_on and cache_key:
+                self._store_still_cache(cache_key, path)
+            return path
 
         try:
             if backend == "openai_images":
-                return self._openai_images(full_prompt, out_path, w, h)
-            if backend == "comfy":
-                return self._comfy_txt2img(full_prompt, out_path, w, h)
-            raise PipelineError(f"Unknown IMAGE_BACKEND: {backend}")
+                path = self._openai_images(full_prompt, out_path, w, h)
+            elif backend == "comfy":
+                path = self._comfy_txt2img(full_prompt, out_path, w, h)
+            else:
+                raise PipelineError(f"Unknown IMAGE_BACKEND: {backend}")
+            if cache_on and cache_key:
+                self._store_still_cache(cache_key, path)
+            return path
         except PipelineError as err:
             # Never soft-fail SSRF/policy rejections; optional mock for outages only
             if "rejected" in str(err).lower():
@@ -793,6 +904,9 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
             ImageClient.comfy_upscale_model()
             if ImageClient.comfy_upscale_enabled()
             else None
+        ),
+        "still_cache": ImageClient.still_cache_enabled(
+            backend=img._backend()
         ),
         "video_frame_size": [frame_w, frame_h],
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",

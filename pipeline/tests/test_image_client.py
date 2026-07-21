@@ -17,6 +17,9 @@ sys.path.insert(0, str(ROOT))
 from pipeline.clients import ImageClient, PipelineError, healthcheck  # noqa: E402
 from pipeline.config import PipelineConfig  # noqa: E402
 
+# Default unit tests must not share still-cache state with each other or the host.
+os.environ.setdefault("ANOR_STILL_CACHE", "0")
+
 # 1x1 PNG
 _TINY_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -171,6 +174,70 @@ class TestHealthImageBackend(unittest.TestCase):
         # No secrets
         blob = str(h)
         self.assertNotIn("sk-", blob)
+
+
+class TestStillCache(unittest.TestCase):
+    def test_cache_key_stable_and_sensitive(self):
+        k1 = ImageClient.still_cache_key(
+            full_prompt="a",
+            width=1024,
+            height=576,
+            backend="comfy",
+            image_model="sd_xl_base_1.0.safetensors",
+            upscale=True,
+            upscale_model="RealESRGAN_x4plus.pth",
+        )
+        k2 = ImageClient.still_cache_key(
+            full_prompt="a",
+            width=1024,
+            height=576,
+            backend="comfy",
+            image_model="sd_xl_base_1.0.safetensors",
+            upscale=True,
+            upscale_model="RealESRGAN_x4plus.pth",
+        )
+        k3 = ImageClient.still_cache_key(
+            full_prompt="b",
+            width=1024,
+            height=576,
+            backend="comfy",
+            image_model="sd_xl_base_1.0.safetensors",
+            upscale=True,
+            upscale_model="RealESRGAN_x4plus.pth",
+        )
+        self.assertEqual(k1, k2)
+        self.assertNotEqual(k1, k3)
+        self.assertEqual(len(k1), 28)
+
+    def test_mock_cache_hit_skips_second_generate_work(self):
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_STILL_CACHE", "ANOR_STILL_CACHE_MOCK", "ANOR_STILL_CACHE_DIR")
+        }
+        with tempfile.TemporaryDirectory() as td:
+            cache_dir = Path(td) / "cache"
+            os.environ["ANOR_STILL_CACHE"] = "1"
+            os.environ["ANOR_STILL_CACHE_MOCK"] = "1"
+            os.environ["ANOR_STILL_CACHE_DIR"] = str(cache_dir)
+            try:
+                client = ImageClient(_cfg(mock_media=True, style_prefix="PRE:"))
+                out1 = Path(td) / "a" / "still.png"
+                out2 = Path(td) / "b" / "still.png"
+                p1 = client.generate("battlefield", out1, width=64, height=36)
+                self.assertTrue(p1.is_file())
+                # Cache should hold one png
+                cached = list(cache_dir.glob("*.png"))
+                self.assertEqual(len(cached), 1)
+                p2 = client.generate("battlefield", out2, width=64, height=36)
+                self.assertTrue(p2.is_file())
+                self.assertTrue(p2.with_suffix(".cache.txt").is_file())
+                self.assertEqual(p1.read_bytes(), p2.read_bytes())
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
 
 
 class TestComfyWorkflow(unittest.TestCase):
