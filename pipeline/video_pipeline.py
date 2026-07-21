@@ -130,14 +130,46 @@ def ken_burns_params() -> dict:
     }
 
 
+def clip_encode_params() -> dict:
+    """ffmpeg encode knobs for Ken Burns muxes (env-tunable).
+
+    Included in clip-cache keys so bitrate/tune changes do not reuse a mux
+    encoded under different settings.
+    """
+    tune = (os.environ.get("ANOR_CLIP_X264_TUNE") or "stillimage").strip() or "stillimage"
+    # Keep tune conservative — only allow a small known set
+    if tune not in ("stillimage", "film", "animation", "grain", "fastdecode", "zerolatency"):
+        tune = "stillimage"
+    raw_br = (os.environ.get("ANOR_CLIP_AUDIO_BITRATE") or "192k").strip() or "192k"
+    a_br = "192k"
+    if len(raw_br) <= 16:
+        low = raw_br.lower()
+        if low.endswith("k") and low[:-1].isdigit():
+            n = int(low[:-1])
+            if 32 <= n <= 512:
+                a_br = f"{n}k"
+        elif raw_br.isdigit():
+            n = int(raw_br)
+            if 32 <= n <= 512:
+                a_br = f"{n}k"
+    return {
+        "v_codec": "libx264",
+        "v_tune": tune,
+        "a_codec": "aac",
+        "a_bitrate": a_br,
+    }
+
+
 def ken_burns_quality_fingerprint() -> str:
-    """Compact quality string for clip-cache keys."""
+    """Compact quality string for clip-cache keys (motion + encode)."""
     p = ken_burns_params()
+    e = clip_encode_params()
     return (
         f"fps{int(p['fps'])}|"
         f"z{float(p['zoom_max']):.3f}|"
         f"dz{float(p['zoom_delta']):.3f}|"
-        f"min{int(p['min_scale'])}x"
+        f"min{int(p['min_scale'])}x|"
+        f"enc:{e['v_tune']}|{e['a_bitrate']}"
     )
 
 
@@ -285,6 +317,7 @@ def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -
             cache_key = ""
 
     vf = ken_burns_filter(dur, width=w, height=h)
+    enc = clip_encode_params()
     cmd = [
         "ffmpeg",
         "-y",
@@ -297,13 +330,13 @@ def _ken_burns_clip(image: Path, audio: Path, out_clip: Path, duration: float) -
         "-vf",
         vf,
         "-c:v",
-        "libx264",
+        enc["v_codec"],
         "-tune",
-        "stillimage",
+        enc["v_tune"],
         "-c:a",
-        "aac",
+        enc["a_codec"],
         "-b:a",
-        "192k",
+        enc["a_bitrate"],
         "-shortest",
         "-t",
         f"{dur:.2f}",

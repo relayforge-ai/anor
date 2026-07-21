@@ -2911,3 +2911,26 @@ Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 New monetizable Waterloo decision pack with freemium catalog coverage and draft-only social pipeline; mock-media path unchanged.
+
+---
+
+## Iteration 108 — 2026-07-21
+
+### OBSERVE
+Main green after ELO-012. Clip-cache quality fingerprint covered motion knobs only — x264 tune and AAC bitrate were hardcoded and not in the key, so encode-quality changes could reuse wrong muxes. Health did not surface Ken Burns quality for fleet ops.
+
+### PLAN
+**One high-impact change:** include encode params in clip quality fingerprint; report in health; env-tunable tune/bitrate.
+
+### EXECUTE
+- `clip_encode_params` (validated x264 tune + audio bitrate)
+- Wire into `_ken_burns_clip` ffmpeg args + `ken_burns_quality_fingerprint`
+- Health `ken_burns_quality`; tests; .env.example
+
+### TEST
+```
+Full local CI → 290 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Clip cache stays correct across encode-quality tuning; operators can read motion+encode fingerprint from health detail.

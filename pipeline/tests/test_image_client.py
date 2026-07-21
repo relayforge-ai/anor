@@ -172,6 +172,10 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertIn("video_frame_size", h)
         self.assertEqual(h["video_frame_size"], [1920, 1080])
         self.assertIn("clip_cache", h)
+        self.assertIn("ken_burns_quality", h)
+        self.assertIsInstance(h["ken_burns_quality"], str)
+        self.assertIn("fps", h["ken_burns_quality"])
+        self.assertIn("enc:", h["ken_burns_quality"])
         # No secrets
         blob = str(h)
         self.assertNotIn("sk-", blob)
@@ -574,6 +578,8 @@ class TestClipCache(unittest.TestCase):
                 "ANOR_KB_ZOOM_MAX",
                 "ANOR_KB_ZOOM_DELTA",
                 "ANOR_KB_MIN_SCALE",
+                "ANOR_CLIP_X264_TUNE",
+                "ANOR_CLIP_AUDIO_BITRATE",
             )
         }
         with tempfile.TemporaryDirectory() as td:
@@ -584,6 +590,8 @@ class TestClipCache(unittest.TestCase):
                 os.environ["ANOR_KB_ZOOM_MAX"] = "1.15"
                 os.environ["ANOR_KB_ZOOM_DELTA"] = "0.15"
                 os.environ["ANOR_KB_MIN_SCALE"] = "2"
+                os.environ["ANOR_CLIP_X264_TUNE"] = "stillimage"
+                os.environ["ANOR_CLIP_AUDIO_BITRATE"] = "192k"
                 q1 = ken_burns_quality_fingerprint()
                 k1 = clip_cache_key(
                     still, audio, duration_s=0.5, width=640, height=360, quality=q1
@@ -597,6 +605,15 @@ class TestClipCache(unittest.TestCase):
                 self.assertNotEqual(k1, k2)
                 self.assertIn("z1.150", q1)
                 self.assertIn("z1.250", q2)
+                self.assertIn("enc:stillimage|192k", q1)
+                os.environ["ANOR_KB_ZOOM_MAX"] = "1.15"
+                os.environ["ANOR_CLIP_AUDIO_BITRATE"] = "128k"
+                q3 = ken_burns_quality_fingerprint()
+                k3 = clip_cache_key(
+                    still, audio, duration_s=0.5, width=640, height=360, quality=q3
+                )
+                self.assertNotEqual(k1, k3)
+                self.assertIn("enc:stillimage|128k", q3)
             finally:
                 for k, v in prev.items():
                     if v is None:
