@@ -134,6 +134,9 @@ class TestStaticProgressUI(unittest.TestCase):
             "saveWatchPosition",
             "getWatchPosition",
             "persistWatchPos",
+            "resumePillHtml",
+            "video-card-resume",
+            "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
             "copyForkNarrative",
@@ -201,6 +204,8 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn(".studio-kbd-hint", css)
         self.assertIn("studio-kbd-hint kbd", css)
         self.assertIn(".home-continue", css)
+        self.assertIn(".video-card-resume", css)
+        self.assertIn(".video-card-has-resume", css)
         html = (STATIC / "index.html").read_text(encoding="utf-8")
         self.assertIn('id="home-continue"', html)
         self.assertIn('id="home-continue-grid"', html)

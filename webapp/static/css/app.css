@@ -743,6 +743,13 @@ textarea {
   gap: 0.35rem;
   margin-top: 0.35rem;
 }
+/* Local mid-watch resume badge (freemium device position) */
+.video-card-resume {
+  border-color: rgba(212, 168, 75, 0.45);
+}
+.video-card-has-resume .video-card-play {
+  box-shadow: 0 0 0 2px rgba(212, 168, 75, 0.35);
+}
 .video-card-unavailable {
   opacity: 0.78;
 }

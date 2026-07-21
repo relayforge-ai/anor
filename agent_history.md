@@ -2773,3 +2773,26 @@ Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers see a different featured decision each day without server state or analytics — broader freemium discovery of the public catalog.
+
+---
+
+## Iteration 102 — 2026-07-21
+
+### OBSERVE
+Main green after daily featured hero. Resume position was silent — library/home/continue cards gave no visual cue that mid-watch progress exists, so freemium retention depended on muscle memory.
+
+### PLAN
+**One high-impact change:** "Resume N%" pills on episode cards when local watch position exists.
+
+### EXECUTE
+- `resumePillHtml` + `video-card-resume` / `video-card-has-resume` styles
+- Wired into `videoCardHtml` for library, home, continue, related
+- Static asset needles
+
+### TEST
+```
+Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers see which cuts have mid-episode progress on this device and re-open with confidence — still client-only, no analytics.

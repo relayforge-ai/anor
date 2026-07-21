@@ -432,6 +432,27 @@
     </div>`;
   }
 
+  /**
+   * Local mid-watch badge for freemium resume (device-only position store).
+   * Shows percent when duration was known at last save; else "Resume".
+   */
+  function resumePillHtml(videoId) {
+    try {
+      const pos = FHFreemium.getWatchPosition(videoId);
+      if (!pos || !(pos.t > 5)) return "";
+      let label = "Resume";
+      if (pos.d && pos.d > 0) {
+        const pct = Math.min(99, Math.max(1, Math.round((pos.t / pos.d) * 100)));
+        label = `Resume ${pct}%`;
+      }
+      return `<span class="pill pill-sim video-card-resume" title="Local mid-episode position on this device">${escapeHtml(
+        label
+      )}</span>`;
+    } catch (_) {
+      return "";
+    }
+  }
+
   function videoCardHtml(v) {
     const access = FHFreemium.videoAccess(v.id, state.catalog);
     const unavailable = v.available === false;
@@ -440,19 +461,22 @@
       : access.mode === "full" || access.mode === "claimable_full"
         ? `<span class="pill pill-doc">${access.mode === "claimable_full" ? "Free full" : "Unlocked"}</span>`
         : `<span class="pill pill-warn">${Math.round(access.previewFraction * 100)}% preview</span>`;
+    const resumePill = unavailable ? "" : resumePillHtml(v.id);
     const spec =
       v.speculation === "documented"
         ? `<span class="pill pill-doc">documented</span>`
         : `<span class="pill pill-sim">${escapeHtml(v.speculation)}</span>`;
     return `
-      <article class="card video-card ${unavailable ? "video-card-unavailable" : ""}" data-video="${escapeHtml(
+      <article class="card video-card ${unavailable ? "video-card-unavailable" : ""}${
+        resumePill ? " video-card-has-resume" : ""
+      }" data-video="${escapeHtml(
         v.id
       )}" data-available="${unavailable ? "0" : "1"}">
         <div class="video-card-art" style="background:linear-gradient(145deg,${v.poster_gradient[0]},${v.poster_gradient[1]})">
           <div class="video-card-play">${unavailable ? "·" : "▶"}</div>
         </div>
         <div class="video-card-body">
-          <div class="video-card-meta">${spec}${gatePill}<span class="pill">${escapeHtml(v.era)}</span></div>
+          <div class="video-card-meta">${spec}${gatePill}${resumePill}<span class="pill">${escapeHtml(v.era)}</span></div>
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
           ${videoCardTagsHtml(v)}
