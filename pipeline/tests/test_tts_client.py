@@ -12,6 +12,9 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+# Isolate from host TTS cache while unit-testing backends
+os.environ.setdefault("ANOR_TTS_CACHE", "0")
+
 from pipeline.clients import PipelineError, TTSClient, healthcheck  # noqa: E402
 from pipeline.config import PipelineConfig  # noqa: E402
 
@@ -119,12 +122,59 @@ class TestTtsSynthesize(unittest.TestCase):
                 os.environ["ANOR_TTS_FALLBACK_MOCK"] = prev
 
 
+class TestTtsCache(unittest.TestCase):
+    def test_cache_key_stable(self):
+        k1 = TTSClient.tts_cache_key(
+            text="hello", voice="alloy", backend="openai_audio", tts_model="tts-1"
+        )
+        k2 = TTSClient.tts_cache_key(
+            text="hello", voice="alloy", backend="openai_audio", tts_model="tts-1"
+        )
+        k3 = TTSClient.tts_cache_key(
+            text="hello!", voice="alloy", backend="openai_audio", tts_model="tts-1"
+        )
+        self.assertEqual(k1, k2)
+        self.assertNotEqual(k1, k3)
+
+    def test_mock_cache_hit(self):
+        prev = {
+            k: os.environ.get(k)
+            for k in ("ANOR_TTS_CACHE", "ANOR_TTS_CACHE_MOCK", "ANOR_TTS_CACHE_DIR")
+        }
+        with tempfile.TemporaryDirectory() as td:
+            cache_dir = Path(td) / "tcache"
+            os.environ["ANOR_TTS_CACHE"] = "1"
+            os.environ["ANOR_TTS_CACHE_MOCK"] = "1"
+            os.environ["ANOR_TTS_CACHE_DIR"] = str(cache_dir)
+            try:
+                client = TTSClient(_cfg(mock_media=True))
+                out1 = Path(td) / "a" / "vo.wav"
+                out2 = Path(td) / "b" / "vo.wav"
+                p1 = client.synthesize("Documented baseline narration.", out1)
+                self.assertTrue(p1.is_file())
+                self.assertEqual(len(list(cache_dir.glob("*.wav"))), 1)
+                p2 = client.synthesize("Documented baseline narration.", out2)
+                self.assertTrue(p2.is_file())
+                # cache sidecar uses compound suffix
+                self.assertTrue(
+                    any(p.name.endswith(".cache.txt") for p in Path(td).rglob("*"))
+                )
+                self.assertEqual(p1.read_bytes(), p2.read_bytes())
+            finally:
+                for k, v in prev.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+
 class TestHealthTts(unittest.TestCase):
     def test_health_reports_tts_fallback(self):
         os.environ["ANOR_MOCK_MEDIA"] = "1"
         h = healthcheck(PipelineConfig.from_env())
         self.assertIn("tts_backend", h)
         self.assertIn("tts_fallback_mock", h)
+        self.assertIn("tts_cache", h)
 
 
 if __name__ == "__main__":

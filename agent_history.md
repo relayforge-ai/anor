@@ -2519,3 +2519,25 @@ Full local CI → 269 OK + pip-audit clean
 
 ### RESULT
 Identical archival stills skip the GPU path on subsequent video jobs — lower fleet cost.
+
+---
+
+## Iteration 91 — 2026-07-21
+
+### OBSERVE
+Main green after still cache. VO re-synthesis still re-paid TTS for identical scripts on re-renders.
+
+### PLAN
+**One high-impact change:** content-addressed TTS cache parallel to still cache.
+
+### EXECUTE
+- `TTSClient.tts_cache_key` / hit-store under `outputs/tts_cache` (default on for non-mock)
+- Env knobs; health `tts_cache`; unit tests with ANOR_TTS_CACHE=0 isolation
+
+### TEST
+```
+Full local CI → 271 OK + pip-audit clean
+```
+
+### RESULT
+Identical narration clips skip remote/system TTS on subsequent video jobs.

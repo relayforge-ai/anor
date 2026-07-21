@@ -773,23 +773,123 @@ class TTSClient:
             return s[:max_chars]
         return s
 
+    @staticmethod
+    def tts_cache_enabled(*, backend: str) -> bool:
+        """Reuse identical VO clips across renders (default on for remote/system).
+
+        Mock is opt-in via ANOR_TTS_CACHE_MOCK=1. Disable with ANOR_TTS_CACHE=0.
+        """
+        raw = (os.environ.get("ANOR_TTS_CACHE") or "1").strip().lower()
+        if raw in ("0", "false", "no", "off"):
+            return False
+        if backend == "mock":
+            m = (os.environ.get("ANOR_TTS_CACHE_MOCK") or "0").strip().lower()
+            return m in ("1", "true", "yes", "on")
+        return True
+
+    @staticmethod
+    def tts_cache_dir() -> Path:
+        raw = (os.environ.get("ANOR_TTS_CACHE_DIR") or "").strip()
+        if raw:
+            return Path(raw).expanduser()
+        return _REPO_ROOT / "outputs" / "tts_cache"
+
+    @staticmethod
+    def tts_cache_key(
+        *,
+        text: str,
+        voice: str,
+        backend: str,
+        tts_model: str,
+    ) -> str:
+        material = "|".join(
+            [text.strip(), voice or "", backend, tts_model or ""]
+        )
+        return hashlib.sha256(material.encode("utf-8")).hexdigest()[:28]
+
+    def _tts_cache_glob(self, key: str) -> list[Path]:
+        d = self.tts_cache_dir()
+        if not d.is_dir():
+            return []
+        return sorted(d.glob(f"{key}.*"))
+
+    def _try_tts_cache_hit(self, key: str, out_path: Path) -> Optional[Path]:
+        hits = [
+            p
+            for p in self._tts_cache_glob(key)
+            if p.suffix.lower() in (".wav", ".mp3", ".aiff", ".m4a", ".ogg")
+            and p.stat().st_size >= _STILL_CACHE_MIN_BYTES
+        ]
+        if not hits:
+            return None
+        src = hits[0]
+        try:
+            dest = out_path if out_path.suffix else out_path.with_suffix(src.suffix)
+            if dest.suffix.lower() != src.suffix.lower():
+                dest = out_path.with_suffix(src.suffix)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            dest.with_suffix(dest.suffix + ".cache.txt").write_text(
+                f"tts_cache_hit key={key}\n",
+                encoding="utf-8",
+            )
+            return dest
+        except OSError:
+            return None
+
+    def _store_tts_cache(self, key: str, out_path: Path) -> None:
+        try:
+            if not out_path.is_file() or out_path.stat().st_size < _STILL_CACHE_MIN_BYTES:
+                return
+            dest = self.tts_cache_dir() / f"{key}{out_path.suffix.lower() or '.wav'}"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_suffix(dest.suffix + ".tmp")
+            shutil.copy2(out_path, tmp)
+            tmp.replace(dest)
+        except OSError:
+            pass
+
     def synthesize(self, text: str, out_path: Path, voice: str = "alloy") -> Path:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         text = self._clip_text(text)
         backend = self._backend()
+        cache_on = self.tts_cache_enabled(backend=backend)
+        cache_key = (
+            self.tts_cache_key(
+                text=text,
+                voice=voice,
+                backend=backend,
+                tts_model=self.cfg.tts_model,
+            )
+            if cache_on
+            else ""
+        )
+        if cache_on and cache_key:
+            hit = self._try_tts_cache_hit(cache_key, out_path)
+            if hit is not None:
+                return hit
 
         if backend == "mock":
-            return self._silent(out_path, duration=max(2.0, min(30.0, len(text) / 14.0)))
+            path = self._silent(
+                out_path, duration=max(2.0, min(30.0, len(text) / 14.0))
+            )
+            if cache_on and cache_key:
+                self._store_tts_cache(cache_key, path)
+            return path
 
         try:
             if backend == "openai_audio":
-                return self._openai_audio(text, out_path, voice)
-            if backend == "http_wav":
-                return self._http_wav(text, out_path, voice)
-            if backend == "system":
-                return self._system_say(text, out_path)
-            raise PipelineError(f"Unknown TTS_BACKEND: {backend}")
+                path = self._openai_audio(text, out_path, voice)
+            elif backend == "http_wav":
+                path = self._http_wav(text, out_path, voice)
+            elif backend == "system":
+                path = self._system_say(text, out_path)
+            else:
+                raise PipelineError(f"Unknown TTS_BACKEND: {backend}")
+            if cache_on and cache_key:
+                self._store_tts_cache(cache_key, path)
+            return path
         except PipelineError as err:
             if self.mock_fallback_enabled():
                 note = out_path.with_suffix(".fallback.txt")
@@ -912,5 +1012,6 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),
         "tts_fallback_mock": TTSClient.mock_fallback_enabled(),
+        "tts_cache": TTSClient.tts_cache_enabled(backend=tts._backend()),
         "http_retry": http_retry_config(),
     }
