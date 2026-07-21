@@ -43,6 +43,7 @@ python3 -m pipeline.cli site --port 8787
 | ELO-001 | Stalin's dacha, Barbarossa | 1941 | Accept invasion reports? |
 | ELO-008 | Overlord D-Day go/no-go | 1944 | Weather window: go or delay? |
 | ELO-006 | Berlin Blockade airlift | 1948 | Airlift vs force corridors? |
+| ELO-010 | Bay of Pigs go/no-go | 1961 | Scrub, proceed, or denser air? |
 | ELO-007 | EXCOMM quarantine | 1962 | Quarantine vs strike? |
 | ELO-013 | Arkhipov on B-59 | 1962 | Nuclear torpedo vote? |
 
@@ -107,6 +108,7 @@ anor/
 | `content/drafts/batch-005/` | July Crisis blank cheque (ELO-005) | DRAFT |
 | `content/drafts/batch-006/` | Berlin Airlift (ELO-006) | DRAFT |
 | `content/drafts/batch-007/` | Overlord D-Day go/no-go (ELO-008) | DRAFT |
+| `content/drafts/batch-008/` | Bay of Pigs (ELO-010) | DRAFT |
 
 Each batch has markdown captions + `postiz-drafts.json` with `status: "draft"` and placeholder integration IDs. **Agents must not publish.**
 

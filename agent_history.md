@@ -2407,3 +2407,26 @@ Full local CI → OK
 
 ### RESULT
 Explorers can share episode URLs with 📗/🧪 labels; social draft publish remains human-gated.
+
+---
+
+## Iteration 86 — 2026-07-21
+
+### OBSERVE
+Main green. Content gap: no 1961 Bay of Pigs pack (Cold War stack had 1948/62 only). Job tests flaky when local `outputs/` had cached MP4s.
+
+### PLAN
+**One high-impact change:** public pack ELO-010 Bay of Pigs + batch-008 human-gate drafts + catalog; force=True on worker-path unit tests.
+
+### EXECUTE
+- `scenarios/public/ELO-010.json` (historical / scrub / dense_air)
+- Catalog videos; `content/drafts/batch-008/*`; PIPELINE + public README
+- Social draft tests; pack list; `force=True` in timeout/sanitize/catalog-cache tests
+
+### TEST
+```
+Full local CI → 263 tests OK + pip-audit clean
+```
+
+### RESULT
+Studio/library gain a labeled 1961 Cold War decision pack; social drafts staged for Ryan only.

@@ -84,7 +84,10 @@ class TestJobTimeout(unittest.TestCase):
             with patch.object(jobs_mod, "acquire_render_lock", return_value=(None, None)):
                 with patch.object(jobs_mod, "release_render_lock"):
                     with patch.object(vp, "render_video", side_effect=hanging_render):
-                        job, _ = q.enqueue("ELO-001", "historical", use_llm=False)
+                        # force=True: local outputs/ may have a cached MP4
+                        job, _ = q.enqueue(
+                            "ELO-001", "historical", use_llm=False, force=True
+                        )
                         deadline = time.time() + 10
                         final = None
                         while time.time() < deadline:

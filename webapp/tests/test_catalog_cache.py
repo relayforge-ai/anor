@@ -97,6 +97,7 @@ class TestCatalogCache(unittest.TestCase):
                             "historical",
                             use_llm=False,
                             owner_key="t",
+                            force=True,  # exercise worker + cache invalidate
                         )
                         deadline = time.time() + 5
                         final = None

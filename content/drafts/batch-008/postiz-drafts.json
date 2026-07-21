@@ -1,0 +1,93 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. Fill integration IDs after Ryan connects TikTok/YouTube. Media must be uploaded via postiz upload first — never raw filesystem paths at publish time. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-008",
+  "created": "2026-07-21",
+  "theme": "Bay of Pigs go/no-go April 1961 (ELO-010)",
+  "needs_ryan": [
+    "Create/claim YouTube channel (suggested: Forked History)",
+    "Create/claim TikTok account (suggested: @forkedhistory)",
+    "Connect both integrations in Postiz",
+    "Replace INTEGRATION_YOUTUBE_ID and INTEGRATION_TIKTOK_ID below",
+    "Review scrub and dense_air cuts for on-screen 🧪 labels",
+    "Review captions; approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-010-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "April 1961. Brigade at sea. Air cover limited.\nProceed — or scrub?\n📗 Documented: the landing goes.\n#history #coldwar #cuba #fyp",
+      "media_local": "outputs/videos/ELO-010-historical/ELO-010-historical.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-010-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "April 1961: The Bay of Pigs landing goes ahead",
+      "caption": "Deniability is thin. Air cover is limited by design.\n\n📗 Documented baseline: the landing proceeds; the beachhead collapses.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#bayofpigs #coldwar #1961 #history",
+      "media_local": "outputs/videos/ELO-010-historical/ELO-010-historical.mp4",
+      "settings": {
+        "title": "April 1961: The Bay of Pigs landing goes ahead",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "coldwar", "label": "coldwar"},
+          {"value": "bayofpigs", "label": "bayofpigs"}
+        ]
+      }
+    },
+    {
+      "id": "elo-010-scrub-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they call it off before the beach?\nWe label this 🧪 SIMULATED. History took the landing.\n#althistory #historytok #coldwar",
+      "media_local": "outputs/videos/ELO-010-scrub/ELO-010-scrub.mp4",
+      "settings": {
+        "privacy": "PUBLIC_TO_EVERYONE",
+        "duet": false,
+        "stitch": false
+      }
+    },
+    {
+      "id": "elo-010-scrub-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Kennedy scrubbed Bay of Pigs before beach contact?",
+      "caption": "⚠️ SIMULATED middle act — not history.\n\n📗 Baseline: the landing is documented.\n🧪 Scrub is labeled simulation: exposure without combat vs combat without deniability.\n\n#althistory #bayofpigs #speculationlabeled",
+      "media_local": "outputs/videos/ELO-010-scrub/ELO-010-scrub.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Kennedy scrubbed Bay of Pigs before beach contact?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "coldwar", "label": "coldwar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-010-dense-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if denser air covered the Bay of Pigs landing?",
+      "caption": "⚠️ DRAMATIZED process — not secret history.\n\nMore sorties can buy hours. They burn the cover story faster.\n\n#althistory #bayofpigs #speculationlabeled",
+      "media_local": "outputs/videos/ELO-010-dense_air/ELO-010-dense_air.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if denser air covered the Bay of Pigs landing?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "cuba", "label": "cuba"}
+        ]
+      }
+    }
+  ]
+}

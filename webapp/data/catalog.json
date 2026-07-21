@@ -20,7 +20,7 @@
           "25% preview of every other episode",
           "Basic scenario fork (authored branches)",
           "Provenance ribbons on every claim",
-          "No ads — ever"
+          "No ads \u2014 ever"
         ]
       },
       {
@@ -31,12 +31,12 @@
         "badge": "Recommended",
         "highlight": true,
         "features": [
-          "Full library — every episode, uncut",
+          "Full library \u2014 every episode, uncut",
           "Unlimited forks with multi-branch compare",
           "Custom pressure seeds & re-renders",
           "Export narratives as markdown",
           "Early access to new packs",
-          "Support sovereign compute (Dawes → Nauvoo)"
+          "Support sovereign compute (Dawes \u2192 Nauvoo)"
         ]
       },
       {
@@ -59,11 +59,11 @@
       "id": "library_pass",
       "name": "Library Pass",
       "price": 7.99,
-      "description": "One-time unlock of the current video library for 90 days — no subscription. Ideal if you only want to binge three nights of decision points."
+      "description": "One-time unlock of the current video library for 90 days \u2014 no subscription. Ideal if you only want to binge three nights of decision points."
     },
     "notes": [
       "Nominal on purpose: this is a museum with a simulation engine, not a dopamine app.",
-      "$4.99/mo Scholar is the default recommendation — less than one streaming add-on, funds GPU hours.",
+      "$4.99/mo Scholar is the default recommendation \u2014 less than one streaming add-on, funds GPU hours.",
       "Stripe checkout hooks are stubbed; membership can be demo-unlocked for review."
     ]
   },
@@ -71,8 +71,19 @@
     "full_videos_free": 1,
     "preview_fraction": 0.25,
     "free_forks_per_day": 3,
-    "free_controls": ["view_opening", "pick_choice", "authored_fork", "compare_branches", "copy_narrative"],
-    "paid_controls": ["llm_rerender", "custom_seed", "export", "multi_scenario_session"]
+    "free_controls": [
+      "view_opening",
+      "pick_choice",
+      "authored_fork",
+      "compare_branches",
+      "copy_narrative"
+    ],
+    "paid_controls": [
+      "llm_rerender",
+      "custom_seed",
+      "export",
+      "multi_scenario_session"
+    ]
   },
   "videos": [
     {
@@ -84,8 +95,15 @@
       "era": "216 BC",
       "runtime_label": "~4 min draft",
       "file": "ELO-003-historical/ELO-003-historical.mp4",
-      "poster_gradient": ["#2a1810", "#0f1115"],
-      "tags": ["Cannae", "Rome", "documented"],
+      "poster_gradient": [
+        "#2a1810",
+        "#0f1115"
+      ],
+      "tags": [
+        "Cannae",
+        "Rome",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: after the greatest battlefield victory of the ancient world, Hannibal refuses the cavalry march on Rome."
@@ -95,27 +113,40 @@
       "scenario_id": "ELO-003",
       "choice_id": "march",
       "title": "SPECULATION: If Hannibal rides",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "216 BC",
       "runtime_label": "~4 min draft",
       "file": "ELO-003-march/ELO-003-march.mp4",
-      "poster_gradient": ["#3a2010", "#121018"],
-      "tags": ["Cannae", "simulated"],
+      "poster_gradient": [
+        "#3a2010",
+        "#121018"
+      ],
+      "tags": [
+        "Cannae",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: accept Maharbal's proposal. Walls, logistics, and overconfident legends — all labeled 🧪."
+      "blurb": "Counterfactual branch: accept Maharbal's proposal. Walls, logistics, and overconfident legends \u2014 all labeled \ud83e\uddea."
     },
     {
       "id": "ELO-013-historical",
       "scenario_id": "ELO-013",
       "choice_id": "historical",
       "title": "One vote on B-59",
-      "subtitle": "27 October 1962 — the documented refusal",
+      "subtitle": "27 October 1962 \u2014 the documented refusal",
       "era": "1962",
       "runtime_label": "~4 min draft",
       "file": "ELO-013-historical/ELO-013-historical.mp4",
-      "poster_gradient": ["#0a1a22", "#0f1115"],
-      "tags": ["Cold War", "Arkhipov", "documented"],
+      "poster_gradient": [
+        "#0a1a22",
+        "#0f1115"
+      ],
+      "tags": [
+        "Cold War",
+        "Arkhipov",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Heat, depth charges, incomplete information. The historical path: refuse the nuclear shot and surface."
@@ -125,42 +156,62 @@
       "scenario_id": "ELO-007",
       "choice_id": "historical",
       "title": "EXCOMM chooses the quarantine",
-      "subtitle": "October 1962 — the documented opening move",
+      "subtitle": "October 1962 \u2014 the documented opening move",
       "era": "1962",
       "runtime_label": "~4 min draft",
       "file": "ELO-007-historical/ELO-007-historical.mp4",
-      "poster_gradient": ["#1a2030", "#0f1115"],
-      "tags": ["Cold War", "Kennedy", "documented"],
+      "poster_gradient": [
+        "#1a2030",
+        "#0f1115"
+      ],
+      "tags": [
+        "Cold War",
+        "Kennedy",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
-      "blurb": "Documented baseline: naval quarantine first — pressure without an irreversible airstrike on day one."
+      "blurb": "Documented baseline: naval quarantine first \u2014 pressure without an irreversible airstrike on day one."
     },
     {
       "id": "ELO-007-surgical_strike",
       "scenario_id": "ELO-007",
       "choice_id": "surgical_strike",
       "title": "SPECULATION: Strike the sites first",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "1962",
       "runtime_label": "~4 min draft",
       "file": "ELO-007-surgical_strike/ELO-007-surgical_strike.mp4",
-      "poster_gradient": ["#2a1818", "#121018"],
-      "tags": ["Cold War", "simulated"],
+      "poster_gradient": [
+        "#2a1818",
+        "#121018"
+      ],
+      "tags": [
+        "Cold War",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: open with air attack. Incomplete coverage, Soviet dead, escalation risk — all labeled 🧪."
+      "blurb": "Counterfactual branch: open with air attack. Incomplete coverage, Soviet dead, escalation risk \u2014 all labeled \ud83e\uddea."
     },
     {
       "id": "ELO-001-historical",
       "scenario_id": "ELO-001",
       "choice_id": "historical",
       "title": "Barbarossa night at the dacha",
-      "subtitle": "22 June 1941 — shock at the center",
+      "subtitle": "22 June 1941 \u2014 shock at the center",
       "era": "1941",
       "runtime_label": "~4 min draft",
       "file": "ELO-001-historical/ELO-001-historical.mp4",
-      "poster_gradient": ["#1a1210", "#0f1115"],
-      "tags": ["WW2", "Barbarossa", "documented"],
+      "poster_gradient": [
+        "#1a1210",
+        "#0f1115"
+      ],
+      "tags": [
+        "WW2",
+        "Barbarossa",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": false,
       "blurb": "Documented baseline: invasion reports meet a hyper-centralized system still arguing with reality."
@@ -170,12 +221,19 @@
       "scenario_id": "ELO-009",
       "choice_id": "historical",
       "title": "Dunkirk: the halt",
-      "subtitle": "May 1940 — armor pauses, ships come",
+      "subtitle": "May 1940 \u2014 armor pauses, ships come",
       "era": "1940",
       "runtime_label": "~4 min draft",
       "file": "ELO-009-historical/ELO-009-historical.mp4",
-      "poster_gradient": ["#1a2430", "#0f1115"],
-      "tags": ["WW2", "Dunkirk", "documented"],
+      "poster_gradient": [
+        "#1a2430",
+        "#0f1115"
+      ],
+      "tags": [
+        "WW2",
+        "Dunkirk",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: German armor halts short of finishing the pocket; Dynamo lifts a living army to Britain."
@@ -185,27 +243,41 @@
       "scenario_id": "ELO-009",
       "choice_id": "press_armor",
       "title": "SPECULATION: Armor keeps driving",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "1940",
       "runtime_label": "~4 min draft",
       "file": "ELO-009-press_armor/ELO-009-press_armor.mp4",
-      "poster_gradient": ["#2a2018", "#121018"],
-      "tags": ["WW2", "Dunkirk", "simulated"],
+      "poster_gradient": [
+        "#2a2018",
+        "#121018"
+      ],
+      "tags": [
+        "WW2",
+        "Dunkirk",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: no historical pause — canal country, attrition, and tempo risk, all labeled 🧪."
+      "blurb": "Counterfactual branch: no historical pause \u2014 canal country, attrition, and tempo risk, all labeled \ud83e\uddea."
     },
     {
       "id": "ELO-004-historical",
       "scenario_id": "ELO-004",
       "choice_id": "historical",
       "title": "Rubicon: the crossing",
-      "subtitle": "49 BC — civil war becomes open",
+      "subtitle": "49 BC \u2014 civil war becomes open",
       "era": "49 BC",
       "runtime_label": "~4 min draft",
       "file": "ELO-004-historical/ELO-004-historical.mp4",
-      "poster_gradient": ["#1a1814", "#0f1115"],
-      "tags": ["Rome", "Caesar", "documented"],
+      "poster_gradient": [
+        "#1a1814",
+        "#0f1115"
+      ],
+      "tags": [
+        "Rome",
+        "Caesar",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: Caesar crosses with the army; the Republic's crisis becomes civil war."
@@ -215,27 +287,40 @@
       "scenario_id": "ELO-004",
       "choice_id": "stand_down",
       "title": "SPECULATION: Caesar stands down",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "49 BC",
       "runtime_label": "~4 min draft",
       "file": "ELO-004-stand_down/ELO-004-stand_down.mp4",
-      "poster_gradient": ["#241c18", "#121018"],
-      "tags": ["Rome", "simulated"],
+      "poster_gradient": [
+        "#241c18",
+        "#121018"
+      ],
+      "tags": [
+        "Rome",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: no armed crossing — courts, enemies, and veterans without a war, all labeled 🧪."
+      "blurb": "Counterfactual branch: no armed crossing \u2014 courts, enemies, and veterans without a war, all labeled \ud83e\uddea."
     },
     {
       "id": "ELO-005-historical",
       "scenario_id": "ELO-005",
       "choice_id": "historical",
       "title": "July 1914: the blank cheque",
-      "subtitle": "Berlin underwrites Vienna — the cascade begins",
+      "subtitle": "Berlin underwrites Vienna \u2014 the cascade begins",
       "era": "1914",
       "runtime_label": "~4 min draft",
       "file": "ELO-005-historical/ELO-005-historical.mp4",
-      "poster_gradient": ["#1a1c18", "#0f1115"],
-      "tags": ["WW1", "July Crisis", "documented"],
+      "poster_gradient": [
+        "#1a1c18",
+        "#0f1115"
+      ],
+      "tags": [
+        "WW1",
+        "July Crisis",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: strong German support for a hard Austrian course after Sarajevo."
@@ -245,15 +330,21 @@
       "scenario_id": "ELO-005",
       "choice_id": "restrain",
       "title": "SPECULATION: Berlin restrains Vienna",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "1914",
       "runtime_label": "~4 min draft",
       "file": "ELO-005-restrain/ELO-005-restrain.mp4",
-      "poster_gradient": ["#221c18", "#121018"],
-      "tags": ["WW1", "simulated"],
+      "poster_gradient": [
+        "#221c18",
+        "#121018"
+      ],
+      "tags": [
+        "WW1",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: condition support on diplomacy first — tempo risk, not a guaranteed peace, labeled 🧪."
+      "blurb": "Counterfactual branch: condition support on diplomacy first \u2014 tempo risk, not a guaranteed peace, labeled \ud83e\uddea."
     },
     {
       "id": "ELO-006-historical",
@@ -264,8 +355,15 @@
       "era": "1948",
       "runtime_label": "~4 min draft",
       "file": "ELO-006-historical/ELO-006-historical.mp4",
-      "poster_gradient": ["#141a22", "#0f1115"],
-      "tags": ["Cold War", "Berlin", "documented"],
+      "poster_gradient": [
+        "#141a22",
+        "#0f1115"
+      ],
+      "tags": [
+        "Cold War",
+        "Berlin",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: sustain West Berlin by air rather than drive armored corridors through a Soviet blockade."
@@ -275,15 +373,21 @@
       "scenario_id": "ELO-006",
       "choice_id": "force_corridors",
       "title": "SPECULATION: Force the land corridors",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "1948",
       "runtime_label": "~4 min draft",
       "file": "ELO-006-force_corridors/ELO-006-force_corridors.mp4",
-      "poster_gradient": ["#1c1820", "#121018"],
-      "tags": ["Cold War", "simulated"],
+      "poster_gradient": [
+        "#1c1820",
+        "#121018"
+      ],
+      "tags": [
+        "Cold War",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: reopen the roads under arms — escalation risk vs logistics patience, labeled 🧪."
+      "blurb": "Counterfactual branch: reopen the roads under arms \u2014 escalation risk vs logistics patience, labeled \ud83e\uddea."
     },
     {
       "id": "ELO-008-historical",
@@ -294,8 +398,15 @@
       "era": "1944",
       "runtime_label": "~4 min draft",
       "file": "ELO-008-historical/ELO-008-historical.mp4",
-      "poster_gradient": ["#121820", "#0f1115"],
-      "tags": ["WW2", "D-Day", "documented"],
+      "poster_gradient": [
+        "#121820",
+        "#0f1115"
+      ],
+      "tags": [
+        "WW2",
+        "D-Day",
+        "documented"
+      ],
       "speculation": "documented",
       "featured": true,
       "blurb": "Documented baseline: after a brief weather hold, Eisenhower orders the Normandy invasion for 6 June 1944."
@@ -305,15 +416,88 @@
       "scenario_id": "ELO-008",
       "choice_id": "delay_longer",
       "title": "SPECULATION: Wait for cleaner weather",
-      "subtitle": "Labeled simulation — not a fact",
+      "subtitle": "Labeled simulation \u2014 not a fact",
       "era": "1944",
       "runtime_label": "~4 min draft",
       "file": "ELO-008-delay_longer/ELO-008-delay_longer.mp4",
-      "poster_gradient": ["#182028", "#121018"],
-      "tags": ["WW2", "simulated"],
+      "poster_gradient": [
+        "#182028",
+        "#121018"
+      ],
+      "tags": [
+        "WW2",
+        "simulated"
+      ],
       "speculation": "simulated",
       "featured": false,
-      "blurb": "Counterfactual branch: hold the loaded force longer — weather quality vs secrecy and fatigue, labeled 🧪."
+      "blurb": "Counterfactual branch: hold the loaded force longer \u2014 weather quality vs secrecy and fatigue, labeled \ud83e\uddea."
+    },
+    {
+      "id": "ELO-010-historical",
+      "scenario_id": "ELO-010",
+      "choice_id": "historical",
+      "title": "Bay of Pigs: the landing goes",
+      "subtitle": "April 1961 \u2014 limited air, exile brigade",
+      "era": "1961",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-010-historical/ELO-010-historical.mp4",
+      "poster_gradient": [
+        "#1a2430",
+        "#0c1016"
+      ],
+      "tags": [
+        "Cuba",
+        "Cold War",
+        "1961",
+        "documented"
+      ],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: Brigade 2506 lands with limited U.S. air support. The beachhead collapses; the political cost is public."
+    },
+    {
+      "id": "ELO-010-scrub",
+      "scenario_id": "ELO-010",
+      "choice_id": "scrub",
+      "title": "SPECULATION: Scrub before beach contact",
+      "subtitle": "Call off the landing \u2014 different bill",
+      "era": "1961",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-010-scrub/ELO-010-scrub.mp4",
+      "poster_gradient": [
+        "#241c18",
+        "#0e1014"
+      ],
+      "tags": [
+        "Cuba",
+        "Cold War",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "Counterfactual branch: cancel after final doubts. \ud83e\uddea Simulated \u2014 exposure without combat vs combat without deniability."
+    },
+    {
+      "id": "ELO-010-dense_air",
+      "scenario_id": "ELO-010",
+      "choice_id": "dense_air",
+      "title": "DRAMATIZED: Denser air cover",
+      "subtitle": "More sorties, thinner cover story",
+      "era": "1961",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-010-dense_air/ELO-010-dense_air.mp4",
+      "poster_gradient": [
+        "#1e2830",
+        "#0a0e12"
+      ],
+      "tags": [
+        "Cuba",
+        "Cold War",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "Dramatized process: heavier air support. Not a guaranteed victory \u2014 a louder American fingerprint."
     }
   ]
 }

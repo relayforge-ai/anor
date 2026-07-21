@@ -111,6 +111,7 @@ class TestSanitizePublicError(unittest.TestCase):
                             "historical",
                             use_llm=False,
                             owner_key="t",
+                            force=True,  # avoid disk cache short-circuit
                         )
                         import time
 

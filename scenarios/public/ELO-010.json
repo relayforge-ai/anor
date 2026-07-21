@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-010",
+  "title": "Bay of Pigs — scrub, proceed, or denser air?",
+  "era": "1961",
+  "location": "White House / CIA planning / Cuban south coast",
+  "datetime": "April 1961, final go/no-go for the Brigade 2506 landing",
+  "domain": "Cold War / covert action / presidential crisis",
+  "known_outcome": "The United States proceeds with a limited-support landing of Cuban exile Brigade 2506 at the Bay of Pigs. Castro’s forces defeat the brigade within days. The fiasco hardens Cuban–Soviet ties and becomes a defining early crisis for the Kennedy administration.",
+  "decision_question": "With an exile brigade already committed and deniability thin, does the President scrub the landing, proceed with limited air support as planned, or authorize denser air cover that risks the cover story?",
+  "opening": {
+    "cold_open": "Boats and men are already in motion. Maps of a swampy beach on Cuba’s south coast sit under White House lamps. The plan was supposed to look Cuban. It is starting to look American. Every hour of delay burns surprise; every hour of action burns deniability.",
+    "what_they_knew": "They knew Castro’s forces were stronger and more alert than the optimistic briefings claimed. They knew a landing without substantial air cover was a gamble. They knew calling it off after training and sailing would leak. They did not know how quickly the beachhead would collapse if local uprising failed to appear.",
+    "pressure": "Cold War prestige. Domestic politics after the 1960 campaign. Alliance optics in Latin America. The thin membrane between ‘plausible deniability’ and open intervention."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Proceed — limited air, exile landing as planned",
+      "is_historical": true,
+      "summary": "Documented path: the landing goes ahead with constrained U.S. air support and a cover story that frays under fire. The brigade is defeated; the political cost is public.",
+      "immediate": "Landings begin. Air strikes are limited and contested. Castro’s armor and militia close. Radio appeals for uprising meet silence.",
+      "near_term": "The beachhead collapses. Prisoners, dead, and a diplomatic storm. Kennedy owns the failure in public.",
+      "longer_arc": "The episode becomes a cautionary case for covert action under half-measures. It also feeds later crisis psychology in 1962 — a scar the administration carries into EXCOMM.",
+      "speculation_level": "documented",
+      "image_prompt": "1961 Cuban coast landing craft at dawn, swampy shoreline, restrained documentary still photograph, film grain, no text, no gore, period uniforms",
+      "vo_script": "April 1961. An exile brigade is already at sea. The question is not only whether the plan works — it is whether the United States will own the fire it lights. History records the landing with limited air support, and a defeat measured in days."
+    },
+    {
+      "id": "scrub",
+      "label": "Scrub — call off the landing before beach contact",
+      "is_historical": false,
+      "summary": "SPECULATION: The President cancels the operation after final doubts, accepting leaks and political cost rather than a contested beachhead.",
+      "immediate": "Orders reverse. Ships turn. Explaining the turn is itself a crisis.",
+      "near_term": "Castro still claims a thwarted invasion; Washington still looks involved. Credibility and morale shift without the beach battle.",
+      "longer_arc": "Simulated. We do not invent a clean diplomatic win. The honest claim is a different political bill: exposure without combat, versus combat without deniability.",
+      "speculation_level": "simulated",
+      "image_prompt": "1961 White House situation room maps of Cuba, officers and civilians under lamp light, documentary chiaroscuro still, no text, period accurate",
+      "vo_script": "What if the order is scrub? This is speculation. Calling off a brigade already in motion saves the beach — and spends political capital in a different currency. We label the branch simulated because the only honest detail is the trade, not a secret happy ending."
+    },
+    {
+      "id": "dense_air",
+      "label": "Denser air cover — more U.S. sorties, thinner cover story",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: authorize heavier air support to protect the brigade, accepting that the operation looks more openly American.",
+      "immediate": "More aircraft over the beach. More fingerprints. The military balance on the sand may shift; the political balance in the hemisphere does too.",
+      "near_term": "Either the beachhead holds longer under louder American power — or the world simply sees intervention without the half-mask. Outcomes are not a scoreboard.",
+      "longer_arc": "Dramatized emphasis on the deniability-versus-success trade, not a claim of a guaranteed victory. Explores how ‘more air’ is never free.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1961 propeller aircraft over a Cuban coastline at dawn, archival documentary painting, sepia warmth, no modern jets, no text, no explosions glorified",
+      "vo_script": "What if denser air is the first tool? More sorties can buy hours on a beach. They also burn the cover story faster. This branch is dramatized process — a study of the price of force — not a secret history of an easy win."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Bay of Pigs invasion (April 1961)",
+    "Published memoirs and secondary literature on Kennedy administration crisis decision-making",
+    "ELOSTIRION ELO-010 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses multi-agency planning into a presidential go/no-go. Counterfactual scrub and denser-air branches are labeled simulated or dramatized — not secret history.",
+    "corpus": "ELOSTIRION ELO-010 public pack"
+  },
+  "style_lock": "1961 White House and Cuban coast, Cold War documentary gravity, period aircraft and landing craft, sepia/chiaroscuro archival stills, no modern objects, no text",
+  "tags": ["alt-history", "Cold War", "Cuba", "1961", "Bay of Pigs", "decision-point"]
+}
