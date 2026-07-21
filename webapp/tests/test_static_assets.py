@@ -215,6 +215,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "filterLibraryVideos",
             "bindLibraryFilters",
             "scenariosChronological",
+            "scenariosForDiscovery",
+            "packIdsWithHostMedia",
             "videosChronological",
             "pickFeaturedOfDay",
             "Featured today",

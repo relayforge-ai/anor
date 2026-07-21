@@ -3802,3 +3802,27 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Explorers on partial hosts land on playable library media without manual filter.
+
+---
+
+## Iteration 146 — 2026-07-21
+
+### OBSERVE
+Main green after 083a402 (smart library default). Home pack grid and Studio scenario select stayed pure chronology — packs with no host MP4 mixed ahead of packs with playable cuts on partial grind fleets.
+
+### PLAN
+**One high-impact change:** `scenariosForDiscovery` — packs with on-host media first when inventory is mixed.
+
+### EXECUTE
+- `packIdsWithHostMedia` + `scenariosForDiscovery` (chrono within buckets)
+- Home scenario cards: on-host / not-on-host pills; order via discovery helper
+- Studio select + default resolveStudioScenarioId use same order (●/○ marks)
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Freemium pack discovery leads with renderable host inventory on partial fleets.

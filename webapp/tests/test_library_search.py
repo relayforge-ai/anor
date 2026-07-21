@@ -62,6 +62,11 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("applySmartLibraryDefault()", JS)
         self.assertIn('state.libraryFilter = "available"', JS)
         self.assertIn("anyPlayable && anyMissing", JS)
+        # Home/Studio pack pickers prefer packs with host media when mixed
+        self.assertIn("function scenariosForDiscovery", JS)
+        self.assertIn("function packIdsWithHostMedia", JS)
+        self.assertIn("scenariosForDiscovery(state.scenarios)", JS)
+        self.assertIn("withHost.concat(without)", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)

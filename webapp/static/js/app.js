@@ -162,14 +162,14 @@
   }
 
   function resolveStudioScenarioId(scenarioId) {
-    /** Prefer explicit route id, else last device pack, else chronological first public pack. */
+    /** Prefer explicit route id, else last device pack, else first pack with host media. */
     const packs = state.scenarios || [];
     const known = new Set(packs.map((s) => s && s.scenario_id).filter(Boolean));
     const sid = String(scenarioId || "").trim();
     if (sid && known.has(sid)) return sid;
     const last = loadLastStudioScenario();
     if (last && known.has(last)) return last;
-    const ordered = scenariosChronological(packs);
+    const ordered = scenariosForDiscovery(packs);
     return (
       (ordered[0] && ordered[0].scenario_id) ||
       (packs[0] && packs[0].scenario_id) ||
@@ -680,18 +680,23 @@
     bindVideoCards(grid);
 
     const sgrid = $("#home-scenario-grid");
-    sgrid.innerHTML = scenariosChronological(state.scenarios)
-      .map(
-        (s) => `
-      <article class="card video-card" data-scenario="${escapeHtml(s.scenario_id)}">
+    const hostPacks = packIdsWithHostMedia();
+    sgrid.innerHTML = scenariosForDiscovery(state.scenarios)
+      .map((s) => {
+        const onHost = hostPacks.has(String(s.scenario_id));
+        const hostPill = onHost
+          ? `<span class="pill pill-doc video-card-on-host" title="At least one narrated cut is on this host">on host</span>`
+          : `<span class="pill pill-warn" title="No narrated cut on this host yet — open Studio to queue">not on host</span>`;
+        return `
+      <article class="card video-card${onHost ? "" : " video-card-unavailable"}" data-scenario="${escapeHtml(s.scenario_id)}" data-available="${onHost ? "1" : "0"}">
         <div class="video-card-body" style="padding-top:1.2rem">
-          <div class="row"><span class="pill">${escapeHtml(s.era || "")}</span><span class="pill">${escapeHtml(s.scenario_id)}</span></div>
+          <div class="row"><span class="pill">${escapeHtml(s.era || "")}</span><span class="pill">${escapeHtml(s.scenario_id)}</span>${hostPill}</div>
           <h3 style="margin-top:0.5rem">${escapeHtml(s.title)}</h3>
           <p>${escapeHtml(s.decision_question)}</p>
           <div class="row" style="margin-top:0.6rem"><span class="btn btn-ghost btn-sm">Open in Studio →</span></div>
         </div>
-      </article>`
-      )
+      </article>`;
+      })
       .join("");
     sgrid.querySelectorAll("[data-scenario]").forEach((el) => {
       el.addEventListener("click", () => navigate("studio/" + el.dataset.scenario));
@@ -926,6 +931,40 @@
       if (d !== 0) return d;
       return String(a.scenario_id || "").localeCompare(String(b.scenario_id || ""));
     });
+  }
+
+  /**
+   * Scenario ids that have at least one playable catalog cut on this host.
+   * Used to rank home/Studio pack pickers on partial grind inventories.
+   */
+  function packIdsWithHostMedia() {
+    const ids = new Set();
+    const vids = (state.catalog && state.catalog.videos) || [];
+    for (const v of vids) {
+      if (v && v.available !== false && v.scenario_id) {
+        ids.add(String(v.scenario_id));
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * Public pack list for freemium discovery: chronological within each bucket,
+   * packs with on-host media first when inventory is mixed.
+   * Pure chronology when all packs have media or none do.
+   */
+  function scenariosForDiscovery(list) {
+    const ordered = scenariosChronological(list);
+    const host = packIdsWithHostMedia();
+    if (!host.size || !ordered.length) return ordered;
+    const withHost = [];
+    const without = [];
+    for (const s of ordered) {
+      if (s && host.has(String(s.scenario_id))) withHost.push(s);
+      else without.push(s);
+    }
+    if (withHost.length && without.length) return withHost.concat(without);
+    return ordered;
   }
 
   /**
@@ -1984,14 +2023,16 @@
     }
 
     const select = $("#studio-scenario");
-    const ordered = scenariosChronological(state.scenarios);
+    const hostPacks = packIdsWithHostMedia();
+    const ordered = scenariosForDiscovery(state.scenarios);
     select.innerHTML = ordered
-      .map(
-        (s) =>
-          `<option value="${escapeHtml(s.scenario_id)}" ${
-            s.scenario_id === scenarioId ? "selected" : ""
-          }>${escapeHtml(s.era || "")} · ${escapeHtml(s.scenario_id)} — ${escapeHtml(s.title)}</option>`
-      )
+      .map((s) => {
+        const onHost = hostPacks.has(String(s.scenario_id));
+        const mark = onHost ? "● " : "○ ";
+        return `<option value="${escapeHtml(s.scenario_id)}" ${
+          s.scenario_id === scenarioId ? "selected" : ""
+        }>${mark}${escapeHtml(s.era || "")} · ${escapeHtml(s.scenario_id)} — ${escapeHtml(s.title)}</option>`;
+      })
       .join("");
 
     // Skeleton while pack loads
