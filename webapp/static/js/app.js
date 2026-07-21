@@ -859,11 +859,38 @@
   function loadLibraryPrefs() {
     try {
       const raw = sessionStorage.getItem(LIBRARY_PREFS_KEY);
-      if (!raw) return;
+      if (!raw) return false;
       const p = JSON.parse(raw);
       if (p && typeof p.filter === "string") state.libraryFilter = p.filter;
       if (p && typeof p.query === "string") state.libraryQuery = p.query;
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
+   * First visit on a partial grind host: default Library to "On this host"
+   * so Explorers land on playable media instead of a wall of missing renders.
+   * Only when session has no saved prefs and inventory is mixed (some available,
+   * some not). Full-host or empty-host inventories stay on "All".
+   */
+  function applySmartLibraryDefault() {
+    try {
+      if (sessionStorage.getItem(LIBRARY_PREFS_KEY)) return false;
+    } catch (_) {
+      /* sessionStorage blocked — still allow one-shot smart default */
+    }
+    if (state.libraryFilter && state.libraryFilter !== "all") return false;
+    const vids = (state.catalog && state.catalog.videos) || [];
+    if (!vids.length) return false;
+    const anyPlayable = vids.some((v) => v && v.available !== false);
+    const anyMissing = vids.some((v) => v && v.available === false);
+    if (anyPlayable && anyMissing) {
+      state.libraryFilter = "available";
+      return true;
+    }
+    return false;
   }
 
   function libraryEmptyHtml(reason) {
@@ -3779,7 +3806,8 @@
 
     state.catalog = catalog;
     state.scenarios = scenarios;
-    loadLibraryPrefs();
+    const hadPrefs = loadLibraryPrefs();
+    if (!hadPrefs) applySmartLibraryDefault();
 
     $("#brand-name").textContent = state.catalog.brand.name;
     document.title = state.catalog.brand.name + " — " + state.catalog.brand.tagline;

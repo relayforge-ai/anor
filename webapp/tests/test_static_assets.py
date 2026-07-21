@@ -211,6 +211,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "noteRateRemaining",
             "X-RateLimit-Remaining",
             "libraryFilter",
+            "applySmartLibraryDefault",
             "filterLibraryVideos",
             "bindLibraryFilters",
             "scenariosChronological",

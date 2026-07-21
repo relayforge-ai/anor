@@ -57,6 +57,11 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("Featured today", JS)
         self.assertIn("v.available !== false", JS)
         self.assertIn("onHost.length", JS)
+        # First-visit Library defaults to "On this host" on mixed inventories
+        self.assertIn("function applySmartLibraryDefault", JS)
+        self.assertIn("applySmartLibraryDefault()", JS)
+        self.assertIn('state.libraryFilter = "available"', JS)
+        self.assertIn("anyPlayable && anyMissing", JS)
 
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)

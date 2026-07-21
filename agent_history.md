@@ -3779,3 +3779,26 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Related discovery keeps pack siblings for Studio queue and prefers playable host media for nearby topics.
+
+---
+
+## Iteration 145 — 2026-07-21
+
+### OBSERVE
+Main green after c38c4a3 (related on-host). Library still defaulted to "all" — partial grind hosts surface dozens of not-on-host cards before playable inventory.
+
+### PLAN
+**One high-impact change:** smart first-visit Library default to "On this host" when inventory is mixed.
+
+### EXECUTE
+- `applySmartLibraryDefault()` after `loadLibraryPrefs()` when no session prefs
+- Only when some available and some missing; full/empty hosts stay on All
+- Static contract needles in library + static asset tests
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Explorers on partial hosts land on playable library media without manual filter.
