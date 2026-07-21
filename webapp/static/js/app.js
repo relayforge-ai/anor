@@ -688,6 +688,11 @@
       ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
     $("#watch-studio").onclick = () => navigate("studio/" + video.scenario_id);
+    const shareBtn = $("#watch-share");
+    if (shareBtn) {
+      shareBtn.onclick = () => shareEpisode(video.id);
+      shareBtn.disabled = false;
+    }
 
     const player = $("#player");
     const gate = $("#player-gate");
@@ -1220,6 +1225,71 @@
       if (!document.execCommand("copy")) throw new Error("execCommand failed");
     } finally {
       document.body.removeChild(ta);
+    }
+  }
+
+  function episodeSharePayload(video) {
+    /** Public SPA deep-link for an episode (no secrets; share sheet / clipboard). */
+    const brand =
+      (state.catalog && state.catalog.brand && state.catalog.brand.name) ||
+      "Forked History";
+    const id = video && (video.id || video.file);
+    const url = new URL(location.href);
+    url.hash = "#/watch/" + encodeURIComponent(id || "");
+    // Drop query/hash noise from path; keep origin+path for deep links
+    const shareUrl = url.origin + url.pathname + url.search + url.hash;
+    const level = (video && video.speculation) || "unknown";
+    const label =
+      level === "documented"
+        ? "📗 Documented baseline"
+        : level === "simulated" || level === "dramatized"
+          ? "🧪 Labeled speculation"
+          : "Episode";
+    const title = `${(video && video.title) || id || "Episode"} — ${brand}`;
+    const text = [
+      label,
+      video && video.era ? String(video.era) : "",
+      (video && (video.blurb || video.subtitle)) || "",
+      "Human-gated social · ANOR / ELOSTIRION discipline",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return { title, text, url: shareUrl };
+  }
+
+  async function shareEpisode(videoId) {
+    const id = videoId || state.videoId;
+    const video =
+      state.catalog &&
+      state.catalog.videos &&
+      state.catalog.videos.find((v) => v.id === id);
+    if (!video) {
+      toast("Episode not found");
+      return;
+    }
+    const payload = episodeSharePayload(video);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({
+          title: payload.title,
+          text: payload.text,
+          url: payload.url,
+        });
+        toast("Shared");
+        return;
+      }
+    } catch (e) {
+      // User dismissed the sheet — not an error
+      if (e && (e.name === "AbortError" || e.name === "NotAllowedError")) {
+        return;
+      }
+      // Fall through to clipboard
+    }
+    try {
+      await copyTextToClipboard(payload.url);
+      toast("Episode link copied");
+    } catch (_) {
+      toast("Could not share or copy link");
     }
   }
 

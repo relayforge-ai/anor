@@ -2385,3 +2385,25 @@ Full local CI → OK
 
 ### RESULT
 Explorers browse by theme (Cold War, Cannae, …) and keep library context across in-tab navigations.
+
+---
+
+## Iteration 85 — 2026-07-21
+
+### OBSERVE
+Main green after library tags. Watch page lacked one-tap share of public deep links (distribution without auto-publish).
+
+### PLAN
+**One high-impact change:** Share episode via Web Share API + clipboard fallback; labeled speculation in share text.
+
+### EXECUTE
+- `episodeSharePayload` / `shareEpisode`; `#watch-share` button
+- Tests: `test_share_episode`; CI module list
+
+### TEST
+```
+Full local CI → OK
+```
+
+### RESULT
+Explorers can share episode URLs with 📗/🧪 labels; social draft publish remains human-gated.
