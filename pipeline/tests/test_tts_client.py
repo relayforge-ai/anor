@@ -219,6 +219,8 @@ class TestHealthTts(unittest.TestCase):
         self.assertIn("tts_fallback_mock", h)
         self.assertIn("tts_cache", h)
         self.assertIn("tts_cache_max_mb", h)
+        self.assertIn("tts_cache_files", h)
+        self.assertIn("tts_cache_used_mb", h)
 
 
 if __name__ == "__main__":

@@ -3169,3 +3169,26 @@ Full local CI → 301 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Full cost ladder (still / TTS / clip) has disk budgets so long grind + real Comfy stills cannot fill the host unbounded.
+
+---
+
+## Iteration 119 — 2026-07-21
+
+### OBSERVE
+Main green after 3f08272 (still/TTS/clip soft caps). Health reported max_mb budgets but not live usage — ops could not see how full cost-ladder caches were vs budget without shell access.
+
+### PLAN
+**One high-impact change:** report still/TTS/clip cache file counts + used MB on pipeline health (detail path only via existing privacy gate).
+
+### EXECUTE
+- `media_cache_dir_usage` helper (public-safe files/bytes, no paths)
+- healthcheck: `*_cache_files` + `*_cache_used_mb` for still, tts, clip
+- Unit tests for usage helper + health keys; privacy tests still slim by default
+
+### TEST
+```
+Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Operators see cost-ladder disk usage vs soft caps on detailed health without path leaks or public recon expansion.

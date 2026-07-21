@@ -56,6 +56,39 @@ def _cache_max_bytes(env_name: str, default_mb: int) -> int:
     return mb * 1024 * 1024
 
 
+def media_cache_dir_usage(
+    root: Path,
+    *,
+    suffixes: tuple[str, ...],
+) -> dict[str, int]:
+    """Count files + total bytes for cache entries matching ``suffixes``.
+
+    Public-safe only (no host paths). Missing dirs → zeros.
+    """
+    out = {"files": 0, "bytes": 0}
+    root = Path(root)
+    try:
+        if not root.is_dir():
+            return out
+        n = 0
+        total = 0
+        for p in root.iterdir():
+            try:
+                if not p.is_file():
+                    continue
+                if p.suffix.lower() not in suffixes:
+                    continue
+                total += int(p.stat().st_size)
+                n += 1
+            except OSError:
+                continue
+        out["files"] = n
+        out["bytes"] = total
+    except OSError:
+        pass
+    return out
+
+
 def prune_media_cache_dir(
     root: Path,
     *,
@@ -112,6 +145,16 @@ def prune_media_cache_dir(
         "bytes_before": empty["bytes_before"],
         "bytes_after": max(0, total),
     }
+
+
+def _mb_from_bytes(n: int) -> float:
+    """Whole or one-decimal MB for ops dashboards (never fractional for tiny)."""
+    if n <= 0:
+        return 0.0
+    mb = n / (1024 * 1024)
+    if mb < 0.1:
+        return round(mb, 3)
+    return round(mb, 1)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -1128,9 +1171,18 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
     img = ImageClient(cfg)
     tts = TTSClient(cfg)
     still_w, still_h = ImageClient.still_size()
+    still_max_b = ImageClient.still_cache_max_bytes()
+    tts_max_b = TTSClient.tts_cache_max_bytes()
+    still_usage = media_cache_dir_usage(
+        ImageClient.still_cache_dir(), suffixes=(".png",)
+    )
+    tts_usage = media_cache_dir_usage(
+        TTSClient.tts_cache_dir(), suffixes=_TTS_CACHE_AUDIO_SUFFIXES
+    )
     # Lazy import keeps clients import light for pure unit tests
     try:
         from .video_pipeline import (
+            clip_cache_dir,
             clip_cache_enabled,
             clip_cache_max_bytes,
             ken_burns_quality_fingerprint,
@@ -1141,11 +1193,13 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
         clip_cache_on = clip_cache_enabled()
         kb_quality = ken_burns_quality_fingerprint()
         clip_max_b = clip_cache_max_bytes()
+        clip_usage = media_cache_dir_usage(clip_cache_dir(), suffixes=(".mp4",))
     except Exception:
         frame_w, frame_h = 1920, 1080
         clip_cache_on = True
         kb_quality = None
         clip_max_b = 512 * 1024 * 1024
+        clip_usage = {"files": 0, "bytes": 0}
     return {
         "config": cfg.describe(),
         "llm": "ready" if (cfg.llm_url and not cfg.mock_media) else "offline/mock",
@@ -1163,25 +1217,27 @@ def healthcheck(cfg: PipelineConfig) -> dict[str, Any]:
             backend=img._backend()
         ),
         "still_cache_max_mb": (
-            int(ImageClient.still_cache_max_bytes() // (1024 * 1024))
-            if ImageClient.still_cache_max_bytes() > 0
-            else 0
+            int(still_max_b // (1024 * 1024)) if still_max_b > 0 else 0
         ),
+        "still_cache_files": int(still_usage["files"]),
+        "still_cache_used_mb": _mb_from_bytes(int(still_usage["bytes"])),
         "video_frame_size": [frame_w, frame_h],
         "clip_cache": clip_cache_on,
         # Soft disk budget (MB); 0 = unlimited — ops-safe, no host paths
         "clip_cache_max_mb": (
             int(clip_max_b // (1024 * 1024)) if clip_max_b > 0 else 0
         ),
+        "clip_cache_files": int(clip_usage["files"]),
+        "clip_cache_used_mb": _mb_from_bytes(int(clip_usage["bytes"])),
         "ken_burns_quality": kb_quality,
         "tts": "ready" if (cfg.tts_url and not cfg.mock_media) else "system/mock",
         "tts_backend": tts._backend(),
         "tts_fallback_mock": TTSClient.mock_fallback_enabled(),
         "tts_cache": TTSClient.tts_cache_enabled(backend=tts._backend()),
         "tts_cache_max_mb": (
-            int(TTSClient.tts_cache_max_bytes() // (1024 * 1024))
-            if TTSClient.tts_cache_max_bytes() > 0
-            else 0
+            int(tts_max_b // (1024 * 1024)) if tts_max_b > 0 else 0
         ),
+        "tts_cache_files": int(tts_usage["files"]),
+        "tts_cache_used_mb": _mb_from_bytes(int(tts_usage["bytes"])),
         "http_retry": http_retry_config(),
     }

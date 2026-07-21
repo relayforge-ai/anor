@@ -177,8 +177,16 @@ class TestHealthImageBackend(unittest.TestCase):
         self.assertGreaterEqual(h["clip_cache_max_mb"], 0)
         self.assertIn("still_cache_max_mb", h)
         self.assertIsInstance(h["still_cache_max_mb"], int)
+        self.assertIn("still_cache_files", h)
+        self.assertIn("still_cache_used_mb", h)
+        self.assertIsInstance(h["still_cache_files"], int)
+        self.assertGreaterEqual(h["still_cache_files"], 0)
         self.assertIn("tts_cache_max_mb", h)
         self.assertIsInstance(h["tts_cache_max_mb"], int)
+        self.assertIn("tts_cache_files", h)
+        self.assertIn("tts_cache_used_mb", h)
+        self.assertIn("clip_cache_files", h)
+        self.assertIn("clip_cache_used_mb", h)
         self.assertIn("ken_burns_quality", h)
         self.assertIsInstance(h["ken_burns_quality"], str)
         self.assertIn("fps", h["ken_burns_quality"])
@@ -262,6 +270,20 @@ class TestStillCache(unittest.TestCase):
                     os.environ.pop(k, None)
                 else:
                     os.environ[k] = v
+
+    def test_media_cache_dir_usage(self):
+        from pipeline.clients import media_cache_dir_usage
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "a.png").write_bytes(b"\x00" * 1000)
+            (root / "b.png").write_bytes(b"\x00" * 500)
+            (root / "skip.txt").write_text("x", encoding="utf-8")
+            u = media_cache_dir_usage(root, suffixes=(".png",))
+            self.assertEqual(u["files"], 2)
+            self.assertEqual(u["bytes"], 1500)
+            empty = media_cache_dir_usage(root / "missing", suffixes=(".png",))
+            self.assertEqual(empty, {"files": 0, "bytes": 0})
 
     def test_prune_still_cache_lru(self):
         import time
