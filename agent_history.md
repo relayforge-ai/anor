@@ -3895,3 +3895,27 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Offline CI guarantee: ANOR_MOCK_MEDIA / mock_media cannot silently talk to Dawes Comfy or remote TTS.
+
+---
+
+## Iteration 150 — 2026-07-21
+
+### OBSERVE
+Main green after dc32c48 (mock never network). Empty grind hosts still rendered a home wall of "not on host" cards; drafts README render commands stopped at ELO-012 (missing Gettysburg/Appomattox).
+
+### PLAN
+**One high-impact change:** empty-host Home CTA + complete drafts render list for ELO-014/015.
+
+### EXECUTE
+- `videosForHomeGrid` returns [] when catalog has only missing media
+- `paintHomeInventoryNote` empty-host copy + libraryEmptyHtml on home grid
+- content/drafts/README render commands for ELO-014 and ELO-015
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Fresh hosts get a Studio CTA instead of dead cards; social render cheatsheet covers Civil War packs.

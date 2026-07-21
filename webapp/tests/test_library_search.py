@@ -73,6 +73,8 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("function paintHomeInventoryNote", JS)
         self.assertIn("paintHomeInventoryNote(", JS)
         self.assertIn("with media on this host", JS)
+        self.assertIn("No narrated cuts on this host yet", JS)
+        self.assertIn("!playable.length && anyMissing", JS)
         self.assertIn('id="home-inventory-note"', HTML)
         self.assertIn(".home-inventory-note", CSS)
 

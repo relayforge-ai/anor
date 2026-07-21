@@ -182,6 +182,12 @@ python -m pipeline.cli video --scenario ELO-011 --choice limited_deal
 python -m pipeline.cli video --scenario ELO-012 --choice historical
 python -m pipeline.cli video --scenario ELO-012 --choice break_contact
 python -m pipeline.cli video --scenario ELO-012 --choice commit_early
+python -m pipeline.cli video --scenario ELO-014 --choice historical
+python -m pipeline.cli video --scenario ELO-014 --choice refuse_charge
+python -m pipeline.cli video --scenario ELO-014 --choice wide_turn
+python -m pipeline.cli video --scenario ELO-015 --choice historical
+python -m pipeline.cli video --scenario ELO-015 --choice harsher_terms
+python -m pipeline.cli video --scenario ELO-015 --choice delay_for_orders
 ```
 
 

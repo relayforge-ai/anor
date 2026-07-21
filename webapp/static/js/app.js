@@ -679,10 +679,17 @@
     const allHome = state.catalog.videos || [];
     const homeVids = videosForHomeGrid(allHome);
     paintHomeInventoryNote(allHome, homeVids);
-    grid.innerHTML = libraryGridHtml(homeVids, {
-      groupByEra: true,
-    });
-    bindVideoCards(grid);
+    if (!homeVids.length && allHome.length) {
+      // Empty grind host: CTA instead of a wall of "not on host" cards
+      grid.innerHTML = libraryEmptyHtml(
+        "No narrated MP4s on this host yet. Open Studio, pick a public pack branch, and queue a video render (mock media is fine offline)."
+      );
+    } else {
+      grid.innerHTML = libraryGridHtml(homeVids, {
+        groupByEra: true,
+      });
+      bindVideoCards(grid);
+    }
 
     const sgrid = $("#home-scenario-grid");
     const hostPacks = packIdsWithHostMedia();
@@ -974,24 +981,26 @@
 
   /**
    * Home episode grid source list.
-   * When inventory is mixed (some on host, some missing), prefer playable cuts
-   * so the museum home wall is not a sea of "not on host" cards. Full-host and
-   * empty-host catalogs pass through unchanged.
+   * - Mixed inventory → playable host cuts only (museum order)
+   * - Empty host (all missing) → [] so callers show a Studio empty state
+   * - Full host / empty catalog → full chronological list
    */
   function videosForHomeGrid(list) {
     const all = list || [];
     if (!all.length) return [];
-    const anyPlayable = all.some((v) => v && v.available !== false);
+    const playable = all.filter((v) => v && v.available !== false);
     const anyMissing = all.some((v) => v && v.available === false);
-    const source =
-      anyPlayable && anyMissing
-        ? all.filter((v) => v && v.available !== false)
-        : all;
-    return videosChronological(source);
+    if (playable.length && anyMissing) {
+      return videosChronological(playable);
+    }
+    if (!playable.length && anyMissing) {
+      return [];
+    }
+    return videosChronological(all);
   }
 
   /**
-   * Explain when Home filters to on-host media so Explorers know the full
+   * Explain Home inventory filtering / empty host so Explorers know the full
    * catalog still lives in Library / Studio (no silent truncation).
    */
   function paintHomeInventoryNote(allVideos, homeVideos) {
@@ -999,7 +1008,10 @@
     if (!note) return;
     const total = (allVideos || []).length;
     const shown = (homeVideos || []).length;
-    if (total > 0 && shown > 0 && shown < total) {
+    if (total > 0 && shown === 0) {
+      note.hidden = false;
+      note.innerHTML = `No narrated cuts on this host yet — open <a href="#/studio">Studio</a> to queue a render, or browse every branch in the <a href="#/library">Library</a>.`;
+    } else if (total > 0 && shown > 0 && shown < total) {
       note.hidden = false;
       note.innerHTML = `Showing <strong>${shown}</strong> of ${total} cuts with media on this host. <a href="#/library">Library</a> lists every branch — open Studio to queue missing renders.`;
     } else {

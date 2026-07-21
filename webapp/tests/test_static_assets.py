@@ -220,6 +220,7 @@ class TestStaticProgressUI(unittest.TestCase):
             "videosForHomeGrid",
             "paintHomeInventoryNote",
             "home-inventory-note",
+            "No narrated cuts on this host yet",
             "videosChronological",
             "pickFeaturedOfDay",
             "Featured today",
