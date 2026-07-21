@@ -1154,6 +1154,67 @@
     return scored.slice(0, lim).map((x) => x.v);
   }
 
+  /**
+   * Prev/next cut in museum chronological order (era → pack → documented → on-host).
+   * Freemium binge path without leaving the public catalog.
+   */
+  function adjacentEpisodes(video) {
+    const list = videosChronological((state.catalog && state.catalog.videos) || []);
+    if (!video || !list.length) return { prev: null, next: null, index: -1, total: 0 };
+    const idx = list.findIndex((v) => v && v.id === video.id);
+    if (idx < 0) return { prev: null, next: null, index: -1, total: list.length };
+    return {
+      prev: idx > 0 ? list[idx - 1] : null,
+      next: idx < list.length - 1 ? list[idx + 1] : null,
+      index: idx,
+      total: list.length,
+    };
+  }
+
+  function goAdjacentEpisode(dir) {
+    if (state.route !== "watch" || !state.videoId || !state.catalog) return false;
+    const video = (state.catalog.videos || []).find((v) => v.id === state.videoId);
+    if (!video) return false;
+    const { prev, next } = adjacentEpisodes(video);
+    const target = dir < 0 ? prev : next;
+    if (!target || !target.id) {
+      toast(dir < 0 ? "Already at the earliest cut in the library" : "Already at the latest cut in the library");
+      return false;
+    }
+    navigate("watch/" + target.id);
+    return true;
+  }
+
+  function paintWatchAdjacent(video) {
+    const bar = $("#watch-adjacent");
+    if (!bar) return;
+    const { prev, next, index, total } = adjacentEpisodes(video);
+    const prevBtn = $("#watch-prev");
+    const nextBtn = $("#watch-next");
+    const pos = $("#watch-adjacent-pos");
+    if (pos) {
+      pos.textContent =
+        index >= 0 && total > 0
+          ? `${index + 1} / ${total} · chronological`
+          : "Catalog order";
+    }
+    if (prevBtn) {
+      prevBtn.disabled = !prev;
+      prevBtn.title = prev
+        ? `Previous: ${prev.title || prev.id}`
+        : "No earlier cut in chronological library";
+      prevBtn.onclick = () => goAdjacentEpisode(-1);
+    }
+    if (nextBtn) {
+      nextBtn.disabled = !next;
+      nextBtn.title = next
+        ? `Next: ${next.title || next.id}`
+        : "No later cut in chronological library";
+      nextBtn.onclick = () => goAdjacentEpisode(1);
+    }
+    bar.hidden = false;
+  }
+
   function paintWatchRelated(video) {
     const wrap = $("#watch-related");
     const grid = $("#watch-related-grid");
@@ -1193,6 +1254,7 @@
       FHFreemium.recordWatch(videoId);
     } catch (_) {}
     paintWatchRelated(video);
+    paintWatchAdjacent(video);
 
     const access = FHFreemium.videoAccess(videoId, state.catalog);
     $("#watch-title").textContent = video.title;
@@ -2094,17 +2156,30 @@
   }
 
   function bindWatchKeyboardShortcuts() {
-    /** Space/K play-pause; J/← −10s; L/→ +10s; M mute; F fullscreen — watch only. */
+    /** Space/K play; J/← L/→ seek; M mute; F full; [/] prev/next episode — watch only. */
     if (document.documentElement.dataset.watchKbd === "1") return;
     document.documentElement.dataset.watchKbd = "1";
     document.addEventListener("keydown", (e) => {
       if (state.route !== "watch") return;
       if ($("#paywall")?.classList.contains("open")) return;
-      if ($("#player-gate")?.classList.contains("open")) return;
+      // Episode nav still works when gate is open (upgrade later, keep browsing)
+      const gateOpen = !!$("#player-gate")?.classList.contains("open");
       if (document.body.classList.contains("boot-failed")) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (isEditableTarget(e.target)) return;
       const key = e.key;
+      // Prev/next episode — allow even at freemium gate so Explorers can browse on
+      if (key === "[" || key === "p" || key === "P") {
+        e.preventDefault();
+        goAdjacentEpisode(-1);
+        return;
+      }
+      if (key === "]" || key === "n" || key === "N") {
+        e.preventDefault();
+        goAdjacentEpisode(1);
+        return;
+      }
+      if (gateOpen) return;
       if (key === " " || key === "k" || key === "K") {
         e.preventDefault();
         toggleWatchPlayback();

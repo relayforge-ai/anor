@@ -3287,3 +3287,27 @@ Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Watch keyboard suite covers play, seek, mute, and fullscreen without network or freemium-gate bypass.
+
+---
+
+## Iteration 124 — 2026-07-21
+
+### OBSERVE
+Main green after b263372 (mute/fullscreen). Watch had related cards and keyboard seek but no chronological prev/next binge path — Explorers finished a cut and had to return to Library to continue the museum timeline.
+
+### PLAN
+**One high-impact change:** chronological prev/next episode navigation on watch (buttons + keys).
+
+### EXECUTE
+- `adjacentEpisodes` / `goAdjacentEpisode` / `paintWatchAdjacent` using `videosChronological`
+- `#watch-adjacent` prev/next + position label
+- Keys `[`/`p` previous, `]`/`n` next (work even when freemium gate is open)
+- CSS + static/related contract tests
+
+### TEST
+```
+Full local CI → 303 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can binge the freemium library in museum order without dumping back to the grid after each cut.

@@ -155,6 +155,12 @@ class TestStaticProgressUI(unittest.TestCase):
             'key === "ArrowLeft"',
             'key === "m"',
             'key === "f"',
+            "adjacentEpisodes",
+            "goAdjacentEpisode",
+            "paintWatchAdjacent",
+            "watch-adjacent",
+            'key === "["',
+            'key === "]"',
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
@@ -261,7 +267,11 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn("−10s", html)
         self.assertIn("mute", html)
         self.assertIn("full", html)
+        self.assertIn('id="watch-adjacent"', html)
+        self.assertIn('id="watch-prev"', html)
+        self.assertIn('id="watch-next"', html)
         self.assertIn(".player-kbd-hint", css)
+        self.assertIn(".watch-adjacent", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

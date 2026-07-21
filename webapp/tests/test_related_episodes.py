@@ -27,6 +27,17 @@ class TestRelatedEpisodes(unittest.TestCase):
     def test_css_hides_when_empty(self):
         self.assertIn(".watch-related[hidden]", CSS)
 
+    def test_adjacent_chronological_nav(self):
+        """Prev/next binge path follows museum chronological order."""
+        self.assertIn("function adjacentEpisodes", JS)
+        self.assertIn("function goAdjacentEpisode", JS)
+        self.assertIn("function paintWatchAdjacent", JS)
+        self.assertIn("videosChronological", JS)
+        self.assertIn('id="watch-adjacent"', HTML)
+        self.assertIn('id="watch-prev"', HTML)
+        self.assertIn('id="watch-next"', HTML)
+        self.assertIn(".watch-adjacent", CSS)
+
 
 if __name__ == "__main__":
     unittest.main()

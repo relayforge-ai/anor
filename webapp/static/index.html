@@ -284,8 +284,17 @@
               <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="1.25" aria-pressed="false">1.25×</button>
               <button type="button" class="btn btn-ghost btn-sm player-speed-btn" data-rate="1.5" aria-pressed="false">1.5×</button>
               <span class="player-kbd-hint note" id="player-kbd-hint">
-                Keys: <kbd>Space</kbd>/<kbd>K</kbd> play · <kbd>J</kbd>/<kbd>←</kbd> −10s · <kbd>L</kbd>/<kbd>→</kbd> +10s · <kbd>M</kbd> mute · <kbd>F</kbd> full
+                Keys: <kbd>Space</kbd>/<kbd>K</kbd> play · <kbd>J</kbd>/<kbd>←</kbd> −10s · <kbd>L</kbd>/<kbd>→</kbd> +10s · <kbd>M</kbd> mute · <kbd>F</kbd> full · <kbd>[</kbd>/<kbd>]</kbd> episode
               </span>
+            </div>
+            <div class="watch-adjacent" id="watch-adjacent" hidden>
+              <button type="button" class="btn btn-ghost btn-sm" id="watch-prev" title="Previous cut in chronological library">
+                ← Previous
+              </button>
+              <span class="note" id="watch-adjacent-pos" aria-live="polite">—</span>
+              <button type="button" class="btn btn-ghost btn-sm" id="watch-next" title="Next cut in chronological library">
+                Next →
+              </button>
             </div>
           </div>
           <aside class="card side-panel">

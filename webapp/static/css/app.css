@@ -851,6 +851,26 @@ textarea {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.04);
 }
+.watch-adjacent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.15rem 0 0.1rem;
+}
+.watch-adjacent[hidden] {
+  display: none !important;
+}
+.watch-adjacent #watch-adjacent-pos {
+  flex: 1 1 auto;
+  text-align: center;
+  min-width: 6rem;
+}
+.watch-adjacent .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .player-stage {
   overflow: hidden;
   position: relative;
