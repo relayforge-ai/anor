@@ -90,6 +90,28 @@
     });
   }
 
+  /**
+   * Cycle freemium watch playback rate (device-local).
+   * dir: -1 slower, +1 faster — wraps within PLAYBACK_RATES.
+   */
+  function cyclePlaybackRate(dir) {
+    const cur = loadPlaybackRate();
+    let idx = PLAYBACK_RATES.findIndex((r) => Math.abs(r - cur) < 0.001);
+    if (idx < 0) idx = PLAYBACK_RATES.indexOf(1);
+    if (idx < 0) idx = 1;
+    const n = PLAYBACK_RATES.length;
+    idx = ((idx + (dir < 0 ? -1 : 1)) % n + n) % n;
+    const rate = PLAYBACK_RATES[idx];
+    const applied = applyPlaybackRate($("#player"), rate);
+    savePlaybackRate(applied);
+    toast(
+      applied === 1
+        ? "Playback speed: normal"
+        : `Playback speed: ${applied}× (saved on this device)`
+    );
+    return applied;
+  }
+
   function saveActiveVideoJob(rec) {
     try {
       sessionStorage.setItem(ACTIVE_VIDEO_KEY, JSON.stringify(rec));
@@ -2704,7 +2726,7 @@
 
   function bindWatchKeyboardShortcuts() {
     /**
-     * Space/K play; J/← L/→ seek; M mute; F full; S share;
+     * Space/K play; J/← L/→ seek; ,/. speed; M mute; F full; S share;
      * [/]/p/n prev/next episode; A toggle auto-next — watch only.
      */
     if (document.documentElement.dataset.watchKbd === "1") return;
@@ -2753,6 +2775,17 @@
       if (key === " " || key === "k" || key === "K") {
         e.preventDefault();
         toggleWatchPlayback();
+        return;
+      }
+      // Cycle device playback rate (same set as speed chips)
+      if (key === "," || key === "<") {
+        e.preventDefault();
+        cyclePlaybackRate(-1);
+        return;
+      }
+      if (key === "." || key === ">") {
+        e.preventDefault();
+        cyclePlaybackRate(1);
         return;
       }
       if (key === "j" || key === "J" || key === "ArrowLeft") {

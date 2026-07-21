@@ -3965,3 +3965,27 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Watch binge keyboard surface matches behavior; auto-next is one key away for Explorers.
+
+---
+
+## Iteration 153 — 2026-07-21
+
+### OBSERVE
+Main green after 48b3364 (A auto-next). Clip cache already solid. Playback speed was chip-only — freemium binge keyboard surface lacked speed cycle.
+
+### PLAN
+**One high-impact change:** , / . (and < / >) cycle device playback rate on watch.
+
+### EXECUTE
+- `cyclePlaybackRate(dir)` wraps PLAYBACK_RATES, applies + saves + toast
+- Watch keyboard: ,/< slower · ./> faster
+- player-kbd-hint documents speed keys
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Explorers can speed binge cuts without leaving the keyboard.

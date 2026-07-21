@@ -60,10 +60,13 @@ class TestRelatedEpisodes(unittest.TestCase):
         self.assertIn('id="watch-auto-next"', HTML)
         self.assertIn(".watch-adjacent", CSS)
         self.assertIn(".watch-auto-next", CSS)
-        # Keyboard binge: A toggles auto-next; hint lists P/N and A
+        # Keyboard binge: A toggles auto-next; ,/. speed; hint lists P/N and A
         self.assertIn('key === "a"', JS)
+        self.assertIn("function cyclePlaybackRate", JS)
+        self.assertIn('key === ","', JS)
         self.assertIn("auto-next", HTML.lower())
         self.assertIn("<kbd>A</kbd> auto-next", HTML)
+        self.assertIn("<kbd>,</kbd>/<kbd>.</kbd> speed", HTML)
 
 
 if __name__ == "__main__":
