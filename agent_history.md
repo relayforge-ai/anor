@@ -2453,3 +2453,25 @@ Full local CI → 263 OK + pip-audit clean
 
 ### RESULT
 Scholars see cache vs render cost before enqueue; operators see image pipeline geometry in health detail.
+
+---
+
+## Iteration 88 — 2026-07-21
+
+### OBSERVE
+Main green. Catalog covered only ~19 of ~30 public pack choices — studio media strip and library missed counterfactual branches.
+
+### PLAN
+**One high-impact change:** complete freemium catalog coverage for every public choice + regression test.
+
+### EXECUTE
+- Added 11 missing `webapp/data/catalog.json` video rows (all packs)
+- `test_catalog_covers_every_public_pack_choice`
+
+### TEST
+```
+Full local CI → 264 OK + pip-audit clean
+```
+
+### RESULT
+Every public decision branch is listable in Library and status-aware in Studio.

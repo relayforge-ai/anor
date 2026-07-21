@@ -498,6 +498,259 @@
       "speculation": "dramatized",
       "featured": false,
       "blurb": "Dramatized process: heavier air support. Not a guaranteed victory \u2014 a louder American fingerprint."
+    },
+    {
+      "id": "ELO-001-immediate_accept",
+      "scenario_id": "ELO-001",
+      "choice_id": "immediate_accept",
+      "title": "SPECULATION: Immediate full acceptance \u2014 war orders without theater",
+      "subtitle": "Stalin's dacha \u2014 the night Barbarossa begins",
+      "era": "1941",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-001-immediate_accept/ELO-001-immediate_accept.mp4",
+      "poster_gradient": [
+        "#241818",
+        "#121018"
+      ],
+      "tags": [
+        "Barbarossa",
+        "Stalin",
+        "WW2",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: The center treats the first credible reports as full-scale war and pushes coherent defensive authorization faster."
+    },
+    {
+      "id": "ELO-001-disinformation_trap",
+      "scenario_id": "ELO-001",
+      "choice_id": "disinformation_trap",
+      "title": "SPECULATION: Double down on 'provocation' framing",
+      "subtitle": "Stalin's dacha \u2014 the night Barbarossa begins",
+      "era": "1941",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-001-disinformation_trap/ELO-001-disinformation_trap.mp4",
+      "poster_gradient": [
+        "#241818",
+        "#121018"
+      ],
+      "tags": [
+        "Barbarossa",
+        "Stalin",
+        "WW2",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: Leadership treats early reports as provocation or local excess longer than the historical record already shows."
+    },
+    {
+      "id": "ELO-003-recon",
+      "scenario_id": "ELO-003",
+      "choice_id": "recon",
+      "title": "SPECULATION: Order reconnaissance and a limited probe north",
+      "subtitle": "Hannibal after Cannae \u2014 March on Rome?",
+      "era": "216 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-003-recon/ELO-003-recon.mp4",
+      "poster_gradient": [
+        "#3a2010",
+        "#121018"
+      ],
+      "tags": [
+        "Cannae",
+        "Hannibal",
+        "Rome",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: Hannibal authorizes a fast probe \u2014 not the full army \u2014 to test Roman morale and road security toward the capital."
+    },
+    {
+      "id": "ELO-004-negotiate_delay",
+      "scenario_id": "ELO-004",
+      "choice_id": "negotiate_delay",
+      "title": "DRAMATIZED: Buy time \u2014 negotiate demobilization terms without crossing",
+      "subtitle": "Caesar at the Rubicon \u2014 cross or stand down?",
+      "era": "49 BC",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-004-negotiate_delay/ELO-004-negotiate_delay.mp4",
+      "poster_gradient": [
+        "#241c18",
+        "#121018"
+      ],
+      "tags": [
+        "Rome",
+        "Caesar",
+        "Rubicon",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: Caesar keeps the army north of the line while bargaining for a consulship, immunity, or joint stand-down with Pompey \u2014 a dramatized path of brinkmanship without the\u2026"
+    },
+    {
+      "id": "ELO-005-localize_only",
+      "scenario_id": "ELO-005",
+      "choice_id": "localize_only",
+      "title": "DRAMATIZED: Push a strictly localized Balkan war \u2014 no Russian front assumed",
+      "subtitle": "July Crisis \u2014 the blank cheque",
+      "era": "1914",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-005-localize_only/ELO-005-localize_only.mp4",
+      "poster_gradient": [
+        "#221c18",
+        "#121018"
+      ],
+      "tags": [
+        "WW1",
+        "July Crisis",
+        "1914",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: Berlin encourages a short, sharp Austrian campaign framed as local punishment while betting Russia will not fully intervene \u2014 a dramatized emphasis on the localizat\u2026"
+    },
+    {
+      "id": "ELO-006-negotiate_withdraw",
+      "scenario_id": "ELO-006",
+      "choice_id": "negotiate_withdraw",
+      "title": "DRAMATIZED: Negotiate under pressure \u2014 trade rights for relief",
+      "subtitle": "Berlin Blockade \u2014 airlift or force the corridors?",
+      "era": "1948",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-006-negotiate_withdraw/ELO-006-negotiate_withdraw.mp4",
+      "poster_gradient": [
+        "#1c1820",
+        "#121018"
+      ],
+      "tags": [
+        "Cold War",
+        "Berlin",
+        "1948",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: Seek a quicker political bargain that may concede occupation practices or currency arrangements to restore land access sooner \u2014 a dramatized emphasis on deal-making\u2026"
+    },
+    {
+      "id": "ELO-007-invasion",
+      "scenario_id": "ELO-007",
+      "choice_id": "invasion",
+      "title": "SPECULATION: Full invasion of Cuba",
+      "subtitle": "EXCOMM \u2014 quarantine or strike?",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-007-invasion/ELO-007-invasion.mp4",
+      "poster_gradient": [
+        "#2a1818",
+        "#121018"
+      ],
+      "tags": [
+        "Cuban Missile Crisis",
+        "Kennedy",
+        "Cold War",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: Couple or replace air action with a ground invasion aimed at regime change and total control of the island."
+    },
+    {
+      "id": "ELO-008-postpone_month",
+      "scenario_id": "ELO-008",
+      "choice_id": "postpone_month",
+      "title": "DRAMATIZED: Postpone to the next major tidal cycle",
+      "subtitle": "Overlord \u2014 go, delay, or hold?",
+      "era": "1944",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-008-postpone_month/ELO-008-postpone_month.mp4",
+      "poster_gradient": [
+        "#182028",
+        "#121018"
+      ],
+      "tags": [
+        "WW2",
+        "D-Day",
+        "Overlord",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: Slip the operation by weeks into the next suitable moon/tide period \u2014 a dramatized emphasis on calendar reset under coalition strain."
+    },
+    {
+      "id": "ELO-009-luftwaffe_only",
+      "scenario_id": "ELO-009",
+      "choice_id": "luftwaffe_only",
+      "title": "DRAMATIZED: Hold armor back; rely on air reduction",
+      "subtitle": "Dunkirk \u2014 the halt that bought a fleet",
+      "era": "1940",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-009-luftwaffe_only/ELO-009-luftwaffe_only.mp4",
+      "poster_gradient": [
+        "#2a2018",
+        "#121018"
+      ],
+      "tags": [
+        "Dunkirk",
+        "WW2",
+        "1940",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: Emphasize Luftwaffe destruction of the pocket and port while armor conserves strength for the drive south \u2014 a sharper version of the air-heavy impulse already prese\u2026"
+    },
+    {
+      "id": "ELO-013-surface_delay",
+      "scenario_id": "ELO-013",
+      "choice_id": "surface_delay",
+      "title": "DRAMATIZED: Delay the vote \u2014 demand another attempt to contact Moscow",
+      "subtitle": "Arkhipov on B-59 \u2014 One vote from nuclear war",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-013-surface_delay/ELO-013-surface_delay.mp4",
+      "poster_gradient": [
+        "#1a1820",
+        "#121018"
+      ],
+      "tags": [
+        "Cuban Missile Crisis",
+        "Arkhipov",
+        "nuclear",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "SPECULATION: The council stalls for a radio attempt or a further battery assessment before any launch vote finalizes."
+    },
+    {
+      "id": "ELO-013-launch",
+      "scenario_id": "ELO-013",
+      "choice_id": "launch",
+      "title": "SPECULATION: Authorize the nuclear torpedo",
+      "subtitle": "Arkhipov on B-59 \u2014 One vote from nuclear war",
+      "era": "1962",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-013-launch/ELO-013-launch.mp4",
+      "poster_gradient": [
+        "#1a1820",
+        "#121018"
+      ],
+      "tags": [
+        "Cuban Missile Crisis",
+        "Arkhipov",
+        "nuclear",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: Launch authority aligns for a nuclear torpedo shot against the American screen. This is the nightmare branch."
     }
   ]
 }

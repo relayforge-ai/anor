@@ -34,6 +34,26 @@ class TestCatalogCache(unittest.TestCase):
             self.assertIn("available", v)
             self.assertIsInstance(v["available"], bool)
 
+    def test_catalog_covers_every_public_pack_choice(self):
+        """Library/media-strip need a catalog row per public choice id."""
+        import json
+
+        cat = json.loads((ROOT / "webapp" / "data" / "catalog.json").read_text())
+        by_pack: dict[str, set[str]] = {}
+        for v in cat.get("videos") or []:
+            by_pack.setdefault(v["scenario_id"], set()).add(v["choice_id"])
+
+        public = ROOT / "scenarios" / "public"
+        for path in sorted(public.glob("ELO-*.json")):
+            pack = json.loads(path.read_text(encoding="utf-8"))
+            sid = pack["scenario_id"]
+            want = {c["id"] for c in pack.get("choices") or []}
+            have = by_pack.get(sid) or set()
+            self.assertTrue(
+                want.issubset(have),
+                f"{sid} missing catalog choices: {sorted(want - have)}",
+            )
+
     def test_second_build_skips_file_stats(self):
         server_mod.clear_catalog_cache()
         # First build populates cache
