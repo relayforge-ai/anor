@@ -936,22 +936,50 @@
   }
 
   /**
-   * One-shot toast when Library was auto-filtered to host media so Explorers
-   * know the catalog is not truncated permanently (switch to All anytime).
+   * Brief focus ring on a Library filter chip (same language as era-jump flash).
+   */
+  function pulseLibraryFilterChip(filterId) {
+    const btn = document.querySelector(
+      `#library-filters [data-lib-filter="${filterId}"]`
+    );
+    if (!btn) return;
+    btn.classList.add("library-filter-flash");
+    try {
+      btn.focus({ preventScroll: true });
+    } catch (_) {
+      try {
+        btn.focus();
+      } catch (_) {}
+    }
+    setTimeout(() => btn.classList.remove("library-filter-flash"), 1100);
+  }
+
+  /**
+   * One-shot toast + filter-chip pulse when Library was auto-filtered to host
+   * media so Explorers know the catalog is not truncated permanently.
    */
   function maybeToastSmartLibraryDefault(applied) {
     if (!applied) return;
+    let shouldNotify = true;
     try {
-      if (sessionStorage.getItem(SMART_LIB_TOAST_KEY)) return;
-      sessionStorage.setItem(SMART_LIB_TOAST_KEY, "1");
+      if (sessionStorage.getItem(SMART_LIB_TOAST_KEY)) shouldNotify = false;
+      else sessionStorage.setItem(SMART_LIB_TOAST_KEY, "1");
     } catch (_) {
-      /* still toast once this boot if storage blocked */
+      /* still notify once this boot if storage blocked */
     }
+    if (!shouldNotify) return;
+    // Pulse chip on next library paint (route may not be library yet)
+    state._pulseLibFilter = "available";
     // Defer past first paint so the toast is visible after chrome is ready
     setTimeout(() => {
       toast(
         "Library: On this host (partial inventory). Tap All to see every branch."
       );
+      // If already on library, flash immediately; else paintLibraryFilterBar will
+      if (state.route === "library") {
+        pulseLibraryFilterChip("available");
+        state._pulseLibFilter = null;
+      }
     }, 450);
   }
 
@@ -1195,6 +1223,12 @@
       btn.classList.toggle("active", on);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
     });
+    // One-shot orientation after smart "On this host" default
+    if (state._pulseLibFilter) {
+      const id = state._pulseLibFilter;
+      state._pulseLibFilter = null;
+      setTimeout(() => pulseLibraryFilterChip(id), 80);
+    }
   }
 
   function eraSectionId(era) {

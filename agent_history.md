@@ -4081,3 +4081,27 @@ Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pyt
 
 ### RESULT
 Studio forks stay authored offline under mock; deploy docs match lowest-cost ops.
+
+---
+
+## Iteration 158 — 2026-07-21
+
+### OBSERVE
+Main green after 6621a77 (LLM mock + DEPLOY cost). ELO-015 complete. Smart Library default toasted but the filter bar gave no visual orientation which chip was active.
+
+### PLAN
+**One high-impact change:** pulse the "On this host" Library filter chip when smart default applies.
+
+### EXECUTE
+- `pulseLibraryFilterChip` + `.library-filter-flash` CSS
+- `state._pulseLibFilter` deferred flash on first library paint
+- Immediate flash if already on library route
+- Static contract needles
+
+### TEST
+```
+Full local CI (unittest as ci.yml + compileall + dep_audit --pip-audit + sim pytest)
+```
+
+### RESULT
+Partial-host Library default is visible on the filter bar as well as in the toast.

@@ -221,6 +221,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "applySmartLibraryDefault",
             "maybeToastSmartLibraryDefault",
             "On this host (partial inventory)",
+            "pulseLibraryFilterChip",
+            "library-filter-flash",
             "filterLibraryVideos",
             "bindLibraryFilters",
             "scenariosChronological",

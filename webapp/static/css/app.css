@@ -825,6 +825,14 @@ textarea {
   border-radius: 6px;
   transition: outline-color 0.4s ease;
 }
+/* Smart Library default: flash active filter chip (On this host) */
+.library-filter-flash {
+  outline: 1px solid rgba(212, 168, 75, 0.65);
+  outline-offset: 3px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(212, 168, 75, 0.18);
+  transition: outline-color 0.35s ease, box-shadow 0.35s ease;
+}
 
 /* ——— Player ——— */
 .player-layout {
