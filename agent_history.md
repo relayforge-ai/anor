@@ -3050,3 +3050,26 @@ Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can jump 216 BC → 1815 → 1962 without scrubbing the full freemium catalog.
+
+---
+
+## Iteration 114 — 2026-07-21
+
+### OBSERVE
+Main green after era jump chips. Video builds recorded ladder cache hits but not deliverable size/duration — ops and Studio could not show how heavy a finished cut was without probing the filesystem.
+
+### PLAN
+**One high-impact change:** record final MP4 bytes + duration in build.json and job results; show in Studio.
+
+### EXECUTE
+- `out_mp4_bytes` / `duration_s` on meta + `VideoBuildResult`
+- Job `result.bytes` / `result.duration_s` (public-safe)
+- Studio "Deliverable: Xm Ys · Z MB" note; pipeline + static tests
+
+### TEST
+```
+Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Every render leaves auditable size/runtime metrics for cost ops and freemium Studio feedback without path leaks.

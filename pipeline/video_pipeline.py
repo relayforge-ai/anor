@@ -87,6 +87,8 @@ class VideoBuildResult:
     segments: list[dict]
     mock_media: bool
     cache: Optional[dict] = None  # still/tts/clip hit summary (public-safe ints)
+    out_mp4_bytes: Optional[int] = None
+    duration_s: Optional[float] = None
 
 
 def _ffprobe_duration(path: Path) -> float:
@@ -554,6 +556,13 @@ def render_video(
         progress("concat", 90, "Concatenating final MP4")
         _concat_clips(clips, out_mp4)
 
+        # Deliverable metrics for ops / freemium feedback (no host paths)
+        try:
+            out_bytes = int(out_mp4.stat().st_size)
+        except OSError:
+            out_bytes = 0
+        out_duration = round(float(_ffprobe_duration(out_mp4)), 2)
+
         cleaned = False
         if not _keep_work():
             progress("concat", 96, "Cleaning intermediate work files")
@@ -570,6 +579,8 @@ def render_video(
             "scenario_id": scenario_id,
             "choice_id": choice_id,
             "out_mp4": out_mp4.name,
+            "out_mp4_bytes": out_bytes,
+            "duration_s": out_duration,
             "speculation_level": fork.speculation_level,
             "is_historical": fork.is_historical,
             "provenance_ribbon": fork.provenance_ribbon,
@@ -590,6 +601,8 @@ def render_video(
             segments=seg_meta,
             mock_media=cfg.mock_media or not (cfg.image_url and cfg.tts_url),
             cache=cache_summary,
+            out_mp4_bytes=out_bytes,
+            duration_s=out_duration,
         )
     finally:
         # Failed / cancelled / timed-out renders must not leave multi-MB work trees.

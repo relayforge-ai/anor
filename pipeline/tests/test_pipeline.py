@@ -185,6 +185,14 @@ class TestVideoPipeline(unittest.TestCase):
             meta = json.loads((out / "build.json").read_text())
             self.assertEqual(meta["scenario_id"], "ELO-013")
             self.assertTrue(meta.get("work_cleaned"))
+            # Deliverable metrics for ops / freemium feedback
+            self.assertIn("out_mp4_bytes", meta)
+            self.assertGreater(int(meta["out_mp4_bytes"]), 1000)
+            self.assertEqual(meta["out_mp4_bytes"], result.out_mp4.stat().st_size)
+            self.assertIn("duration_s", meta)
+            self.assertGreater(float(meta["duration_s"]), 0)
+            self.assertIsNotNone(result.out_mp4_bytes)
+            self.assertIsNotNone(result.duration_s)
             # Cost ladder accounting (hits may be 0 under mock defaults)
             cache = meta.get("cache") or {}
             self.assertIn("still_hits", cache)

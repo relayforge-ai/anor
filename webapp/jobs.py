@@ -783,6 +783,21 @@ class VideoJobQueue:
                 "segments": len(result.segments),
                 "mock_media": result.mock_media,
             }
+            # Deliverable metrics (public-safe ints/floats only)
+            try:
+                ob = getattr(result, "out_mp4_bytes", None)
+                if ob is None and result.out_mp4 is not None:
+                    ob = int(Path(result.out_mp4).stat().st_size)
+                if ob is not None and int(ob) >= 0:
+                    payload["bytes"] = int(ob)
+            except (OSError, TypeError, ValueError):
+                pass
+            try:
+                ds = getattr(result, "duration_s", None)
+                if ds is not None and float(ds) > 0:
+                    payload["duration_s"] = round(float(ds), 2)
+            except (TypeError, ValueError):
+                pass
             if cache_pub is not None:
                 payload["cache"] = cache_pub
                 # Friendly complete message when any ladder stage was reused

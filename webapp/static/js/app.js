@@ -2145,6 +2145,22 @@
           const ladderHits = ladder
             ? (ladder.still_hits || 0) + (ladder.tts_hits || 0) + (ladder.clip_hits || 0)
             : 0;
+          const deliverableNote = (() => {
+            const bits = [];
+            const ds = st.result && st.result.duration_s;
+            const by = st.result && st.result.bytes;
+            if (typeof ds === "number" && ds > 0) {
+              bits.push(formatDuration(ds) + " runtime");
+            }
+            if (typeof by === "number" && by > 0) {
+              const mb = by / (1024 * 1024);
+              bits.push(
+                mb >= 1 ? mb.toFixed(1) + " MB" : Math.max(1, Math.round(by / 1024)) + " KB"
+              );
+            }
+            if (!bits.length) return "";
+            return `<p class="note">Deliverable: ${escapeHtml(bits.join(" · "))}.</p>`;
+          })();
           const cachedNote = wasCached
             ? `<p class="note">Served from disk cache — no new stills/TTS/ffmpeg work. Use <strong>Force re-render</strong> only when you need fresh stills/VO.</p>`
             : ladder && ladderHits > 0
@@ -2176,6 +2192,7 @@
             }) +
             `<div style="margin-top:1rem">
               <p class="note">Async job <code>${escapeHtml(jobId)}</code> finished.</p>
+              ${deliverableNote}
               ${cachedNote}
               <div class="row" style="flex-wrap:wrap;gap:0.45rem;margin-top:0.35rem">
               ${
