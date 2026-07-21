@@ -206,6 +206,33 @@
     return `${r}s`;
   }
 
+  function formatBytes(n) {
+    const b = Number(n);
+    if (!Number.isFinite(b) || b < 0) return "";
+    if (b >= 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + " MB";
+    if (b >= 1024) return Math.max(1, Math.round(b / 1024)) + " KB";
+    return Math.round(b) + " B";
+  }
+
+  /**
+   * Prefer host-measured duration/size from catalog (build.json) over the
+   * static draft estimate so freemium library/watch match actual deliverables.
+   */
+  function videoRuntimeLabel(v) {
+    if (!v) return "";
+    const ds = v.duration_s;
+    if (typeof ds === "number" && ds > 0) {
+      let label = formatDuration(ds);
+      const by = v.bytes;
+      if (typeof by === "number" && by > 0) {
+        const sz = formatBytes(by);
+        if (sz) label += " · " + sz;
+      }
+      return label;
+    }
+    return v.runtime_label || "";
+  }
+
   function jobTimeSuffix(st) {
     /** Elapsed since start + remaining wall-clock budget (when running). */
     if (!st || (st.status !== "running" && st.status !== "queued")) return "";
@@ -594,7 +621,7 @@
           <div class="note">${
             unavailable
               ? "Media missing — open Studio and queue a render"
-              : escapeHtml(v.runtime_label || "")
+              : escapeHtml(videoRuntimeLabel(v))
           }</div>
         </div>
       </article>`;
@@ -1097,6 +1124,7 @@
     const access = FHFreemium.videoAccess(videoId, state.catalog);
     $("#watch-title").textContent = video.title;
     $("#watch-sub").textContent = video.subtitle || video.blurb;
+    const runtimePill = videoRuntimeLabel(video);
     $("#watch-pills").innerHTML = `
       <span class="pill">${escapeHtml(video.era)}</span>
       ${
@@ -1104,7 +1132,11 @@
           ? `<span class="pill pill-doc">documented</span>`
           : `<span class="pill pill-sim">${escapeHtml(video.speculation)}</span>`
       }
-      <span class="pill">${escapeHtml(video.runtime_label || "")}</span>
+      ${
+        runtimePill
+          ? `<span class="pill">${escapeHtml(runtimePill)}</span>`
+          : ""
+      }
       ${video.available === false ? `<span class="pill pill-warn">unavailable</span>` : ""}`;
     $("#watch-blurb").textContent = video.blurb;
     $("#watch-studio").onclick = () => navigate("studio/" + video.scenario_id);
@@ -2153,10 +2185,8 @@
               bits.push(formatDuration(ds) + " runtime");
             }
             if (typeof by === "number" && by > 0) {
-              const mb = by / (1024 * 1024);
-              bits.push(
-                mb >= 1 ? mb.toFixed(1) + " MB" : Math.max(1, Math.round(by / 1024)) + " KB"
-              );
+              const sz = formatBytes(by);
+              if (sz) bits.push(sz);
             }
             if (!bits.length) return "";
             return `<p class="note">Deliverable: ${escapeHtml(bits.join(" · "))}.</p>`;

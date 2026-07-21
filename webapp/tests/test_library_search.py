@@ -78,6 +78,17 @@ class TestLibrarySearchSurface(unittest.TestCase):
     def test_video_tags_click_to_search(self):
         self.assertIn("videoCardTagsHtml", JS)
         self.assertIn("data-lib-tag", JS)
+
+    def test_measured_runtime_prefers_host_metrics(self):
+        """Library/watch use duration_s/bytes from catalog when media is on host."""
+        self.assertIn("function videoRuntimeLabel", JS)
+        self.assertIn("function formatBytes", JS)
+        self.assertIn("v.duration_s", JS)
+        self.assertIn("v.bytes", JS)
+        self.assertIn("videoRuntimeLabel(v)", JS)
+        self.assertIn("videoRuntimeLabel(video)", JS)
+        # Falls back to authored estimate when no measured duration
+        self.assertIn("runtime_label", JS)
         self.assertIn("applyLibraryTagSearch", JS)
         self.assertIn("fh:libraryPrefs", JS)
         self.assertIn("saveLibraryPrefs", JS)

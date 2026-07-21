@@ -3097,3 +3097,27 @@ Full local CI → 294 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Cache-hit Studio jobs and freemium catalog rows now surface deliverable size/runtime without re-rendering or path leaks.
+
+---
+
+## Iteration 116 — 2026-07-21
+
+### OBSERVE
+Main green after 682f80a (catalog + disk-cache job metrics). Library cards and watch still showed static `runtime_label` ("~4 min draft") even when host `duration_s` / `bytes` were on the catalog payload — freemium Explorers could not see actual deliverable cost/size at browse time.
+
+### PLAN
+**One high-impact change:** prefer host-measured duration/size on library and watch surfaces.
+
+### EXECUTE
+- `videoRuntimeLabel(v)` + `formatBytes` in app.js
+- Library cards + watch pills use measured metrics when present; fall back to authored `runtime_label`
+- Studio deliverable note reuses `formatBytes`
+- Static + library search contract tests
+
+### TEST
+```
+Full local CI → 295 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Freemium library/watch show real runtime and size for on-host cuts instead of stale draft estimates.
