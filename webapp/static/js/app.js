@@ -1982,6 +1982,77 @@
     });
   }
 
+  /**
+   * Seek the watch player by delta seconds, clamped to media bounds and
+   * Explorer preview ceiling when active (never unlocks paywalled remainder).
+   */
+  function seekWatchPlayer(deltaSec) {
+    const player = $("#player");
+    if (!player || !player.getAttribute("src")) return false;
+    const dur = player.duration;
+    if (!Number.isFinite(dur) || dur <= 0) return false;
+    let t = (Number.isFinite(player.currentTime) ? player.currentTime : 0) + Number(deltaSec || 0);
+    t = Math.max(0, Math.min(dur - 0.05, t));
+    if (previewCeiling != null && Number.isFinite(previewCeiling)) {
+      const cap = Math.max(0, previewCeiling - 0.05);
+      if (t > cap) {
+        t = cap;
+        try {
+          if (!$("#player-gate")?.classList.contains("open")) {
+            toast("Explorer preview limit — upgrade for the full cut");
+          }
+        } catch (_) {}
+      }
+    }
+    try {
+      player.currentTime = t;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function toggleWatchPlayback() {
+    const player = $("#player");
+    if (!player || !player.getAttribute("src")) return false;
+    if (player.paused) {
+      const p = player.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    } else {
+      player.pause();
+    }
+    return true;
+  }
+
+  function bindWatchKeyboardShortcuts() {
+    /** Space/K play-pause; J/← −10s; L/→ +10s — freemium watch only. */
+    if (document.documentElement.dataset.watchKbd === "1") return;
+    document.documentElement.dataset.watchKbd = "1";
+    document.addEventListener("keydown", (e) => {
+      if (state.route !== "watch") return;
+      if ($("#paywall")?.classList.contains("open")) return;
+      if ($("#player-gate")?.classList.contains("open")) return;
+      if (document.body.classList.contains("boot-failed")) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isEditableTarget(e.target)) return;
+      const key = e.key;
+      if (key === " " || key === "k" || key === "K") {
+        e.preventDefault();
+        toggleWatchPlayback();
+        return;
+      }
+      if (key === "j" || key === "J" || key === "ArrowLeft") {
+        e.preventDefault();
+        seekWatchPlayer(-10);
+        return;
+      }
+      if (key === "l" || key === "L" || key === "ArrowRight") {
+        e.preventDefault();
+        seekWatchPlayer(10);
+      }
+    });
+  }
+
   async function runFork({ useLlm }) {
     if (!state.scenarioId || !state.choiceId) {
       toast("Select a scenario and a decision first.");
@@ -3141,6 +3212,7 @@
       if (c && !c.disabled) c.click();
     });
     bindStudioKeyboardShortcuts();
+    bindWatchKeyboardShortcuts();
 
     // player gate buttons
     $("#gate-upgrade")?.addEventListener("click", () => navigate("pricing"));

@@ -3239,3 +3239,27 @@ Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers can skim or slow documentary cuts with a preference that sticks on-device and never hits the network.
+
+---
+
+## Iteration 122 — 2026-07-21
+
+### OBSERVE
+Main green after 79d8215 (playback speed). Watch still relied on native browser chrome for seek/play — inconsistent across mobile/desktop, and J/K-style skimming was missing for documentary VO.
+
+### PLAN
+**One high-impact change:** watch keyboard shortcuts with Explorer preview ceiling respect.
+
+### EXECUTE
+- `seekWatchPlayer` / `toggleWatchPlayback` / `bindWatchKeyboardShortcuts`
+- Space/K play-pause; J/← −10s; L/→ +10s (no capture in inputs; disabled when gate/paywall open)
+- Forward seek clamps to freemium preview ceiling + toast
+- `#player-kbd-hint` + CSS; static contract tests
+
+### TEST
+```
+Full local CI → 302 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can keyboard-skim narrated cuts without bypassing the freemium preview gate.

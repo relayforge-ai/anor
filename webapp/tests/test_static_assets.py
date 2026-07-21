@@ -143,6 +143,12 @@ class TestStaticProgressUI(unittest.TestCase):
             "applyPlaybackRate",
             "bindPlayerSpeedControls",
             "playbackRate",
+            "bindWatchKeyboardShortcuts",
+            "seekWatchPlayer",
+            "toggleWatchPlayback",
+            "previewCeiling",
+            'key === "j"',
+            'key === "ArrowLeft"',
             "Resume ${pct}%",
             "Resumed where you left off",
             "formatForkMarkdown",
@@ -245,6 +251,9 @@ class TestStaticProgressUI(unittest.TestCase):
         self.assertIn('id="player-speed"', html)
         self.assertIn('data-rate="1.25"', html)
         self.assertIn("Playback speed", html)
+        self.assertIn('id="player-kbd-hint"', html)
+        self.assertIn("−10s", html)
+        self.assertIn(".player-kbd-hint", css)
 
     def test_index_fork_region_live(self):
         html = (STATIC / "index.html").read_text(encoding="utf-8")

@@ -836,6 +836,21 @@ textarea {
   color: var(--gold);
   background: rgba(212, 179, 90, 0.1);
 }
+.player-kbd-hint {
+  margin-left: 0.35rem;
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+.player-kbd-hint kbd {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  padding: 0.08rem 0.28rem;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
 .player-stage {
   overflow: hidden;
   position: relative;
