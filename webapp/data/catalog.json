@@ -885,6 +885,73 @@
       "speculation": "dramatized",
       "featured": false,
       "blurb": "DRAMATIZED process: spend the elite reserve earlier — different risks arrive first; not a secret winning hour."
+    },
+    {
+      "id": "ELO-014-historical",
+      "scenario_id": "ELO-014",
+      "choice_id": "historical",
+      "title": "Gettysburg 1863: the charge on Cemetery Ridge",
+      "subtitle": "Documented center assault — 3 July",
+      "era": "1863",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-014-historical/ELO-014-historical.mp4",
+      "poster_gradient": [
+        "#2a2218",
+        "#101418"
+      ],
+      "tags": [
+        "Gettysburg",
+        "1863",
+        "Civil War",
+        "documented"
+      ],
+      "speculation": "documented",
+      "featured": true,
+      "blurb": "Documented baseline: Lee orders a massed assault on the Union center; the attack fails and the campaign’s decision is written under fire."
+    },
+    {
+      "id": "ELO-014-refuse_charge",
+      "scenario_id": "ELO-014",
+      "choice_id": "refuse_charge",
+      "title": "SPECULATION: Refuse the frontal assault",
+      "subtitle": "Labeled simulation — not a fact",
+      "era": "1863",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-014-refuse_charge/ELO-014-refuse_charge.mp4",
+      "poster_gradient": [
+        "#322818",
+        "#141018"
+      ],
+      "tags": [
+        "Gettysburg",
+        "1863",
+        "simulated"
+      ],
+      "speculation": "simulated",
+      "featured": false,
+      "blurb": "SPECULATION: decline the center punch and conserve the corps. No clean extrication or secret victory guaranteed."
+    },
+    {
+      "id": "ELO-014-wide_turn",
+      "scenario_id": "ELO-014",
+      "choice_id": "wide_turn",
+      "title": "DRAMATIZED: Wide turning movement",
+      "subtitle": "Axis choice under incomplete information",
+      "era": "1863",
+      "runtime_label": "~4 min draft",
+      "file": "ELO-014-wide_turn/ELO-014-wide_turn.mp4",
+      "poster_gradient": [
+        "#3a2818",
+        "#101210"
+      ],
+      "tags": [
+        "Gettysburg",
+        "1863",
+        "dramatized"
+      ],
+      "speculation": "dramatized",
+      "featured": false,
+      "blurb": "DRAMATIZED process: seek a flank rather than a center rupture — different risks first; not a secret winning road."
     }
   ]
 }

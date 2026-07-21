@@ -44,6 +44,7 @@ python3 -m pipeline.cli site --port 8787
 | ELO-008 | Overlord D-Day go/no-go | 1944 | Weather window: go or delay? |
 | ELO-006 | Berlin Blockade airlift | 1948 | Airlift vs force corridors? |
 | ELO-012 | Waterloo 1815 Guard decision | 1815 | Commit late, break contact, or earlier Guard? |
+| ELO-014 | Gettysburg 1863 Pickett’s Charge | 1863 | Order center assault, refuse, or turn wide? |
 | ELO-011 | Munich 1938 Sudeten crisis | 1938 | Stand firm, settle, or limited deal? |
 | ELO-010 | Bay of Pigs go/no-go | 1961 | Scrub, proceed, or denser air? |
 | ELO-007 | EXCOMM quarantine | 1962 | Quarantine vs strike? |
@@ -114,6 +115,7 @@ anor/
 | `content/drafts/batch-009/` | Gap fill (ELO-001/003/013 cuts) | DRAFT |
 | `content/drafts/batch-010/` | Munich 1938 (ELO-011) | DRAFT |
 | `content/drafts/batch-011/` | Waterloo 1815 (ELO-012) | DRAFT |
+| `content/drafts/batch-012/` | Gettysburg 1863 (ELO-014) | DRAFT |
 
 Each batch has markdown captions + `postiz-drafts.json` with `status: "draft"` and placeholder integration IDs. **Agents must not publish.**
 

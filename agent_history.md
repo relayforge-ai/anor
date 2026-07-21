@@ -3405,3 +3405,26 @@ Full local CI → 305 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Watch matches Studio’s host-deliverable affordance for on-host cuts without path leaks or auto-publish.
+
+---
+
+## Iteration 129 — 2026-07-21
+
+### OBSERVE
+Main green after 8bd433c. Freemium surface and cost ladder were solid; public catalog still lacked a US Civil War decision point (eras jumped 1815 → 1914). Social drafts and freemium library need matching pack coverage for monetizable expansion.
+
+### PLAN
+**One high-impact change:** ship public pack ELO-014 (Gettysburg 1863) end-to-end with catalog + human-gate drafts.
+
+### EXECUTE
+- `scenarios/public/ELO-014.json` — historical / refuse_charge / wide_turn (labeled)
+- Catalog rows (3), `batch-012` drafts + postiz skeleton, README/PIPELINE tables
+- Social draft regression tests for batch-012
+
+### TEST
+```
+Full local CI → 307 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Public library gains a labeled Gettysburg decision point with draft-only social captions; no MANDOS, no auto-publish.

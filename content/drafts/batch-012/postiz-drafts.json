@@ -1,0 +1,83 @@
+{
+  "_comment": "Human-gate drafts for Postiz. status must remain draft. NEVER auto-publish.",
+  "human_gate": true,
+  "status": "draft",
+  "batch": "batch-012",
+  "created": "2026-07-21",
+  "theme": "Gettysburg 1863 Pickett’s Charge decision (ELO-014)",
+  "needs_ryan": [
+    "Connect TikTok/YouTube in Postiz",
+    "Replace INTEGRATION_* placeholders",
+    "Review 🧪 labels on non-historical cuts",
+    "Approve flip draft→schedule — agents must not publish"
+  ],
+  "posts": [
+    {
+      "id": "elo-014-historical-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "1863. Ridge holds. The order is charge.\n📗 Documented center assault — and the break.\n#historytok #gettysburg #civilwar",
+      "media_local": "outputs/videos/ELO-014-historical/ELO-014-historical.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-014-historical-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "3 July 1863: The charge on Cemetery Ridge",
+      "caption": "📗 Documented baseline: massed assault on the Union center fails; the campaign’s decision is written under fire.\n\nSeries: ANOR Fork / ELOSTIRION\n\n#history #gettysburg #1863 #civilwar",
+      "media_local": "outputs/videos/ELO-014-historical/ELO-014-historical.mp4",
+      "settings": {
+        "title": "3 July 1863: The charge on Cemetery Ridge",
+        "type": "public",
+        "tags": [
+          {"value": "history", "label": "history"},
+          {"value": "gettysburg", "label": "gettysburg"},
+          {"value": "civilwar", "label": "civilwar"}
+        ]
+      }
+    },
+    {
+      "id": "elo-014-refuse-tt",
+      "platforms": ["tiktok"],
+      "integration_id": "INTEGRATION_TIKTOK_ID",
+      "title": null,
+      "caption": "What if they refuse the charge?\n🧪 SIMULATED.\n📗 History ordered the center punch.\n#althistory #gettysburg",
+      "media_local": "outputs/videos/ELO-014-refuse_charge/ELO-014-refuse_charge.mp4",
+      "settings": {"privacy": "PUBLIC_TO_EVERYONE", "duet": false, "stitch": false}
+    },
+    {
+      "id": "elo-014-refuse-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "SPECULATION: What if Lee refused Pickett’s Charge?",
+      "caption": "⚠️ SIMULATED — not a secret second Gettysburg.\n\nLives conserved vs initiative surrendered.\n\n#althistory #gettysburg #speculationlabeled",
+      "media_local": "outputs/videos/ELO-014-refuse_charge/ELO-014-refuse_charge.mp4",
+      "settings": {
+        "title": "SPECULATION: What if Lee refused Pickett’s Charge?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "gettysburg", "label": "gettysburg"}
+        ]
+      }
+    },
+    {
+      "id": "elo-014-wide-yt",
+      "platforms": ["youtube"],
+      "integration_id": "INTEGRATION_YOUTUBE_ID",
+      "title": "DRAMATIZED: What if Lee turned wide instead of punching the center?",
+      "caption": "⚠️ DRAMATIZED process — not a secret winning road.\n\nAxis choice reorders risks. It does not invent guaranteed envelopment.\n\n#althistory #gettysburg #speculationlabeled",
+      "media_local": "outputs/videos/ELO-014-wide_turn/ELO-014-wide_turn.mp4",
+      "settings": {
+        "title": "DRAMATIZED: What if Lee turned wide instead of punching the center?",
+        "type": "public",
+        "tags": [
+          {"value": "althistory", "label": "althistory"},
+          {"value": "1863", "label": "1863"}
+        ]
+      }
+    }
+  ]
+}

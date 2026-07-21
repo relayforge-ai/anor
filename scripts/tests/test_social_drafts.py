@@ -134,6 +134,18 @@ class TestSocialDrafts(unittest.TestCase):
         ):
             self.assertTrue((b11 / name).is_file(), f"missing {name}")
 
+    def test_batch_012_present(self):
+        b12 = DRAFTS / "batch-012"
+        self.assertTrue(b12.is_dir())
+        for name in (
+            "ELO-014-historical.md",
+            "ELO-014-refuse_charge.md",
+            "ELO-014-wide_turn.md",
+            "postiz-drafts.json",
+            "README.md",
+        ):
+            self.assertTrue((b12 / name).is_file(), f"missing {name}")
+
     def test_every_public_choice_has_a_draft_file(self):
         """Catalog social coverage: each public pack choice has an ELO-*-{choice} draft."""
         for pack_path in sorted(PUBLIC.glob("ELO-*.json")):
@@ -266,6 +278,15 @@ class TestSocialDrafts(unittest.TestCase):
             self.assertNotIn("mandos", text.lower())
             self.assertNotIn("master source", text.lower())
 
+    def test_batch_012_references_public_pack_only(self):
+        pack = PUBLIC / "ELO-014.json"
+        self.assertTrue(pack.is_file())
+        for path in (DRAFTS / "batch-012").glob("ELO-014*.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("ELO-014", text)
+            self.assertNotIn("mandos", text.lower())
+            self.assertNotIn("master source", text.lower())
+
     def test_simulated_drafts_carry_label(self):
         labeled = [
             DRAFTS / "batch-002" / "ELO-007-surgical_strike.md",
@@ -290,6 +311,8 @@ class TestSocialDrafts(unittest.TestCase):
             DRAFTS / "batch-010" / "ELO-011-limited_deal.md",
             DRAFTS / "batch-011" / "ELO-012-break_contact.md",
             DRAFTS / "batch-011" / "ELO-012-commit_early.md",
+            DRAFTS / "batch-012" / "ELO-014-refuse_charge.md",
+            DRAFTS / "batch-012" / "ELO-014-wide_turn.md",
         ]
         for path in labeled:
             text = path.read_text(encoding="utf-8")

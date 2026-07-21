@@ -128,7 +128,17 @@ See `batch-010/README.md` and `batch-010/postiz-drafts.json`.
 | `batch-011/ELO-012-break_contact.md` | break contact | simulated | YT + TT |
 | `batch-011/ELO-012-commit_early.md` | earlier Guard | dramatized | YT + TT |
 
-See `batch-011/README.md` and `batch-011/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
+See `batch-011/README.md` and `batch-011/postiz-drafts.json`.
+
+## Batch 012 — Gettysburg 1863 (ELO-014)
+
+| File | Scenario | Cut | Platforms |
+|------|----------|-----|-----------|
+| `batch-012/ELO-014-historical.md` | center assault ordered | historical | YT + TT |
+| `batch-012/ELO-014-refuse_charge.md` | refuse frontal assault | simulated | YT + TT |
+| `batch-012/ELO-014-wide_turn.md` | wide turning movement | dramatized | YT + TT |
+
+See `batch-012/README.md` and `batch-012/postiz-drafts.json`. Every public pack choice keeps a human-gate draft.
 
 Render commands (offline-safe with mock media, or point env at Dawes):
 

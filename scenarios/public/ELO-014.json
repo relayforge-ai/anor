@@ -1,0 +1,65 @@
+{
+  "scenario_id": "ELO-014",
+  "title": "Gettysburg 1863 — order Pickett’s Charge or refuse the frontal assault?",
+  "era": "1863",
+  "location": "Cemetery Ridge / Seminary Ridge / Gettysburg, Pennsylvania",
+  "datetime": "3 July 1863, afternoon after two days of inconclusive fighting",
+  "domain": "American Civil War / operational command / infantry assault under artillery",
+  "known_outcome": "Lee orders a concentrated infantry assault against the Union center on Cemetery Ridge (Pickett–Pettigrew–Trimble). The attack fails under massed artillery and infantry fire. The Army of Northern Virginia withdraws after the battle; the strategic initiative in the Eastern Theater shifts decisively toward the Union.",
+  "decision_question": "With the flanks contested and the Union center still holding, does Lee order a massed frontal assault on Cemetery Ridge, refuse the charge and seek a different axis, or attempt a wider turning movement rather than a center punch?",
+  "opening": {
+    "cold_open": "July heat. Smoke lifts over a stone wall on a ridge. Couriers ride between two armies that have already spent two days without a decision. One more order can still shape the afternoon — or spend a generation of officers on open ground.",
+    "what_they_knew": "They knew the Union army still held the high ground. They knew Confederate artillery had fired a preparatory barrage of uncertain effect. They knew a frontal assault against a prepared line was the costliest kind of honesty. They did not know whether the Union center would thin, break, or stand.",
+    "pressure": "Two days of blood without a break. Political clocks in Richmond and Washington. The belief that one concentrated blow could still redeem a campaign already past its culminating point."
+  },
+  "choices": [
+    {
+      "id": "historical",
+      "label": "Order the charge — massed assault on the Union center",
+      "is_historical": true,
+      "summary": "Documented path: Lee orders the assault on Cemetery Ridge; the attack fails; the army later withdraws south.",
+      "immediate": "Divisions step off under fire. Gaps open. Survivors who reach the wall cannot hold it. The assault collapses.",
+      "near_term": "The army re-forms and begins a withdrawal. Union pursuit is incomplete but the strategic initiative moves northward in the East.",
+      "longer_arc": "Gettysburg becomes a canonical study in culmination, artillery preparation, and the cost of frontal assault against a coherent defensive line.",
+      "speculation_level": "documented",
+      "image_prompt": "1863 Gettysburg afternoon, Cemetery Ridge stone wall, distant Confederate lines forming, smoke haze, archival documentary painting, sepia chiaroscuro, film grain, period-accurate uniforms, no text, no glorified gore",
+      "vo_script": "3 July 1863. The ridge still holds. History records the order for a massed assault on the Union center — Pickett’s Charge as popular memory names it. The attack fails. The campaign’s decision is written on open ground under artillery and rifle fire."
+    },
+    {
+      "id": "refuse_charge",
+      "label": "Refuse the frontal assault — conserve the corps for another axis",
+      "is_historical": false,
+      "summary": "SPECULATION: Decline the center punch; keep formations for a different approach or a fighting withdrawal under better terms.",
+      "immediate": "Orders reverse the psychology of a culminating afternoon. The army may avoid one catastrophe — without inventing an easy victory elsewhere.",
+      "near_term": "Union forces still hold interior lines. Logistics and political clocks still run. There is no guaranteed path to a cleaner decision.",
+      "longer_arc": "Simulated. Explores reserve conservation and culmination management — not a secret Confederate win condition.",
+      "speculation_level": "simulated",
+      "image_prompt": "1863 Pennsylvania farm road at dusk, Confederate staff officers with maps, columns held back, restrained documentary still, film grain, sepia, no text",
+      "vo_script": "What if the order is refuse the charge? This is speculation. Saving the divisions may save a core — or merely leave the same Union position intact while time runs out. We label the branch simulated because the only honest detail is the trade: lives conserved versus initiative surrendered."
+    },
+    {
+      "id": "wide_turn",
+      "label": "Wide turning movement — seek a flank rather than a center rupture",
+      "is_historical": false,
+      "summary": "SPECULATION / dramatized process: attempt a broader turning movement instead of a dense frontal assault on the ridge center.",
+      "immediate": "A wider march may find thinner air — or open the army to counterstroke while strung out on roads.",
+      "near_term": "Outcomes are not a scoreboard. Axis choice reorders which risks arrive first; it does not invent guaranteed envelopment.",
+      "longer_arc": "Dramatized process study of operational axis selection under incomplete information, not a second history book with a secret winning road.",
+      "speculation_level": "dramatized",
+      "image_prompt": "1863 rural Pennsylvania roads, dust columns, distant ridges, Civil War staff maps, documentary chiaroscuro, film grain, no modern objects, no text",
+      "vo_script": "What if the army turns wide instead of punching the center? Different ground. Different fatigue. The same Union army still has to be broken or forced off. This branch is dramatized process — a study of axis choice — not a guaranteed road around Cemetery Ridge."
+    }
+  ],
+  "sources": [
+    "Established public histories of the Gettysburg campaign (July 1863)",
+    "Published operational narratives of Lee, Meade, and Army of Northern Virginia / Army of the Potomac decisions",
+    "ELOSTIRION ELO-014 decision-point framing (public pack only)"
+  ],
+  "provenance": {
+    "discipline": "ELOSTIRION accuracy: decision-point framing; primary-source grounding; speculation labeled",
+    "notes": "Public pack compresses a multi-day battle into the 3 July center-assault decision. Counterfactual refuse-charge and wide-turn branches are labeled simulated or dramatized — not secret history. 'Pickett’s Charge' is popular shorthand for the broader assault.",
+    "corpus": "ELOSTIRION ELO-014 public pack"
+  },
+  "style_lock": "1863 Pennsylvania farmland and ridges, Civil War uniforms, powder smoke, documentary gravity, sepia/chiaroscuro archival stills, no modern objects, no text",
+  "tags": ["alt-history", "Gettysburg", "1863", "Civil War", "decision-point"]
+}
