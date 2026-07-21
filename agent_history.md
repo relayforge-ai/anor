@@ -2796,3 +2796,26 @@ Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Explorers see which cuts have mid-episode progress on this device and re-open with confidence — still client-only, no analytics.
+
+---
+
+## Iteration 103 — 2026-07-21
+
+### OBSERVE
+Main green after Resume pills. Library still had no way to list only mid-watch cuts — Explorers hunted resume badges among 33 titles.
+
+### PLAN
+**One high-impact change:** Library filter chip "In progress" for local mid-episode positions.
+
+### EXECUTE
+- `filterLibraryVideos` mode `in_progress` via `getWatchPosition`
+- Sort most-recently-watched first; status + empty-state copy
+- HTML chip + library/static tests
+
+### TEST
+```
+Full local CI → 287 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Freemium library can focus on unfinished cuts on this device — pairs with Resume pills and Continue watching.

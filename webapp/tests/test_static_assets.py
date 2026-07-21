@@ -159,6 +159,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "Featured today",
             "eraSortKey",
             "data-lib-filter",
+            'f === "in_progress"',
+            "most recent first",
             "function compareBranches",
             "Authored pack text only",
             "Branch compare",

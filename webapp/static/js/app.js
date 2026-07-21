@@ -622,6 +622,16 @@
       });
     } else if (f === "preview") {
       list = list.filter((v) => FHFreemium.videoAccess(v.id, cat).mode === "preview");
+    } else if (f === "in_progress") {
+      // Local mid-watch only (device position store; no analytics)
+      list = list.filter((v) => {
+        try {
+          const pos = FHFreemium.getWatchPosition(v.id);
+          return !!(pos && pos.t > 5);
+        } catch (_) {
+          return false;
+        }
+      });
     }
 
     const q = normalizeLibraryQuery(query);
@@ -703,14 +713,28 @@
       searchInput.value = state.libraryQuery || "";
     }
     const all = state.catalog.videos || [];
-    const videos = videosChronological(
-      filterLibraryVideos(
-        all,
-        state.libraryFilter,
-        state.libraryQuery,
-        state.catalog
-      )
+    const filtered = filterLibraryVideos(
+      all,
+      state.libraryFilter,
+      state.libraryQuery,
+      state.catalog
     );
+    // In-progress: most recently watched first; otherwise museum chronology
+    let videos;
+    if (state.libraryFilter === "in_progress") {
+      videos = [...filtered].sort((a, b) => {
+        let atA = 0;
+        let atB = 0;
+        try {
+          atA = (FHFreemium.getWatchPosition(a.id) || {}).at || 0;
+          atB = (FHFreemium.getWatchPosition(b.id) || {}).at || 0;
+        } catch (_) {}
+        if (atB !== atA) return atB - atA;
+        return String(a.id || "").localeCompare(String(b.id || ""));
+      });
+    } else {
+      videos = videosChronological(filtered);
+    }
     const grid = $("#library-grid");
     const status = $("#library-filter-status");
     if (status) {
@@ -718,13 +742,18 @@
         all: "Showing all episodes",
         unlocked: "Showing full-access titles on this device",
         preview: "Showing Explorer preview-only titles",
+        in_progress: "Showing mid-episode progress on this device",
         documented: "Showing 📗 documented baselines only",
         simulated: "Showing 🧪 simulated / dramatized forks only",
         available: "Showing episodes with media on this host",
       };
       const q = normalizeLibraryQuery(state.libraryQuery);
       const qNote = q ? ` · search “${q}”` : "";
-      status.textContent = `${labels[state.libraryFilter] || labels.all} · chronological${qNote} · ${videos.length} of ${all.length}`;
+      const orderNote =
+        state.libraryFilter === "in_progress"
+          ? " · most recent first"
+          : " · chronological";
+      status.textContent = `${labels[state.libraryFilter] || labels.all}${orderNote}${qNote} · ${videos.length} of ${all.length}`;
     }
     if (!all.length) {
       grid.innerHTML = libraryEmptyHtml("Catalog has no episode entries yet.");
@@ -741,6 +770,9 @@
       } else if (f === "preview") {
         emptyHint =
           "No preview-only titles right now (Scholars and unused free-full slots show under <strong>Unlocked</strong>).";
+      } else if (f === "in_progress") {
+        emptyHint =
+          "No mid-episode progress on this device yet — open a title and watch past the first few seconds, or check <strong>Continue watching</strong> on Home.";
       } else if (hasQuery) {
         emptyHint =
           "Try another word (era, title, or pack id), clear the search box, or switch filter chips.";

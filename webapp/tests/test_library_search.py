@@ -26,11 +26,13 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn("tokens.every", JS)
         # Esc clears search
         self.assertIn('e.key === "Escape"', JS)
-        # Freemium access chips (unlocked / preview-only)
+        # Freemium access chips (unlocked / preview-only / in progress)
         self.assertIn('f === "unlocked"', JS)
         self.assertIn('f === "preview"', JS)
+        self.assertIn('f === "in_progress"', JS)
         self.assertIn("videoAccess", JS)
         self.assertIn("claimable_full", JS)
+        self.assertIn("getWatchPosition", JS)
         # Museum chronological order (era → pack → documented first)
         self.assertIn("function videosChronological", JS)
         self.assertIn("function eraSortKey", JS)
@@ -43,8 +45,10 @@ class TestLibrarySearchSurface(unittest.TestCase):
     def test_html_has_freemium_access_filters(self):
         self.assertIn('data-lib-filter="unlocked"', HTML)
         self.assertIn('data-lib-filter="preview"', HTML)
+        self.assertIn('data-lib-filter="in_progress"', HTML)
         self.assertIn("Preview only", HTML)
         self.assertIn("Unlocked", HTML)
+        self.assertIn("In progress", HTML)
         self.assertIn("Filter episodes by access and speculation", HTML)
 
     def test_slash_focuses_library_search(self):
