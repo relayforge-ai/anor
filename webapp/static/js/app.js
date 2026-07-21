@@ -759,15 +759,25 @@
           <h3>${escapeHtml(v.title)}</h3>
           <p>${escapeHtml(v.blurb)}</p>
           ${videoCardTagsHtml(v)}
-          <div class="note">${
-            unavailable
-              ? `<button type="button" class="btn btn-ghost btn-sm video-card-queue-studio" data-studio-scenario="${escapeHtml(
-                  v.scenario_id || ""
-                )}" data-studio-choice="${escapeHtml(
-                  v.choice_id || ""
-                )}" title="Open Studio with this branch selected — queue a narrated render">Queue in Studio</button>`
-              : escapeHtml(videoRuntimeLabel(v))
-          }</div>
+          <div class="video-card-actions">
+            <div class="note video-card-note">${
+              unavailable
+                ? `<button type="button" class="btn btn-ghost btn-sm video-card-queue-studio" data-studio-scenario="${escapeHtml(
+                    v.scenario_id || ""
+                  )}" data-studio-choice="${escapeHtml(
+                    v.choice_id || ""
+                  )}" title="Open Studio with this branch selected — queue a narrated render">Queue in Studio</button>`
+                : escapeHtml(videoRuntimeLabel(v))
+            }</div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm video-card-share"
+              data-share-video="${escapeHtml(v.id || "")}"
+              title="Share public deep link (native share or copy) — human gate for social posts"
+            >
+              Share
+            </button>
+          </div>
         </div>
       </article>`;
   }
@@ -802,6 +812,14 @@
         const sid = btn.getAttribute("data-studio-scenario") || "";
         const cid = btn.getAttribute("data-studio-choice") || "";
         openStudioForCut(sid, cid, { queueIntent: true });
+      });
+    });
+    root.querySelectorAll(".video-card-share").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.getAttribute("data-share-video") || "";
+        if (id) shareEpisode(id);
       });
     });
     root.querySelectorAll("[data-video]").forEach((el) => {

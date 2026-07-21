@@ -760,6 +760,22 @@ textarea {
 .video-card-queue-studio {
   margin-top: 0.15rem;
 }
+.video-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.15rem;
+}
+.video-card-actions .video-card-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.video-card-share {
+  flex: 0 0 auto;
+}
 .library-empty {
   text-align: left;
   border-style: dashed;

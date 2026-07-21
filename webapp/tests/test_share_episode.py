@@ -37,6 +37,16 @@ class TestShareEpisode(unittest.TestCase):
         self.assertIn("Documented baseline", JS)
         self.assertIn("Labeled speculation", JS)
 
+    def test_library_cards_have_share_control(self):
+        """Home/library grids share public deep links without auto-publish."""
+        self.assertIn("video-card-share", JS)
+        self.assertIn("data-share-video", JS)
+        self.assertIn("video-card-actions", JS)
+        self.assertIn("shareEpisode(id)", JS)
+        css = (STATIC / "css" / "app.css").read_text(encoding="utf-8")
+        self.assertIn(".video-card-share", css)
+        self.assertIn(".video-card-actions", css)
+
     def test_route_share_meta_updates_canonical_and_og_url(self):
         """SPA routes refresh og:url + canonical for freemium discovery/share."""
         self.assertIn("function publicShareUrl", JS)

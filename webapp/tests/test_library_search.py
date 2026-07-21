@@ -73,6 +73,8 @@ class TestLibrarySearchSurface(unittest.TestCase):
         self.assertIn(".library-search", CSS)
         self.assertIn(".library-toolbar", CSS)
         self.assertIn(".video-card-tags", CSS)
+        self.assertIn(".video-card-actions", CSS)
+        self.assertIn(".video-card-share", CSS)
         self.assertIn(".library-era-head", CSS)
         self.assertIn(".library-era-title", CSS)
         self.assertIn(".library-era-jumps", CSS)

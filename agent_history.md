@@ -3547,3 +3547,26 @@ Full local CI → 309 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Scholar keyboard path: deep-link branch → Ctrl+Shift+V queue (paywall still enforced for Explorers).
+
+---
+
+## Iteration 135 — 2026-07-21
+
+### OBSERVE
+Main green after 94d911a. Episode share lived only on the watch page — library/home/related grids had no one-tap deep-link share for freemium discovery.
+
+### PLAN
+**One high-impact change:** Share control on episode cards (library, home, related).
+
+### EXECUTE
+- `video-card-share` on every catalog card → `shareEpisode` (stopPropagation)
+- Card action row layout (runtime/queue + Share)
+- CSS + share/library/static tests (no auto-publish wording that fails the guard test)
+
+### TEST
+```
+Full local CI → 310 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Explorers can share labeled episode deep links from any grid without entering watch first; social stays human-gated.

@@ -132,6 +132,8 @@ class TestStaticProgressUI(unittest.TestCase):
             "openStudioForCut",
             "video-card-queue-studio",
             "Queue in Studio",
+            "video-card-share",
+            "data-share-video",
             "INTENT_QUEUE_VIDEO_KEY",
             "fh:intentQueueVideo",
             "applyQueueVideoIntent",
