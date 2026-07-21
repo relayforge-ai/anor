@@ -3003,3 +3003,27 @@ Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
 
 ### RESULT
 Each video render leaves auditable cost-ladder accounting for fleet ops without logging secrets or absolute paths.
+
+---
+
+## Iteration 112 — 2026-07-21
+
+### OBSERVE
+Main green after build.json cache accounting. Studio only celebrated full disk-cache hits — ladder assists (still/TTS/clip reuse mid-render) were invisible to freemium operators and Explorers. Home episode grid also lacked the new era headers.
+
+### PLAN
+**One high-impact change:** surface cost-ladder cache summary on video job results + home era grouping.
+
+### EXECUTE
+- `VideoBuildResult.cache` → job `result.cache` (public ints only)
+- Complete message / Studio note / toast when any hits > 0
+- Home `#home-video-grid` uses `libraryGridHtml({ groupByEra: true })`
+- Static needles for Cost ladder UI
+
+### TEST
+```
+Full local CI → 291 OK + compileall + pip-audit clean + sim pytest 3 passed
+```
+
+### RESULT
+Studio shows when a render reused stills/TTS/Ken Burns work; home episodes read as a museum timeline matching Library.

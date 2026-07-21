@@ -502,9 +502,9 @@
     paintHomeStudioCta();
     paintHomeContinue();
     const grid = $("#home-video-grid");
-    grid.innerHTML = videosChronological(state.catalog.videos || [])
-      .map((v) => videoCardHtml(v))
-      .join("");
+    grid.innerHTML = libraryGridHtml(videosChronological(state.catalog.videos || []), {
+      groupByEra: true,
+    });
     bindVideoCards(grid);
 
     const sgrid = $("#home-scenario-grid");
@@ -2073,18 +2073,37 @@
           clearStudioDockProgress();
           const url = st.result?.media_url || "";
           const wasCached = !!(st.result && st.result.cached);
+          const ladder = st.result && st.result.cache ? st.result.cache : null;
+          const ladderHits = ladder
+            ? (ladder.still_hits || 0) + (ladder.tts_hits || 0) + (ladder.clip_hits || 0)
+            : 0;
           const cachedNote = wasCached
             ? `<p class="note">Served from disk cache — no new stills/TTS/ffmpeg work. Use <strong>Force re-render</strong> only when you need fresh stills/VO.</p>`
-            : "";
+            : ladder && ladderHits > 0
+              ? `<p class="note">Cost ladder: reused <strong>${escapeHtml(
+                  String(ladder.still_hits || 0)
+                )}</strong> still(s), <strong>${escapeHtml(
+                  String(ladder.tts_hits || 0)
+                )}</strong> TTS, <strong>${escapeHtml(
+                  String(ladder.clip_hits || 0)
+                )}</strong> Ken Burns clip(s) of ${escapeHtml(
+                  String(ladder.segments || "?")
+                )} segment(s) — less GPU/voice/ffmpeg work.</p>`
+              : "";
           const forceBtn = FHFreemium.isMember()
             ? `<button type="button" class="btn btn-ghost btn-sm" id="btn-force-rerender" title="Ignore disk cache and re-run stills → TTS → Ken Burns">Force re-render</button>`
             : "";
+          const doneLabel = wasCached
+            ? "Existing render ready"
+            : ladderHits > 0
+              ? "Render complete (cache assists)"
+              : "Render complete";
           $("#fork-result").innerHTML =
             renderSimProgress({
               stages,
               activeIndex: stages.length - 1,
               pct: 100,
-              label: wasCached ? "Existing render ready" : "Render complete",
+              label: doneLabel,
               indeterminate: false,
             }) +
             `<div style="margin-top:1rem">
@@ -2109,9 +2128,11 @@
           toast(
             wasCached
               ? "Existing render ready"
-              : resumed
-                ? "Render finished while you were away"
-                : "Video ready"
+              : ladderHits > 0
+                ? `Video ready — reused ${ladder.still_hits || 0} still / ${ladder.tts_hits || 0} TTS / ${ladder.clip_hits || 0} clip`
+                : resumed
+                  ? "Render finished while you were away"
+                  : "Video ready"
           );
           // Bust catalog ETag cache so new render availability is visible
           try {

@@ -764,11 +764,45 @@ class VideoJobQueue:
 
             # Public-safe result — never expose absolute filesystem paths to clients
             rel_mp4 = f"{scenario_id}-{choice_id}/{result.out_mp4.name}"
+            # Cost-ladder summary only (ints) — no host paths or cache keys
+            cache_pub = None
+            raw_cache = getattr(result, "cache", None)
+            if isinstance(raw_cache, dict):
+                cache_pub = {
+                    "still_hits": int(raw_cache.get("still_hits") or 0),
+                    "tts_hits": int(raw_cache.get("tts_hits") or 0),
+                    "clip_hits": int(raw_cache.get("clip_hits") or 0),
+                    "segments": int(
+                        raw_cache.get("segments")
+                        if raw_cache.get("segments") is not None
+                        else len(result.segments or [])
+                    ),
+                }
             payload = {
                 "media_url": f"/media/videos/{rel_mp4}",
                 "segments": len(result.segments),
                 "mock_media": result.mock_media,
             }
+            if cache_pub is not None:
+                payload["cache"] = cache_pub
+                # Friendly complete message when any ladder stage was reused
+                hits = (
+                    cache_pub["still_hits"]
+                    + cache_pub["tts_hits"]
+                    + cache_pub["clip_hits"]
+                )
+                if hits > 0:
+                    complete_msg = (
+                        f"Render complete — reused {cache_pub['still_hits']} still"
+                        f"{'' if cache_pub['still_hits'] == 1 else 's'}, "
+                        f"{cache_pub['tts_hits']} TTS, "
+                        f"{cache_pub['clip_hits']} clip"
+                        f"{'' if cache_pub['clip_hits'] == 1 else 's'}"
+                    )
+                else:
+                    complete_msg = "Render complete"
+            else:
+                complete_msg = "Render complete"
             completed_ok = False
             with self._lock:
                 job = self._jobs.get(job_id)
@@ -783,7 +817,7 @@ class VideoJobQueue:
                         job.status = "completed"
                         job.stage = "done"
                         job.pct = 100.0
-                        job.message = "Render complete"
+                        job.message = complete_msg
                         job.result = payload
                         job.finished_at = time.time()
                         job.updated_at = time.time()

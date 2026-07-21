@@ -86,6 +86,7 @@ class VideoBuildResult:
     script_path: Path
     segments: list[dict]
     mock_media: bool
+    cache: Optional[dict] = None  # still/tts/clip hit summary (public-safe ints)
 
 
 def _ffprobe_duration(path: Path) -> float:
@@ -588,6 +589,7 @@ def render_video(
             script_path=script_path,
             segments=seg_meta,
             mock_media=cfg.mock_media or not (cfg.image_url and cfg.tts_url),
+            cache=cache_summary,
         )
     finally:
         # Failed / cancelled / timed-out renders must not leave multi-MB work trees.
